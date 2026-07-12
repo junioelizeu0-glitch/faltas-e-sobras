@@ -1,12 +1,9 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
+import { requireUnlockedSession } from "@/lib/gate.functions";
 
-function getSupabase() {
-  return createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_PUBLISHABLE_KEY!,
-    { auth: { storage: undefined, persistSession: false, autoRefreshToken: false } },
-  );
+async function getSupabase() {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin;
 }
 
 function toApiShape(row: any) {
@@ -34,7 +31,8 @@ function toApiShape(row: any) {
 
 export const fetchDashboardData = createServerFn({ method: "GET" }).handler(
   async () => {
-    const supabase = getSupabase();
+    await requireUnlockedSession();
+    const supabase = await getSupabase();
     const all: any[] = [];
     let from = 0;
     const pageSize = 1000;
@@ -142,7 +140,8 @@ export const createChamado = createServerFn({ method: "POST" })
         "Inclusão por esta aba ainda não está habilitada. Somente FALTAS está migrado.",
       );
     }
-    const supabase = getSupabase();
+    await requireUnlockedSession();
+    const supabase = await getSupabase();
     const row = {
       chamado: nullIfEmpty(data.Chamado),
       loja: nullIfEmpty(data.Loja),
