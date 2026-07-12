@@ -1,16 +1,13 @@
 import { createServerFn } from "@tanstack/react-start";
-import { createClient } from "@supabase/supabase-js";
+import { requireUnlockedSession } from "@/lib/gate.functions";
 
 // Tabelas expostas no visualizador. Adicione novas aqui conforme forem criadas.
 export const ADMIN_TABLES = ["chamados_faltas"] as const;
 export type AdminTable = (typeof ADMIN_TABLES)[number];
 
-function getSupabase() {
-  return createClient(
-    process.env.SUPABASE_URL!,
-    process.env.SUPABASE_PUBLISHABLE_KEY!,
-    { auth: { storage: undefined, persistSession: false, autoRefreshToken: false } },
-  );
+async function getSupabase() {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  return supabaseAdmin;
 }
 
 export const fetchTableRows = createServerFn({ method: "GET" })
@@ -25,7 +22,8 @@ export const fetchTableRows = createServerFn({ method: "GET" })
     };
   })
   .handler(async ({ data }) => {
-    const supabase = getSupabase();
+    await requireUnlockedSession();
+    const supabase = await getSupabase();
     let query = supabase
       .from(data.table)
       .select("*", { count: "exact" })
@@ -33,7 +31,6 @@ export const fetchTableRows = createServerFn({ method: "GET" })
       .limit(data.limit);
 
     if (data.search) {
-      // Busca simples em colunas textuais comuns
       const s = data.search.replace(/[,%]/g, "");
       query = query.or(
         [
