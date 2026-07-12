@@ -1,5 +1,4 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireUnlockedSession } from "@/lib/gate.server";
 
 async function getSupabase() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
@@ -31,7 +30,7 @@ function toApiShape(row: any) {
 
 export const fetchDashboardData = createServerFn({ method: "GET" }).handler(
   async () => {
-    await requireUnlockedSession();
+    const { requireUnlockedSession } = await import("@/lib/gate.server"); await requireUnlockedSession();
     const supabase = await getSupabase();
     const all: any[] = [];
     let from = 0;
@@ -140,7 +139,7 @@ export const createChamado = createServerFn({ method: "POST" })
         "Inclusão por esta aba ainda não está habilitada. Somente FALTAS está migrado.",
       );
     }
-    await requireUnlockedSession();
+    const { requireUnlockedSession } = await import("@/lib/gate.server"); await requireUnlockedSession();
     const supabase = await getSupabase();
     const row = {
       chamado: nullIfEmpty(data.Chamado),
