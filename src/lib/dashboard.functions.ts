@@ -97,6 +97,43 @@ const numOrNull = (v: any) => {
   return isNaN(n) ? null : n;
 };
 
+const SHEET_NAMES: Record<NovoChamadoPayload["aba"], string> = {
+  FALTAS: "CONTROLE CHAMADOS (FALTAS)",
+  SOBRA: "CONTROLE CHAMADOS (SOBRAS)",
+  RECALL: "CONTROLE CHAMADOS (RECALL)",
+  GATO: "CONTROLE CHAMADOS (GATO)",
+};
+
+async function mirrorToAppsScript(
+  aba: NovoChamadoPayload["aba"],
+  payload: NovoChamadoPayload,
+): Promise<{ ok: boolean; error?: string }> {
+  const url = process.env.APPS_SCRIPT_URL;
+  if (!url) return { ok: false, error: "APPS_SCRIPT_URL não configurada" };
+  try {
+    const { aba: _drop, ...fields } = payload;
+    const res = await fetch(url, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        action: "insert",
+        sheet: SHEET_NAMES[aba],
+        data: fields,
+      }),
+      redirect: "follow",
+    });
+    const text = await res.text();
+    let json: any = null;
+    try { json = JSON.parse(text); } catch {}
+    if (!res.ok) return { ok: false, error: `HTTP ${res.status}: ${text.slice(0, 200)}` };
+    if (json && json.success === false) return { ok: false, error: json.error || "Resposta success=false" };
+    if (!json) return { ok: false, error: "Resposta não-JSON do Apps Script (verifique deploy)" };
+    return { ok: true };
+  } catch (e: any) {
+    return { ok: false, error: e?.message ?? String(e) };
+  }
+}
+
 export const createChamado = createServerFn({ method: "POST" })
   .inputValidator((data: NovoChamadoPayload) => data)
   .handler(async ({ data }) => {
@@ -132,5 +169,15 @@ export const createChamado = createServerFn({ method: "POST" })
       .select()
       .single();
     if (error) throw new Error(error.message);
-    return { success: true, id: inserted?.id };
+
+    // Réplica na planilha (Apps Script). Não falha o fluxo se der erro.
+    const mirror = await mirrorToAppsScript(data.aba, data);
+
+    return {
+      success: true,
+      id: inserted?.id,
+      mirrored: mirror.ok,
+      mirrorError: mirror.ok ? undefined : mirror.error,
+    };
   });
+
