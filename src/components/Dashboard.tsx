@@ -14,6 +14,7 @@ import {
   Plus, BarChart2, LayoutGrid, Menu, ChevronLeft, Package
 } from 'lucide-react';
 import { useDashboardData, isValidField, getTarefaAtual, isSemRetorno, parseDataBR, getBusinessDays } from '@/lib/data-processing';
+import NovoChamadoForm from '@/components/NovoChamadoForm';
 
 import DrillDownModal from '@/components/DrillDownModal';
 import AppShell from '@/components/AppShell';
@@ -1150,7 +1151,7 @@ export default function Dashboard() {
     }));
   };
 
-  const { kpis, filterOptions, isLoading, isRefetching, error, refetch } = useDashboardData(activeFilters);
+  const { kpis, filterOptions, isLoading, isRefetching, error, refetch, rawData } = useDashboardData(activeFilters);
   const charts = kpis?.charts;
 
   const executiveSummaryRef = useRef<HTMLDivElement>(null);
@@ -1493,7 +1494,11 @@ export default function Dashboard() {
           <div className="flex-1 bg-slate-100"></div>
         )}
 
-        {(selectedSubmenu === 'novo' || selectedSubmenu === 'consulta') && (
+        {selectedSubmenu === 'novo' && (
+          <NovoChamadoForm rawData={rawData} onCreated={() => refetch()} />
+        )}
+
+        {selectedSubmenu === 'consulta' && (
           <div className="flex-1 bg-white flex items-center justify-center">
             <span className="text-slate-400 font-medium text-sm">Em construção</span>
           </div>
