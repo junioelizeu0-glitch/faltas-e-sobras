@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireUnlockedSession } from "@/lib/gate.functions";
+import { requireUnlockedSession } from "@/lib/gate.server";
 
 async function getSupabase() {
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");

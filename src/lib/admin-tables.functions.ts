@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { requireUnlockedSession } from "@/lib/gate.functions";
+import { requireUnlockedSession } from "@/lib/gate.server";
 
 // Tabelas expostas no visualizador. Adicione novas aqui conforme forem criadas.
 export const ADMIN_TABLES = ["chamados_faltas"] as const;
