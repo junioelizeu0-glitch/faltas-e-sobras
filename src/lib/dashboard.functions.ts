@@ -42,10 +42,18 @@ export type NovoChamadoPayload = {
 export const createChamado = createServerFn({ method: "POST" })
   .inputValidator((data: NovoChamadoPayload) => data)
   .handler(async ({ data }) => {
+    const payload = { action: "insert", ...data };
+    // Apps Script aceita melhor form-urlencoded (e.parameter) do que JSON puro.
+    const form = new URLSearchParams();
+    Object.entries(payload).forEach(([k, v]) => {
+      form.append(k, v == null ? "" : String(v));
+    });
     const response = await fetch(GOOGLE_SCRIPT_URL, {
       method: "POST",
-      headers: { "Content-Type": "text/plain;charset=utf-8" },
-      body: JSON.stringify({ action: "insert", ...data }),
+      headers: {
+        "Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
+      },
+      body: form.toString(),
       redirect: "follow",
     });
     const text = await response.text();
@@ -53,9 +61,8 @@ export const createChamado = createServerFn({ method: "POST" })
     try {
       json = JSON.parse(text);
     } catch {
-      // Apps Script sem doPost devolve HTML
       throw new Error(
-        "O Apps Script ainda não tem endpoint doPost(). Adicione o snippet fornecido para habilitar inclusão.",
+        "O Apps Script respondeu em HTML (provavelmente ainda não tem a função doPost). Adicione o snippet doPost fornecido no editor do Apps Script e reimplante a mesma versão.",
       );
     }
     if (!response.ok || json?.ok === false) {
@@ -63,3 +70,4 @@ export const createChamado = createServerFn({ method: "POST" })
     }
     return json;
   });
+
