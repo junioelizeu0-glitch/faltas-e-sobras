@@ -14,7 +14,78 @@ export type Database = {
   }
   public: {
     Tables: {
-      [_ in never]: never
+      chamados_faltas: {
+        Row: {
+          cd: string | null
+          chamado: string | null
+          conferente: string | null
+          created_at: string
+          dt_abertura: string | null
+          dt_emissao: string | null
+          dt_finalizacao: string | null
+          dt_pagamento: string | null
+          id: string
+          loja: string | null
+          motivo: string | null
+          nf: string | null
+          periodo: string | null
+          situacao: string | null
+          sla_status: string | null
+          status_chamado: string | null
+          status_pagamento: string | null
+          tipo: string | null
+          transportadora: string | null
+          updated_at: string
+          valor: number | null
+        }
+        Insert: {
+          cd?: string | null
+          chamado?: string | null
+          conferente?: string | null
+          created_at?: string
+          dt_abertura?: string | null
+          dt_emissao?: string | null
+          dt_finalizacao?: string | null
+          dt_pagamento?: string | null
+          id?: string
+          loja?: string | null
+          motivo?: string | null
+          nf?: string | null
+          periodo?: string | null
+          situacao?: string | null
+          sla_status?: string | null
+          status_chamado?: string | null
+          status_pagamento?: string | null
+          tipo?: string | null
+          transportadora?: string | null
+          updated_at?: string
+          valor?: number | null
+        }
+        Update: {
+          cd?: string | null
+          chamado?: string | null
+          conferente?: string | null
+          created_at?: string
+          dt_abertura?: string | null
+          dt_emissao?: string | null
+          dt_finalizacao?: string | null
+          dt_pagamento?: string | null
+          id?: string
+          loja?: string | null
+          motivo?: string | null
+          nf?: string | null
+          periodo?: string | null
+          situacao?: string | null
+          sla_status?: string | null
+          status_chamado?: string | null
+          status_pagamento?: string | null
+          tipo?: string | null
+          transportadora?: string | null
+          updated_at?: string
+          valor?: number | null
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
