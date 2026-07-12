@@ -184,10 +184,15 @@ export default function NovoChamadoForm({ rawData, onCreated }: Props) {
           Periodo: primeiroDiaMesISO(form["Dt Abertura"]),
         },
       });
+      const numeroSalvo = form.Chamado;
       setFeedback({
         type: "ok",
-        msg: `Chamado ${form.Chamado} incluído com sucesso na planilha.`,
+        msg: `Chamado nº ${numeroSalvo} foi incluído na planilha de Faltas.`,
       });
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
       // Reset e sugere próximo número
       const proximo = Number(form.Chamado) + 1;
       setForm((prev) => ({
