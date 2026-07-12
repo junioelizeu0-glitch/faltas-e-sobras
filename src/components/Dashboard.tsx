@@ -1150,7 +1150,7 @@ export default function Dashboard() {
     }));
   };
 
-  const { kpis, filterOptions, isLoading, isRefetching, error, refetch } = useDashboardData(activeFilters);
+  const { kpis, filterOptions, isLoading, isRefetching, error, refetch, rawData } = useDashboardData(activeFilters);
   const charts = kpis?.charts;
 
   const executiveSummaryRef = useRef<HTMLDivElement>(null);
@@ -1493,7 +1493,11 @@ export default function Dashboard() {
           <div className="flex-1 bg-slate-100"></div>
         )}
 
-        {(selectedSubmenu === 'novo' || selectedSubmenu === 'consulta') && (
+        {selectedSubmenu === 'novo' && (
+          <NovoChamadoForm rawData={rawData} onCreated={() => refetch()} />
+        )}
+
+        {selectedSubmenu === 'consulta' && (
           <div className="flex-1 bg-white flex items-center justify-center">
             <span className="text-slate-400 font-medium text-sm">Em construção</span>
           </div>
