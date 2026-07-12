@@ -6,7 +6,11 @@ import {
   Search,
   BarChart2,
   Package,
+  LogOut,
 } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { useRouter } from "@tanstack/react-router";
+import { lockSite } from "@/lib/gate.functions";
 
 interface AppShellProps {
   children: React.ReactNode;
@@ -22,6 +26,12 @@ export default function AppShell({
   setSelectedSubmenu,
 }: AppShellProps) {
   const [menuAberto, setMenuAberto] = useState(false);
+  const lock = useServerFn(lockSite);
+  const router = useRouter();
+  async function handleLogout() {
+    try { await lock(); } catch {}
+    await router.navigate({ to: "/unlock" });
+  }
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 font-sans flex overflow-hidden">
