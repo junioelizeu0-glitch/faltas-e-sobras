@@ -14,6 +14,7 @@ import {
   Plus, BarChart2, LayoutGrid, Menu, ChevronLeft, Package
 } from 'lucide-react';
 import { useDashboardData, isValidField, getTarefaAtual, isSemRetorno, parseDataBR, getBusinessDays } from '@/lib/data-processing';
+import NovoChamadoForm from '@/components/NovoChamadoForm';
 
 import DrillDownModal from '@/components/DrillDownModal';
 import AppShell from '@/components/AppShell';
