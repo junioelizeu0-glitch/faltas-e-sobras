@@ -161,7 +161,7 @@ export default function NovoChamadoForm({ rawData, onCreated }: Props) {
     }
     setSubmitting(true);
     try {
-      await submitFn({
+      const result: any = await submitFn({
         data: {
           aba: "FALTAS",
           Chamado: form.Chamado,
@@ -185,13 +185,18 @@ export default function NovoChamadoForm({ rawData, onCreated }: Props) {
         },
       });
       const numeroSalvo = form.Chamado;
+      const mirrored = result?.mirrored;
+      const mirrorError = result?.mirrorError;
       setFeedback({
         type: "ok",
-        msg: `Chamado nº ${numeroSalvo} foi incluído na planilha de Faltas.`,
+        msg: mirrored
+          ? `Chamado nº ${numeroSalvo} salvo no banco e replicado na planilha.`
+          : `Chamado nº ${numeroSalvo} salvo no banco, mas a planilha NÃO recebeu (${mirrorError || "erro desconhecido"}).`,
       });
       if (typeof window !== "undefined") {
         window.scrollTo({ top: 0, behavior: "smooth" });
       }
+
 
       // Reset e sugere próximo número
       const proximo = Number(form.Chamado) + 1;
