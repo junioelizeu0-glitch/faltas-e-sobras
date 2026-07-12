@@ -452,7 +452,8 @@ export default function NovoChamadoForm({ rawData, onCreated }: Props) {
                 <input
                   list="motivos-list"
                   value={form.Motivo}
-                  onChange={(e) => setField("Motivo", e.target.value)}
+                  onChange={(e) => setField("Motivo", e.target.value.slice(0, 200))}
+                  maxLength={200}
                   className={inputCls}
                   placeholder={
                     precisaMotivo
@@ -460,6 +461,7 @@ export default function NovoChamadoForm({ rawData, onCreated }: Props) {
                       : "Digite ou selecione"
                   }
                 />
+
                 <datalist id="motivos-list">
                   {motivos.map((m) => (
                     <option key={m} value={m} />
