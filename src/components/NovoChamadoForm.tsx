@@ -184,10 +184,15 @@ export default function NovoChamadoForm({ rawData, onCreated }: Props) {
           Periodo: primeiroDiaMesISO(form["Dt Abertura"]),
         },
       });
+      const numeroSalvo = form.Chamado;
       setFeedback({
         type: "ok",
-        msg: `Chamado ${form.Chamado} incluído com sucesso na planilha.`,
+        msg: `Chamado nº ${numeroSalvo} foi incluído na planilha de Faltas.`,
       });
+      if (typeof window !== "undefined") {
+        window.scrollTo({ top: 0, behavior: "smooth" });
+      }
+
       // Reset e sugere próximo número
       const proximo = Number(form.Chamado) + 1;
       setForm((prev) => ({
@@ -230,18 +235,30 @@ export default function NovoChamadoForm({ rawData, onCreated }: Props) {
 
         {feedback && (
           <div
-            className={`mb-4 flex items-start gap-2 rounded-lg border px-4 py-3 text-sm ${
+            className={`mb-4 flex items-start gap-3 rounded-lg border px-4 py-4 shadow-sm ${
               feedback.type === "ok"
-                ? "border-green-200 bg-green-50 text-green-700"
+                ? "border-green-300 bg-green-50 text-green-800"
                 : "border-red-200 bg-red-50 text-red-700"
             }`}
           >
             {feedback.type === "ok" ? (
-              <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" />
+              <CheckCircle2 className="w-6 h-6 mt-0.5 shrink-0 text-green-600" />
             ) : (
-              <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+              <AlertCircle className="w-5 h-5 mt-0.5 shrink-0" />
             )}
-            <span>{feedback.msg}</span>
+            <div className="flex-1">
+              {feedback.type === "ok" && (
+                <div className="font-bold text-base leading-tight">Chamado salvo com sucesso!</div>
+              )}
+              <div className="text-sm">{feedback.msg}</div>
+            </div>
+            <button
+              type="button"
+              onClick={() => setFeedback(null)}
+              className="text-xs opacity-60 hover:opacity-100 cursor-pointer"
+            >
+              ✕
+            </button>
           </div>
         )}
 
@@ -254,12 +271,13 @@ export default function NovoChamadoForm({ rawData, onCreated }: Props) {
             <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
               Identificação
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-6 gap-4">
               <Field label="Chamado *">
                 <input
                   type="number"
                   value={form.Chamado}
-                  onChange={(e) => setField("Chamado", e.target.value)}
+                  onChange={(e) => setField("Chamado", e.target.value.slice(0, 8))}
+                  maxLength={8}
                   className={inputCls}
                   required
                 />
@@ -268,7 +286,8 @@ export default function NovoChamadoForm({ rawData, onCreated }: Props) {
                 <input
                   type="number"
                   value={form.Loja}
-                  onChange={(e) => setField("Loja", e.target.value)}
+                  onChange={(e) => setField("Loja", e.target.value.slice(0, 5))}
+                  maxLength={5}
                   className={inputCls}
                   required
                 />
@@ -295,15 +314,16 @@ export default function NovoChamadoForm({ rawData, onCreated }: Props) {
                   ))}
                 </select>
               </Field>
-              <Field label="NF">
+              <Field label="NF" className="col-span-2 md:col-span-1">
                 <input
                   type="number"
                   value={form.NF}
-                  onChange={(e) => setField("NF", e.target.value)}
+                  onChange={(e) => setField("NF", e.target.value.slice(0, 10))}
+                  maxLength={10}
                   className={inputCls}
                 />
               </Field>
-              <Field label="Data Emissão">
+              <Field label="Data Emissão" className="col-span-2 md:col-span-1">
                 <input
                   type="date"
                   value={form["Dt Emissão"]}
@@ -319,7 +339,7 @@ export default function NovoChamadoForm({ rawData, onCreated }: Props) {
             <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
               Status e Datas
             </h2>
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
               <Field label="Data Abertura *">
                 <input
                   type="date"
@@ -345,8 +365,15 @@ export default function NovoChamadoForm({ rawData, onCreated }: Props) {
                   className={inputCls}
                 />
               </Field>
+              <Field label="Status Pagamento (auto)">
+                <input
+                  value={statusPagamento}
+                  readOnly
+                  className={inputCls + " bg-slate-50 text-slate-500"}
+                />
+              </Field>
 
-              <Field label="Situação (tarefa atual)">
+              <Field label="Situação (tarefa atual)" className="col-span-2">
                 <select
                   value={form["Situação "]}
                   onChange={(e) => setField("Situação ", e.target.value)}
@@ -367,13 +394,6 @@ export default function NovoChamadoForm({ rawData, onCreated }: Props) {
                     <option key={o}>{o}</option>
                   ))}
                 </select>
-              </Field>
-              <Field label="Status Pagamento (auto)">
-                <input
-                  value={statusPagamento}
-                  readOnly
-                  className={inputCls + " bg-slate-50 text-slate-500"}
-                />
               </Field>
               <Field label="SLA (auto, dias úteis)">
                 <input
@@ -401,8 +421,9 @@ export default function NovoChamadoForm({ rawData, onCreated }: Props) {
                   list="transportadoras-list"
                   value={form.Transportadora}
                   onChange={(e) =>
-                    setField("Transportadora", e.target.value.toUpperCase())
+                    setField("Transportadora", e.target.value.toUpperCase().slice(0, 60))
                   }
+                  maxLength={60}
                   className={inputCls}
                   placeholder="Digite ou selecione"
                 />
@@ -417,7 +438,8 @@ export default function NovoChamadoForm({ rawData, onCreated }: Props) {
                   list="conferentes-list"
                   value={form.Conferente}
                   onChange={(e) =>
-                    setField("Conferente", e.target.value.toUpperCase())
+                    setField("Conferente", e.target.value.toUpperCase().slice(0, 60))
+
                   }
                   className={inputCls}
                   placeholder="Digite ou selecione"
@@ -435,7 +457,8 @@ export default function NovoChamadoForm({ rawData, onCreated }: Props) {
                 <input
                   list="motivos-list"
                   value={form.Motivo}
-                  onChange={(e) => setField("Motivo", e.target.value)}
+                  onChange={(e) => setField("Motivo", e.target.value.slice(0, 200))}
+                  maxLength={200}
                   className={inputCls}
                   placeholder={
                     precisaMotivo
@@ -443,6 +466,7 @@ export default function NovoChamadoForm({ rawData, onCreated }: Props) {
                       : "Digite ou selecione"
                   }
                 />
+
                 <datalist id="motivos-list">
                   {motivos.map((m) => (
                     <option key={m} value={m} />
