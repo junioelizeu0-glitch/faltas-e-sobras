@@ -39,21 +39,27 @@ export type NovoChamadoPayload = {
   Periodo: string;
 };
 
+const ABA_TO_SHEET: Record<string, string> = {
+  FALTAS: "CONTROLE CHAMADOS (FALTAS)",
+  SOBRA: "CONTROLE CHAMADOS (SOBRA)",
+  RECALL: "CONTROLE CHAMADOS (RECALL)",
+  GATO: "CONTROLE CHAMADOS (GATO)",
+};
+
 export const createChamado = createServerFn({ method: "POST" })
   .inputValidator((data: NovoChamadoPayload) => data)
   .handler(async ({ data }) => {
-    const payload = { action: "insert", ...data };
-    // Apps Script aceita melhor form-urlencoded (e.parameter) do que JSON puro.
-    const form = new URLSearchParams();
-    Object.entries(payload).forEach(([k, v]) => {
-      form.append(k, v == null ? "" : String(v));
-    });
+    const { aba, ...rest } = data;
+    const sheet = ABA_TO_SHEET[aba] || aba;
+    const body = {
+      action: "insert",
+      sheet,
+      data: rest,
+    };
     const response = await fetch(GOOGLE_SCRIPT_URL, {
       method: "POST",
-      headers: {
-        "Content-Type": "application/x-www-form-urlencoded;charset=utf-8",
-      },
-      body: form.toString(),
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(body),
       redirect: "follow",
     });
     const text = await response.text();
@@ -62,12 +68,13 @@ export const createChamado = createServerFn({ method: "POST" })
       json = JSON.parse(text);
     } catch {
       throw new Error(
-        "O Apps Script respondeu em HTML (provavelmente ainda não tem a função doPost). Adicione o snippet doPost fornecido no editor do Apps Script e reimplante a mesma versão.",
+        "O Apps Script respondeu em HTML. Verifique se a implantação Web App está ativa e acessível a 'Qualquer pessoa'.",
       );
     }
-    if (!response.ok || json?.ok === false) {
+    if (!response.ok || json?.success === false) {
       throw new Error(json?.error || "Falha ao inserir chamado na planilha");
     }
     return json;
   });
+
 
