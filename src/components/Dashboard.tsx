@@ -253,7 +253,7 @@ const ChartCard = ({ title, children, span = 1, desc, onClick }: any) => {
           </button>
         </div>
       </div>
-      <div onClick={onClick} className="w-full h-[320px] relative overflow-hidden">
+      <div onClick={onClick} className="w-full min-h-[320px] relative">
         {children}
       </div>
     </div>
@@ -903,9 +903,9 @@ const AbaTransportadoras = ({ mode, data, onOpenModal }: { mode: 'geral', data: 
           </div>
         </div>
         <ResponsiveContainer width="100%" height={320}>
-          <BarChart onClick={(e: any) => { if(e && e.activeLabel) onOpenModal(`TRANSP - ${e.activeLabel}`) }} data={data.charts?.topTranspData || []} margin={{ top: 15, right: 10, left: -20, bottom: 5 }}>
+          <BarChart onClick={(e: any) => { if(e && e.activeLabel) onOpenModal(`TRANSP - ${e.activeLabel}`) }} data={data.charts?.topTranspData || []} margin={{ top: 15, right: 10, left: -20, bottom: 60 }}>
             <CartesianGrid vertical={false} stroke="#e1e0d9" />
-            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#898781' }} dy={10} />
+            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#898781' }} dy={10} interval={0} angle={-25} textAnchor="end" height={80} />
             <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#898781' }} domain={[0, getDynamicCeilingMulti(data.charts?.topTranspData || [], ['aprovados', 'recusados'], 10)]} />
             <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ fontSize: '12px', borderRadius: '8px' }} />
             <Bar dataKey="aprovados" name="Aprovados" fill="#1baf7a" radius={[4, 4, 0, 0]} maxBarSize={40}>
@@ -930,9 +930,9 @@ const AbaTransportadoras = ({ mode, data, onOpenModal }: { mode: 'geral', data: 
           </div>
         </div>
          <ResponsiveContainer width="100%" height={320}>
-          <BarChart onClick={(e: any) => { if(e && e.activeLabel) onOpenModal(`TRANSP - ${e.activeLabel}`) }} data={data.charts?.topTranspData || []} margin={{ top: 15, right: 10, left: -20, bottom: 0 }}>
+          <BarChart onClick={(e: any) => { if(e && e.activeLabel) onOpenModal(`TRANSP - ${e.activeLabel}`) }} data={data.charts?.topTranspData || []} margin={{ top: 15, right: 10, left: -20, bottom: 60 }}>
              <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#898781' }} dy={10} />
+             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#898781' }} dy={10} interval={0} angle={-25} textAnchor="end" height={80} />
              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b' }} tickFormatter={(val) => `${String(val).replace('.', ',')}%`} domain={[0, 100]} />
              <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ fontSize: '12px', borderRadius: '8px' }} formatter={(val) => `${String(val).replace('.', ',')}%`} />
              <Bar dataKey="percAprovados" name="Aprovados (%)" fill="#1baf7a" radius={[4, 4, 0, 0]} maxBarSize={40}>
