@@ -31,7 +31,8 @@ function toApiShape(row: any) {
 
 export const fetchDashboardData = createServerFn({ method: "GET" }).handler(
   async () => {
-    const supabase = getSupabase();
+    await requireUnlockedSession();
+    const supabase = await getSupabase();
     const all: any[] = [];
     let from = 0;
     const pageSize = 1000;
@@ -139,7 +140,8 @@ export const createChamado = createServerFn({ method: "POST" })
         "Inclusão por esta aba ainda não está habilitada. Somente FALTAS está migrado.",
       );
     }
-    const supabase = getSupabase();
+    await requireUnlockedSession();
+    const supabase = await getSupabase();
     const row = {
       chamado: nullIfEmpty(data.Chamado),
       loja: nullIfEmpty(data.Loja),
