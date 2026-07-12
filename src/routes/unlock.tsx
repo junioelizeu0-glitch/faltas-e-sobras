@@ -39,7 +39,7 @@ function UnlockPage() {
 
   return (
     <div className="min-h-screen w-full bg-amber-50 lg:grid lg:grid-cols-2">
-      {/* Lado da imagem — apenas o fundo */}
+      {/* Lado da imagem — marca Constance nítida */}
       <div className="relative hidden items-center justify-center overflow-hidden lg:flex">
         <div
           className="absolute inset-0"
@@ -47,11 +47,10 @@ function UnlockPage() {
             backgroundImage: `url(${BG_URL})`,
             backgroundSize: "cover",
             backgroundPosition: "center",
-            filter: "blur(6px) saturate(0.9)",
           }}
         />
-        <div className="absolute inset-0 bg-gradient-to-br from-amber-100/80 via-amber-200/70 to-stone-300/80" />
-        <div className="absolute inset-0 bg-white/10" />
+        {/* leve tom quente para unir visualmente com o formulário */}
+        <div className="absolute inset-0 bg-amber-50/10" />
       </div>
 
       {/* Lado do formulário */}
