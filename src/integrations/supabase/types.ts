@@ -14,6 +14,66 @@ export type Database = {
   }
   public: {
     Tables: {
+      chamados_etapas: {
+        Row: {
+          chamado_id: string
+          created_at: string
+          dias_uteis_previsto: number | null
+          dias_uteis_real: number | null
+          dt_fim: string | null
+          dt_inicio: string | null
+          id: string
+          nome_tarefa: string
+          ordem: number
+          sla_status: string | null
+          tarefa_id: string | null
+          updated_at: string
+        }
+        Insert: {
+          chamado_id: string
+          created_at?: string
+          dias_uteis_previsto?: number | null
+          dias_uteis_real?: number | null
+          dt_fim?: string | null
+          dt_inicio?: string | null
+          id?: string
+          nome_tarefa: string
+          ordem?: number
+          sla_status?: string | null
+          tarefa_id?: string | null
+          updated_at?: string
+        }
+        Update: {
+          chamado_id?: string
+          created_at?: string
+          dias_uteis_previsto?: number | null
+          dias_uteis_real?: number | null
+          dt_fim?: string | null
+          dt_inicio?: string | null
+          id?: string
+          nome_tarefa?: string
+          ordem?: number
+          sla_status?: string | null
+          tarefa_id?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chamados_etapas_chamado_id_fkey"
+            columns: ["chamado_id"]
+            isOneToOne: false
+            referencedRelation: "chamados_faltas"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "chamados_etapas_tarefa_id_fkey"
+            columns: ["tarefa_id"]
+            isOneToOne: false
+            referencedRelation: "tarefas_catalogo"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       chamados_faltas: {
         Row: {
           cd: string | null
@@ -83,6 +143,83 @@ export type Database = {
           transportadora?: string | null
           updated_at?: string
           valor?: number | null
+        }
+        Relationships: []
+      }
+      chamados_referencias: {
+        Row: {
+          chamado_id: string
+          cor: string | null
+          created_at: string
+          fornecedor: string | null
+          id: string
+          referencia: string | null
+          tamanho: string | null
+          updated_at: string
+        }
+        Insert: {
+          chamado_id: string
+          cor?: string | null
+          created_at?: string
+          fornecedor?: string | null
+          id?: string
+          referencia?: string | null
+          tamanho?: string | null
+          updated_at?: string
+        }
+        Update: {
+          chamado_id?: string
+          cor?: string | null
+          created_at?: string
+          fornecedor?: string | null
+          id?: string
+          referencia?: string | null
+          tamanho?: string | null
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "chamados_referencias_chamado_id_fkey"
+            columns: ["chamado_id"]
+            isOneToOne: false
+            referencedRelation: "chamados_faltas"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      tarefas_catalogo: {
+        Row: {
+          aplica_faltas: boolean
+          aplica_sobras: boolean
+          ativo: boolean
+          created_at: string
+          dias_uteis: number
+          id: string
+          nome: string
+          ordem: number
+          updated_at: string
+        }
+        Insert: {
+          aplica_faltas?: boolean
+          aplica_sobras?: boolean
+          ativo?: boolean
+          created_at?: string
+          dias_uteis?: number
+          id?: string
+          nome: string
+          ordem?: number
+          updated_at?: string
+        }
+        Update: {
+          aplica_faltas?: boolean
+          aplica_sobras?: boolean
+          ativo?: boolean
+          created_at?: string
+          dias_uteis?: number
+          id?: string
+          nome?: string
+          ordem?: number
+          updated_at?: string
         }
         Relationships: []
       }
