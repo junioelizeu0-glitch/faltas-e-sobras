@@ -25,6 +25,7 @@ function UnlockPage() {
     try {
       const { ok } = await unlock({ data: { username, password } });
       if (ok) {
+        await router.invalidate();
         await router.navigate({ to: "/" });
       } else {
         setError("Usuário ou senha incorretos.");
