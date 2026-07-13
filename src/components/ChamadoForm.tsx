@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, CheckCircle2, AlertCircle, Save, Plus, Trash2, Search } from "lucide-react";
+import { Loader2, CheckCircle2, AlertCircle, Save, Plus, Trash2, Search, X } from "lucide-react";
 import { createChamadoCompleto, updateChamadoCompleto, getChamadoCompleto, listTarefas } from "@/lib/chamados.functions";
 import {
   listTransportadoras, listConferentes, listMotivos, searchProdutos,
