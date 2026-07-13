@@ -53,7 +53,30 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(0);
+  const [syncing, setSyncing] = useState<"pull" | "push" | null>(null);
   const delFn = useServerFn(deleteChamado);
+  const pullFn = useServerFn(pullFromAppsScript);
+  const pushFn = useServerFn(pushToAppsScript);
+
+  const doPull = async () => {
+    if (!confirm("Puxar dados da API? Chamados existentes serão atualizados e novos serão adicionados.")) return;
+    setSyncing("pull");
+    try {
+      const r: any = await pullFn({ data: undefined as any });
+      toast.success(`API → Banco: ${r.inseridos} novos, ${r.atualizados} atualizados (de ${r.total}).`);
+      onChanged?.();
+    } catch (e: any) { toast.error(e?.message || "Erro ao puxar da API"); }
+    finally { setSyncing(null); }
+  };
+  const doPush = async () => {
+    if (!confirm("Enviar TODOS os chamados do banco para a planilha? A aba será substituída.")) return;
+    setSyncing("push");
+    try {
+      const r: any = await pushFn({ data: undefined as any });
+      toast.success(`Banco → API: ${r.enviados} registros enviados.`);
+    } catch (e: any) { toast.error(e?.message || "Erro ao enviar para API"); }
+    finally { setSyncing(null); }
+  };
 
   const tarefas = useMemo(() => {
     const set = new Set<string>();
