@@ -79,8 +79,8 @@ export default function CadastroProdutos() {
   const totalPages = Math.max(1, Math.ceil(total / limit));
 
   return (
-    <div className="flex-1 overflow-auto bg-slate-50 p-6">
-      <div className="max-w-6xl mx-auto">
+    <div className="flex-1 overflow-auto bg-slate-50 p-4">
+      <div className="w-full">
         <header className="mb-4 flex items-center justify-between flex-wrap gap-3">
           <div>
             <h1 className="text-xl font-bold text-slate-800">Base de Produtos</h1>

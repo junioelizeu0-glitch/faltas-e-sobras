@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, CheckCircle2, AlertCircle, Save, Plus, Trash2, Search } from "lucide-react";
+import { Loader2, CheckCircle2, AlertCircle, Save, Plus, Trash2, Search, X } from "lucide-react";
 import { createChamadoCompleto, updateChamadoCompleto, getChamadoCompleto, listTarefas } from "@/lib/chamados.functions";
 import {
   listTransportadoras, listConferentes, listMotivos, searchProdutos,
@@ -224,8 +224,8 @@ export default function ChamadoForm({ mode, chamadoId, initialChamado, onSaved, 
   if (loading) return <div className="flex items-center justify-center p-10 text-slate-500"><Loader2 className="w-5 h-5 animate-spin mr-2"/>Carregando...</div>;
 
   return (
-    <div className={compact ? "" : "flex-1 overflow-auto bg-slate-50 p-6"}>
-      <div className={compact ? "" : "max-w-6xl mx-auto"}>
+    <div className={compact ? "" : "flex-1 overflow-auto bg-slate-50 p-4"}>
+      <div className={compact ? "" : "w-full"}>
         {!compact && (
           <header className="mb-4">
             <h1 className="text-xl font-bold text-slate-800">
@@ -352,7 +352,25 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
   );
 }
 
+function ItemEditModal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+  return (
+    <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
+      <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-2xl w-full max-w-2xl">
+        <div className="flex items-center justify-between px-4 py-3 border-b">
+          <h3 className="font-semibold text-slate-800">{title}</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5"/></button>
+        </div>
+        <div className="p-4">{children}</div>
+        <div className="flex justify-end px-4 py-3 border-t bg-slate-50">
+          <button onClick={onClose} className="inline-flex items-center gap-1 px-3 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-md"><Save className="w-4 h-4"/>Concluir</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function ReferenciasTab({ refs, setRef, addRef, rmRef, buscar }: any) {
+  const [editIdx, setEditIdx] = useState<number | null>(null);
   return (
     <div className="space-y-3">
       <div className="flex justify-between items-center">
@@ -377,16 +395,30 @@ function ReferenciasTab({ refs, setRef, addRef, rmRef, buscar }: any) {
             <Field label="Tam."><input value={r.tamanho} onChange={(e) => setRef(idx, { tamanho: e.target.value })} className={inputCls} /></Field>
             <div className="flex items-center gap-1">
               <Field label="Qtd"><input type="number" value={r.quantidade} onChange={(e) => setRef(idx, { quantidade: e.target.value })} className={inputCls} /></Field>
+              <button type="button" onClick={() => setEditIdx(idx)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-md mb-0.5" title="Editar"><Save className="w-4 h-4"/></button>
               <button type="button" onClick={() => rmRef(idx)} className="p-2 text-red-500 hover:bg-red-50 rounded-md mb-0.5" title="Remover"><Trash2 className="w-4 h-4"/></button>
             </div>
           </div>
         ))}
       </div>
+      {editIdx != null && refs[editIdx] && (
+        <ItemEditModal title={`Editar referência ${refs[editIdx].referencia || `#${editIdx + 1}`}`} onClose={() => setEditIdx(null)}>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Referência"><input value={refs[editIdx].referencia} onChange={(e) => setRef(editIdx, { referencia: e.target.value })} className={inputCls}/></Field>
+            <Field label="Cor"><input value={refs[editIdx].cor} onChange={(e) => setRef(editIdx, { cor: e.target.value })} className={inputCls}/></Field>
+            <Field label="Descrição" className="col-span-2"><input value={refs[editIdx].descricao} onChange={(e) => setRef(editIdx, { descricao: e.target.value })} className={inputCls}/></Field>
+            <Field label="Fornecedor" className="col-span-2"><input value={refs[editIdx].fornecedor} onChange={(e) => setRef(editIdx, { fornecedor: e.target.value })} className={inputCls}/></Field>
+            <Field label="Tamanho"><input value={refs[editIdx].tamanho} onChange={(e) => setRef(editIdx, { tamanho: e.target.value })} className={inputCls}/></Field>
+            <Field label="Quantidade"><input type="number" value={refs[editIdx].quantidade} onChange={(e) => setRef(editIdx, { quantidade: e.target.value })} className={inputCls}/></Field>
+          </div>
+        </ItemEditModal>
+      )}
     </div>
   );
 }
 
 function EtapasTab({ etapas, setEt, addEtapa, rmEtapa, tarefas }: any) {
+  const [editIdx, setEditIdx] = useState<number | null>(null);
   return (
     <div className="space-y-3">
       <div className="flex justify-between items-center">
@@ -427,12 +459,36 @@ function EtapasTab({ etapas, setEt, addEtapa, rmEtapa, tarefas }: any) {
               <Field label="Finalizado" className="col-span-2"><input type="date" value={e.dt_fim} onChange={(ev) => setEt(idx, { dt_fim: ev.target.value })} className={inputCls} /></Field>
               <div className="col-span-1 flex items-center gap-1">
                 {sla && <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${sla.cor}`}>{sla.texto}</span>}
+                <button type="button" onClick={() => setEditIdx(idx)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-md" title="Editar"><Save className="w-4 h-4"/></button>
                 <button type="button" onClick={() => rmEtapa(idx)} className="p-2 text-red-500 hover:bg-red-50 rounded-md" title="Remover"><Trash2 className="w-4 h-4"/></button>
               </div>
             </div>
           );
         })}
       </div>
+      {editIdx != null && etapas[editIdx] && (
+        <ItemEditModal title={`Editar etapa ${etapas[editIdx].nome_tarefa || `#${editIdx + 1}`}`} onClose={() => setEditIdx(null)}>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Tarefa" className="col-span-2">
+              <select
+                value={etapas[editIdx].tarefa_id || ""}
+                onChange={(ev) => {
+                  const t = tarefas.find((x: any) => x.id === ev.target.value);
+                  setEt(editIdx, { tarefa_id: t?.id || null, nome_tarefa: t?.nome || "", dias_uteis_previsto: t?.dias_uteis ?? null });
+                }}
+                className={inputCls}
+              >
+                <option value="">— Selecionar —</option>
+                {tarefas.map((t: any) => <option key={t.id} value={t.id}>{t.nome}</option>)}
+              </select>
+            </Field>
+            <Field label="SLA (dias úteis)"><input value={etapas[editIdx].dias_uteis_previsto ?? ""} readOnly className={inputCls + " bg-slate-50 text-slate-500"}/></Field>
+            <Field label="Data prevista"><input value={calcDataPrevista(etapas[editIdx].dt_inicio, etapas[editIdx].dias_uteis_previsto) || "—"} readOnly className={inputCls + " bg-slate-50 text-slate-500"}/></Field>
+            <Field label="Início"><input type="date" value={etapas[editIdx].dt_inicio} onChange={(ev) => setEt(editIdx, { dt_inicio: ev.target.value })} className={inputCls}/></Field>
+            <Field label="Finalizado"><input type="date" value={etapas[editIdx].dt_fim} onChange={(ev) => setEt(editIdx, { dt_fim: ev.target.value })} className={inputCls}/></Field>
+          </div>
+        </ItemEditModal>
+      )}
     </div>
   );
 }

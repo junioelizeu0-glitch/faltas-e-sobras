@@ -31,8 +31,8 @@ export default function CadastroTarefas() {
   };
 
   return (
-    <div className="flex-1 overflow-auto bg-slate-50 p-6">
-      <div className="max-w-5xl mx-auto">
+    <div className="flex-1 overflow-auto bg-slate-50 p-4">
+      <div className="w-full">
         <header className="mb-4 flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-slate-800">Cadastro de Tarefas (Etapas)</h1>
