@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, Loader2, Save, X, Search, Upload, Download } from "lucide-react";
+import { Plus, Loader2, Save, X, Search, Upload, Download, Pencil, Trash2 } from "lucide-react";
 import * as XLSX from "xlsx";
 import {
   listProdutos, upsertProduto, deleteProduto, bulkUpsertProdutos, exportProdutos,

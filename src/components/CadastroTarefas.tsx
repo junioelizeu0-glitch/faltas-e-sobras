@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, Loader2, Save, X } from "lucide-react";
+import { Plus, Loader2, Save, X, Pencil, Trash2 } from "lucide-react";
 import { listAllTarefas, upsertTarefa, deleteTarefa } from "@/lib/chamados.functions";
 
 type T = { id: string; nome: string; dias_uteis: number; aplica_faltas: boolean; aplica_sobras: boolean; ativo: boolean; ordem: number };
