@@ -23,9 +23,9 @@ export function safeEq(a: string, b: string) {
   return timingSafeEqual(ha, hb);
 }
 
+import { useSession } from "@tanstack/react-start/server";
+
 export async function getGateSession() {
-  const mod = "@tanstack/react-start/server";
-  const { useSession } = (await import(/* @vite-ignore */ mod)) as typeof import("@tanstack/react-start/server");
   return useSession<GateSession>(sessionConfig());
 }
 
