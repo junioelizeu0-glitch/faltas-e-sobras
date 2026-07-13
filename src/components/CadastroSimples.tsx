@@ -2,6 +2,9 @@ import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Plus, Loader2, Save, X, Search, Pencil, Trash2 } from "lucide-react";
+import Pagination from "./Pagination";
+
+const PAGE_SIZE = 30;
 
 type ServerFn = (args?: any) => Promise<any>;
 
