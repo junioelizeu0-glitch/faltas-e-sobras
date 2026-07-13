@@ -77,7 +77,11 @@ export default function DrillDownModal({
         if (col === "Tarefa Atual") {
           return getTarefaAtual(row);
         }
-        if (col === "NF") return row["Nº Nfe"] || row["NF"] || row["nfe"] || "";
+        if (col === "NF" || col === "Numero da NF") return row["Nº Nfe"] || row["NF"] || row["nfe"] || "";
+        if (col === "Dt Emissão NF") {
+          const parsed = parseDataBR(row["Dt Emissão"] || row.dt_emissao);
+          return parsed ? parsed.getTime() : 0;
+        }
         if (col.startsWith("Dt ") || col.includes("Dt ") || col.includes("Data")) {
           const parsed = parseDataBR(row[col]);
           return parsed ? parsed.getTime() : 0;
