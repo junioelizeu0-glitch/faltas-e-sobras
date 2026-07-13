@@ -19,7 +19,7 @@ export const listLojas = createServerFn({ method: "GET" }).handler(async () => {
   const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
   const { data, error } = await supabase.from("lojas").select("*").order("numero", { ascending: true });
   if (error) throw new Error(error.message);
-  return (data || []) as Loja[];
+  return (data || []) as unknown as Loja[];
 });
 
 export const getLojaByNumero = createServerFn({ method: "GET" })
