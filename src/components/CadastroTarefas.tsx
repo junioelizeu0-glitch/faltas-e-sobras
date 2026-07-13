@@ -82,11 +82,11 @@ export default function CadastroTarefas() {
       </div>
 
       {editing && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onClick={() => setEditing(null)}>
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
           <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-2xl w-full max-w-lg">
             <div className="flex items-center justify-between px-4 py-3 border-b">
               <h3 className="font-semibold">{editing.id ? "Editar" : "Nova"} tarefa</h3>
-              <button onClick={() => setEditing(null)}><X className="w-5 h-5 text-slate-400"/></button>
+              <button><X className="w-5 h-5 text-slate-400"/></button>
             </div>
             <div className="p-4 space-y-3">
               <label className="block"><span className="text-xs font-semibold text-slate-600">Nome</span>

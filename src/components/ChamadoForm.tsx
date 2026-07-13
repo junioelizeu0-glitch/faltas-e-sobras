@@ -428,7 +428,7 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
 
 function ItemEditModal({ title, onClose, onAdd, children }: { title: string; onClose: () => void; onAdd?: () => void; children: React.ReactNode }) {
   return (
-    <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
+    <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4">
       <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-2xl w-full max-w-2xl">
         <div className="flex items-center justify-between px-4 py-3 border-b">
           <h3 className="font-semibold text-slate-800">{title}</h3>
