@@ -5,13 +5,12 @@ export type Loja = {
   numero: string;
   cnpj: string | null;
   razao_social: string | null;
+  tipo: string | null;
   banco: string | null;
   agencia: string | null;
   agencia_dig: string | null;
   conta: string | null;
   conta_dig: string | null;
-  tipo_conta: string | null;
-  pix: string | null;
   observacao: string | null;
 };
 
@@ -44,13 +43,12 @@ export const upsertLoja = createServerFn({ method: "POST" })
       numero,
       cnpj: data.cnpj?.trim() || null,
       razao_social: data.razao_social?.trim() || null,
+      tipo: data.tipo?.trim() || null,
       banco: data.banco?.trim() || null,
       agencia: data.agencia?.trim() || null,
       agencia_dig: data.agencia_dig?.trim() || null,
       conta: data.conta?.trim() || null,
       conta_dig: data.conta_dig?.trim() || null,
-      tipo_conta: data.tipo_conta?.trim() || null,
-      pix: data.pix?.trim() || null,
       observacao: data.observacao?.trim() || null,
     };
     if (data.id) {
