@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useDashboardData, isValidField, getTarefaAtual, isSemRetorno, parseDataBR, getBusinessDays } from '@/lib/data-processing';
 import NovoChamadoForm from '@/components/NovoChamadoForm';
+import ConsultaChamados from '@/components/ConsultaChamados';
 
 import DrillDownModal from '@/components/DrillDownModal';
 import AppShell from '@/components/AppShell';
@@ -1499,9 +1500,7 @@ export default function Dashboard() {
         )}
 
         {selectedSubmenu === 'consulta' && (
-          <div className="flex-1 bg-white flex items-center justify-center">
-            <span className="text-slate-400 font-medium text-sm">Em construção</span>
-          </div>
+          <ConsultaChamados rawData={rawData} onChanged={() => refetch()} />
         )}
 
         {selectedSubmenu === 'relatorio' && (

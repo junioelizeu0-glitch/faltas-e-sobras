@@ -7,6 +7,7 @@ async function getSupabase() {
 
 function toApiShape(row: any) {
   return {
+    id: row.id ?? "",
     Chamado: row.chamado ?? "",
     Loja: row.loja ?? "",
     Tipo: row.tipo ?? "",
@@ -178,4 +179,38 @@ export const createChamado = createServerFn({ method: "POST" })
       mirrorError: mirror.ok ? undefined : mirror.error,
     };
   });
+
+export const updateChamado = createServerFn({ method: "POST" })
+  .inputValidator((data: { id: string } & Partial<NovoChamadoPayload>) => data)
+  .handler(async ({ data }) => {
+    const { requireUnlockedSession } = await import("@/lib/gate.server");
+    await requireUnlockedSession();
+    const supabase = await getSupabase();
+    if (!data.id) throw new Error("id do chamado é obrigatório");
+    const row: any = {
+      chamado: nullIfEmpty(data.Chamado),
+      loja: nullIfEmpty(data.Loja),
+      tipo: nullIfEmpty(data.Tipo),
+      nf: nullIfEmpty(data.NF),
+      dt_emissao: dateOrNull(data["Dt Emissão"]),
+      valor: numOrNull(data[" Valor "]),
+      cd: nullIfEmpty(data.CD),
+      situacao: nullIfEmpty(data["Situação "]),
+      dt_abertura: dateOrNull(data["Dt Abertura"]),
+      dt_finalizacao: dateOrNull(data["Dt Finalização"]),
+      dt_pagamento: dateOrNull(data["Dt Pagamento"]),
+      sla_status: nullIfEmpty(data["SLA por chamado (60dias)"]),
+      status_pagamento: nullIfEmpty(data["Status Pagamento"]),
+      status_chamado: nullIfEmpty(data["Status Chamado"]),
+      motivo: nullIfEmpty(data.Motivo),
+      transportadora: nullIfEmpty(data.Transportadora),
+      conferente: nullIfEmpty(data.Conferente),
+      periodo: dateOrNull(data.Periodo),
+    };
+    Object.keys(row).forEach((k) => row[k] === undefined && delete row[k]);
+    const { error } = await supabase.from("chamados_faltas").update(row).eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { success: true };
+  });
+
 
