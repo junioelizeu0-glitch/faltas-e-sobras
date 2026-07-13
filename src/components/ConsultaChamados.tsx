@@ -155,7 +155,7 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {linhas.map((r: any) => (
+                {paginadas.map((r: any) => (
                   <tr key={r.id || r.Chamado} onClick={() => r.id && setEditingId(r.id)} className={`border-b border-slate-100 hover:bg-blue-50/40 cursor-pointer ${selected.has(r.id) ? "bg-blue-50/60" : ""}`}>
                     <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
                       <input type="checkbox" checked={selected.has(r.id)} onChange={() => toggleOne(r.id)} className="cursor-pointer"/>
@@ -178,6 +178,8 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
             </table>
           </div>
         </div>
+
+        <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={linhas.length} pageSize={PAGE_SIZE} />
       </div>
 
       {editingId && (
