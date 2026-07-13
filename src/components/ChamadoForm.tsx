@@ -12,8 +12,12 @@ const fmtBR = (iso: string | null | undefined) => {
 import { createChamadoCompleto, updateChamadoCompleto, getChamadoCompleto, listTarefas, deleteChamado } from "@/lib/chamados.functions";
 import {
   listTransportadoras, listConferentes, listMotivos, searchProdutos,
+  upsertTransportadora, deleteTransportadora,
+  upsertConferente, deleteConferente,
+  upsertMotivo, deleteMotivo,
 } from "@/lib/cadastros.functions";
 import { diasUteisEntre, parseISO, calcDataPrevista } from "@/lib/business-days";
+import CadastroSimples from "./CadastroSimples";
 
 
 const STATUS_CHAMADO_OPCOES = ["Pendente Monitoramento", "Aprovado", "Recusado"];
@@ -77,6 +81,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "ok" | "err"; msg: string } | null>(null);
   const [loading, setLoading] = useState(mode === "editar");
+  const [manage, setManage] = useState<null | "transp" | "conf" | "motivo">(null);
 
   const [form, setForm] = useState<Record<string, string>>({
     Chamado: "", Loja: "", Tipo: "Franquia", NF: "",
@@ -90,20 +95,19 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   const [etapas, setEtapas] = useState<Etapa[]>([]);
 
   // Carrega listas + dados quando edita
-  useEffect(() => {
-    (async () => {
-      try {
-        const [ta, tr, cf, mo] = await Promise.all([
-          listTarefasFn({ data: { tipo: "FALTAS" } }),
-          listTFn(), listCFn(), listMFn(),
-        ]);
-        setTarefas((ta as any[]).map((t) => ({ id: t.id, nome: t.nome, dias_uteis: t.dias_uteis })));
-        setTransp((tr as any[]).map((x) => x.nome));
-        setConfs((cf as any[]).map((x) => x.nome));
-        setMotivos((mo as any[]).map((x) => x.nome));
-      } catch (e) { /* silent */ }
-    })();
-  }, []);
+  const loadListas = async () => {
+    try {
+      const [ta, tr, cf, mo] = await Promise.all([
+        listTarefasFn({ data: { tipo: "FALTAS" } }),
+        listTFn(), listCFn(), listMFn(),
+      ]);
+      setTarefas((ta as any[]).map((t) => ({ id: t.id, nome: t.nome, dias_uteis: t.dias_uteis })));
+      setTransp((tr as any[]).map((x) => x.nome));
+      setConfs((cf as any[]).map((x) => x.nome));
+      setMotivos((mo as any[]).map((x) => x.nome));
+    } catch (e) { /* silent */ }
+  };
+  useEffect(() => { loadListas(); }, []);
 
   useEffect(() => {
     if (mode !== "editar" || !chamadoId) return;
@@ -308,7 +312,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
             {tab === "cadastro" && (
               <CadastroTab form={form} setField={setField} statusPagamento={statusPagamento} sla={slaCalc}
                 transp={transp} confs={confs} motivos={motivos} precisaTranspConf={precisaTranspConf} precisaMotivo={precisaMotivo}
-                statusChamado={statusChamado}
+                statusChamado={statusChamado} onManage={setManage}
               />
             )}
             {tab === "referencias" && (
@@ -356,6 +360,33 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
 
         </div>
       </div>
+
+      {manage && (
+        <div className="fixed inset-0 z-[70] bg-black/50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) { setManage(null); loadListas(); } }}>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between px-4 py-3 border-b bg-slate-50">
+              <h3 className="font-semibold text-slate-800">
+                {manage === "transp" && "Cadastro de Transportadoras"}
+                {manage === "conf" && "Cadastro de Conferentes"}
+                {manage === "motivo" && "Cadastro de Motivos"}
+              </h3>
+              <button onClick={() => { setManage(null); loadListas(); }} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5"/></button>
+            </div>
+            <div className="flex-1 overflow-auto">
+              {manage === "transp" && (
+                <CadastroSimples titulo="Transportadoras" listFn={listTransportadoras} upsertFn={upsertTransportadora} deleteFn={deleteTransportadora} />
+              )}
+              {manage === "conf" && (
+                <CadastroSimples titulo="Conferentes" listFn={listConferentes} upsertFn={upsertConferente} deleteFn={deleteConferente}
+                  extraFields={[{ key: "cd", label: "CD", type: "select", options: ["ES", "PB"] }]} />
+              )}
+              {manage === "motivo" && (
+                <CadastroSimples titulo="Motivos" listFn={listMotivos} upsertFn={upsertMotivo} deleteFn={deleteMotivo} />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
@@ -372,7 +403,13 @@ function Field({ label, children, className = "", style }: { label: string; chil
 }
 
 
-function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, motivos, precisaTranspConf, precisaMotivo, statusChamado }: any) {
+function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, motivos, precisaTranspConf, precisaMotivo, statusChamado, onManage }: any) {
+  const ManageBtn = ({ onClick, title }: { onClick: () => void; title: string }) => (
+    <button type="button" onClick={onClick} title={title}
+      className="inline-flex items-center justify-center p-0.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded">
+      <Pencil className="w-3 h-3"/>
+    </button>
+  );
   return (
     <div className="space-y-5">
       <section>
@@ -408,18 +445,30 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
           Responsáveis {precisaTranspConf && <span className="ml-2 text-[10px] text-blue-600 normal-case">(obrigatório para {statusChamado})</span>}
         </h2>
         <div className="flex flex-wrap gap-3">
-          <Field label={`Transportadora ${precisaTranspConf ? "*" : ""}`} style={{ minWidth: "240px", flex: "1 1 240px" }}>
+          <label className="flex flex-col gap-1" style={{ minWidth: "240px", flex: "1 1 240px" }}>
+            <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+              Transportadora {precisaTranspConf ? "*" : ""}
+              <ManageBtn onClick={() => onManage("transp")} title="Cadastrar transportadoras" />
+            </span>
             <input list="transp-list-form" value={form.Transportadora} onChange={(e) => setField("Transportadora", e.target.value.toUpperCase().slice(0, 60))} className={inputCls} />
             <datalist id="transp-list-form">{transp.map((t: string) => <option key={t} value={t} />)}</datalist>
-          </Field>
-          <Field label={`Conferente ${precisaTranspConf ? "*" : ""}`} style={{ minWidth: "240px", flex: "1 1 240px" }}>
+          </label>
+          <label className="flex flex-col gap-1" style={{ minWidth: "240px", flex: "1 1 240px" }}>
+            <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+              Conferente {precisaTranspConf ? "*" : ""}
+              <ManageBtn onClick={() => onManage("conf")} title="Cadastrar conferentes" />
+            </span>
             <input list="conf-list-form" value={form.Conferente} onChange={(e) => setField("Conferente", e.target.value.toUpperCase().slice(0, 60))} className={inputCls} />
             <datalist id="conf-list-form">{confs.map((c: string) => <option key={c} value={c} />)}</datalist>
-          </Field>
-          <Field label={`Motivo ${precisaMotivo ? "*" : ""}`} style={{ minWidth: "320px", flex: "2 1 320px" }}>
+          </label>
+          <label className="flex flex-col gap-1" style={{ minWidth: "320px", flex: "2 1 320px" }}>
+            <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+              Motivo {precisaMotivo ? "*" : ""}
+              <ManageBtn onClick={() => onManage("motivo")} title="Cadastrar motivos" />
+            </span>
             <input list="mot-list-form" value={form.Motivo} onChange={(e) => setField("Motivo", e.target.value.slice(0, 200))} className={inputCls} />
             <datalist id="mot-list-form">{motivos.map((m: string) => <option key={m} value={m} />)}</datalist>
-          </Field>
+          </label>
         </div>
       </section>
     </div>
