@@ -191,8 +191,6 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
                     <td className="px-3 py-2">{fmtDateBR(r["Dt Abertura"])}</td>
                     <td className="px-3 py-2 max-w-[220px] truncate" title={r["Situação "]}>{r["Situação "] || "—"}</td>
                     <td className="px-3 py-2">{statusBadge(r["Status Chamado"])}</td>
-                    <td className="px-3 py-2 max-w-[160px] truncate" title={r.Transportadora}>{r.Transportadora || "—"}</td>
-                    <td className="px-3 py-2 max-w-[160px] truncate" title={r.Conferente}>{r.Conferente || "—"}</td>
                     <td className="px-3 py-2">{slaBadge(r["Dt Abertura"], r["Dt Finalização"])}</td>
                     <td className="px-3 py-2 text-right">
                       <button
