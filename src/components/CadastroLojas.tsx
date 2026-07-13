@@ -205,11 +205,11 @@ export default function CadastroLojas() {
             </div>
             <div className="p-4 space-y-3">
               {err && <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded p-2">{err}</div>}
-              <div className="grid grid-cols-12 gap-3 items-start">
-                <div className="col-span-3">
+              <div className="flex flex-wrap items-end gap-3">
+                <div className="w-28 shrink-0">
                   {field("Número da Loja *", "numero", { placeholder: "Ex.: 101" })}
                 </div>
-                <label className="col-span-9 block">
+                <label className="flex-1 min-w-0 block">
                   <span className="text-xs font-semibold text-slate-600">CNPJ</span>
                   <div className="mt-1 flex gap-1">
                     <input
@@ -228,10 +228,20 @@ export default function CadastroLojas() {
               {field("Razão Social", "razao_social")}
               <div className="pt-2 border-t">
                 <div className="text-xs font-bold text-slate-500 uppercase mb-2">Dados Bancários</div>
-                <div className="grid grid-cols-3 gap-3">
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="block">
+                    <span className="text-xs font-semibold text-slate-600">Tipo *</span>
+                    <select
+                      value={editing?.tipo ?? ""}
+                      onChange={(e) => setEditing({ ...(editing as Loja), tipo: e.target.value })}
+                      className="mt-1 w-full text-sm rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                    >
+                      <option value="">Selecione...</option>
+                      <option value="Própria">Própria</option>
+                      <option value="Franquia">Franquia</option>
+                    </select>
+                  </label>
                   {field("Banco", "banco")}
-                  {field("Tipo de Conta", "tipo_conta", { placeholder: "Corrente / Poupança" })}
-                  {field("PIX", "pix")}
                 </div>
                 <div className="grid grid-cols-4 gap-3 mt-3">
                   {field("Agência", "agencia")}
