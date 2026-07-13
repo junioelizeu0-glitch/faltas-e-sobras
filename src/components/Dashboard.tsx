@@ -16,6 +16,14 @@ import {
 import { useDashboardData, isValidField, getTarefaAtual, isSemRetorno, parseDataBR, getBusinessDays } from '@/lib/data-processing';
 import NovoChamadoForm from '@/components/NovoChamadoForm';
 import ConsultaChamados from '@/components/ConsultaChamados';
+import CadastroProdutos from '@/components/CadastroProdutos';
+import CadastroTarefas from '@/components/CadastroTarefas';
+import CadastroSimples from '@/components/CadastroSimples';
+import {
+  listTransportadoras, upsertTransportadora, deleteTransportadora,
+  listConferentes, upsertConferente, deleteConferente,
+  listMotivos, upsertMotivo, deleteMotivo,
+} from '@/lib/cadastros.functions';
 
 import DrillDownModal from '@/components/DrillDownModal';
 import AppShell from '@/components/AppShell';
@@ -1501,6 +1509,18 @@ export default function Dashboard() {
 
         {selectedSubmenu === 'consulta' && (
           <ConsultaChamados rawData={rawData} onChanged={() => refetch()} />
+        )}
+
+        {selectedSubmenu === 'cad_produtos' && <CadastroProdutos />}
+        {selectedSubmenu === 'cad_tarefas' && <CadastroTarefas />}
+        {selectedSubmenu === 'cad_transportadoras' && (
+          <CadastroSimples titulo="Transportadoras" listFn={listTransportadoras} upsertFn={upsertTransportadora} deleteFn={deleteTransportadora} />
+        )}
+        {selectedSubmenu === 'cad_conferentes' && (
+          <CadastroSimples titulo="Conferentes" listFn={listConferentes} upsertFn={upsertConferente} deleteFn={deleteConferente} />
+        )}
+        {selectedSubmenu === 'cad_motivos' && (
+          <CadastroSimples titulo="Motivos" listFn={listMotivos} upsertFn={upsertMotivo} deleteFn={deleteMotivo} />
         )}
 
         {selectedSubmenu === 'relatorio' && (

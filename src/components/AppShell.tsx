@@ -6,6 +6,10 @@ import {
   Search,
   BarChart2,
   Package,
+  Truck,
+  UserCheck,
+  FileText,
+  ListChecks,
   LogOut,
 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
@@ -132,42 +136,36 @@ export default function AppShell({
                 </div>
               </div>
 
-              {/* Outros Grupos Desabilitados */}
-              <div className="space-y-4 pt-4 border-t border-slate-100">
-                <div className="px-3 text-[10px] font-bold text-slate-300 uppercase tracking-wider">
-                  Em breve
+              {/* Cadastros */}
+              <div>
+                <div className="px-3 py-1 text-xs font-bold uppercase tracking-wider flex items-center justify-between text-slate-400">
+                  <span>Cadastros</span>
+                  <ChevronDown className="w-3.5 h-3.5" />
                 </div>
-
-                {/* Grupo Sobras */}
-                <div className="px-3 py-1 flex items-center justify-between opacity-30 cursor-not-allowed">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                    Sobras
-                  </span>
-                  <span className="text-[9px] font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded uppercase tracking-wide">
-                    Em breve
-                  </span>
-                </div>
-
-                {/* Grupo Recall */}
-                <div className="px-3 py-1 flex items-center justify-between opacity-30 cursor-not-allowed">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                    Recall
-                  </span>
-                  <span className="text-[9px] font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded uppercase tracking-wide">
-                    Em breve
-                  </span>
-                </div>
-
-                {/* Grupo Gato */}
-                <div className="px-3 py-1 flex items-center justify-between opacity-30 cursor-not-allowed">
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                    Gato
-                  </span>
-                  <span className="text-[9px] font-bold bg-slate-100 text-slate-500 px-1.5 py-0.5 rounded uppercase tracking-wide">
-                    Em breve
-                  </span>
+                <div className="mt-2 space-y-1">
+                  {[
+                    { k: "cad_produtos", label: "Produtos", icon: Package },
+                    { k: "cad_tarefas", label: "Tarefas / Etapas", icon: ListChecks },
+                    { k: "cad_transportadoras", label: "Transportadoras", icon: Truck },
+                    { k: "cad_conferentes", label: "Conferentes", icon: UserCheck },
+                    { k: "cad_motivos", label: "Motivos", icon: FileText },
+                  ].map((item) => {
+                    const Icon = item.icon;
+                    const active = selectedSubmenu === item.k;
+                    return (
+                      <button
+                        key={item.k}
+                        onClick={() => { setSelectedSubmenu(item.k); setMenuAberto(false); }}
+                        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${active ? "bg-blue-50 text-blue-600" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"} cursor-pointer`}
+                      >
+                        <Icon className="w-4 h-4 shrink-0" />
+                        <span>{item.label}</span>
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
+
             </div>
           </div>
         ) : (

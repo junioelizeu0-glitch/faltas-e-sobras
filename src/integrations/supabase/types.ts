@@ -151,8 +151,10 @@ export type Database = {
           chamado_id: string
           cor: string | null
           created_at: string
+          descricao: string | null
           fornecedor: string | null
           id: string
+          quantidade: number | null
           referencia: string | null
           tamanho: string | null
           updated_at: string
@@ -161,8 +163,10 @@ export type Database = {
           chamado_id: string
           cor?: string | null
           created_at?: string
+          descricao?: string | null
           fornecedor?: string | null
           id?: string
+          quantidade?: number | null
           referencia?: string | null
           tamanho?: string | null
           updated_at?: string
@@ -171,8 +175,10 @@ export type Database = {
           chamado_id?: string
           cor?: string | null
           created_at?: string
+          descricao?: string | null
           fornecedor?: string | null
           id?: string
+          quantidade?: number | null
           referencia?: string | null
           tamanho?: string | null
           updated_at?: string
@@ -186,6 +192,78 @@ export type Database = {
             referencedColumns: ["id"]
           },
         ]
+      }
+      conferentes: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      motivos: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
+      produtos: {
+        Row: {
+          cor: string
+          created_at: string
+          descricao: string | null
+          id: string
+          nome_parceiro: string | null
+          referencia: string
+          updated_at: string
+        }
+        Insert: {
+          cor?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome_parceiro?: string | null
+          referencia: string
+          updated_at?: string
+        }
+        Update: {
+          cor?: string
+          created_at?: string
+          descricao?: string | null
+          id?: string
+          nome_parceiro?: string | null
+          referencia?: string
+          updated_at?: string
+        }
+        Relationships: []
       }
       tarefas_catalogo: {
         Row: {
@@ -223,12 +301,34 @@ export type Database = {
         }
         Relationships: []
       }
+      transportadoras: {
+        Row: {
+          created_at: string
+          id: string
+          nome: string
+          updated_at: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          nome: string
+          updated_at?: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          nome?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
-      [_ in never]: never
+      show_limit: { Args: never; Returns: number }
+      show_trgm: { Args: { "": string }; Returns: string[] }
     }
     Enums: {
       [_ in never]: never
