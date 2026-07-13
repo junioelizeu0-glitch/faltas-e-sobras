@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Loader2, CheckCircle2, AlertCircle, Save, Plus, Trash2, Search, X } from "lucide-react";
+import { Loader2, CheckCircle2, AlertCircle, Save, Plus, Trash2, Search, X, Pencil } from "lucide-react";
+
+const fmtBR = (iso: string | null | undefined) => {
+  if (!iso) return "";
+  const s = String(iso).slice(0, 10);
+  const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
+  return m ? `${m[3]}/${m[2]}/${m[1]}` : s;
+};
 import { createChamadoCompleto, updateChamadoCompleto, getChamadoCompleto, listTarefas } from "@/lib/chamados.functions";
 import {
   listTransportadoras, listConferentes, listMotivos, searchProdutos,
@@ -395,7 +402,7 @@ function ReferenciasTab({ refs, setRef, addRef, rmRef, buscar }: any) {
             <Field label="Tam."><input value={r.tamanho} onChange={(e) => setRef(idx, { tamanho: e.target.value })} className={inputCls} /></Field>
             <div className="flex items-center gap-1">
               <Field label="Qtd"><input type="number" value={r.quantidade} onChange={(e) => setRef(idx, { quantidade: e.target.value })} className={inputCls} /></Field>
-              <button type="button" onClick={() => setEditIdx(idx)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-md mb-0.5" title="Editar"><Save className="w-4 h-4"/></button>
+              <button type="button" onClick={() => setEditIdx(idx)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-md mb-0.5" title="Editar"><Pencil className="w-4 h-4"/></button>
               <button type="button" onClick={() => rmRef(idx)} className="p-2 text-red-500 hover:bg-red-50 rounded-md mb-0.5" title="Remover"><Trash2 className="w-4 h-4"/></button>
             </div>
           </div>
@@ -455,11 +462,11 @@ function EtapasTab({ etapas, setEt, addEtapa, rmEtapa, tarefas }: any) {
               </Field>
               <Field label="SLA (dias)" className="col-span-1"><input value={e.dias_uteis_previsto ?? ""} readOnly className={inputCls + " bg-slate-50 text-slate-500"} /></Field>
               <Field label="Início" className="col-span-2"><input type="date" value={e.dt_inicio} onChange={(ev) => setEt(idx, { dt_inicio: ev.target.value })} className={inputCls} /></Field>
-              <Field label="Previsto" className="col-span-2"><input value={dtPrev || "—"} readOnly className={inputCls + " bg-slate-50 text-slate-500"} /></Field>
+              <Field label="Previsto" className="col-span-2"><input value={fmtBR(dtPrev) || "—"} readOnly className={inputCls + " bg-slate-50 text-slate-500"} /></Field>
               <Field label="Finalizado" className="col-span-2"><input type="date" value={e.dt_fim} onChange={(ev) => setEt(idx, { dt_fim: ev.target.value })} className={inputCls} /></Field>
               <div className="col-span-1 flex items-center gap-1">
                 {sla && <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${sla.cor}`}>{sla.texto}</span>}
-                <button type="button" onClick={() => setEditIdx(idx)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-md" title="Editar"><Save className="w-4 h-4"/></button>
+                <button type="button" onClick={() => setEditIdx(idx)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-md" title="Editar"><Pencil className="w-4 h-4"/></button>
                 <button type="button" onClick={() => rmEtapa(idx)} className="p-2 text-red-500 hover:bg-red-50 rounded-md" title="Remover"><Trash2 className="w-4 h-4"/></button>
               </div>
             </div>
@@ -483,7 +490,7 @@ function EtapasTab({ etapas, setEt, addEtapa, rmEtapa, tarefas }: any) {
               </select>
             </Field>
             <Field label="SLA (dias úteis)"><input value={etapas[editIdx].dias_uteis_previsto ?? ""} readOnly className={inputCls + " bg-slate-50 text-slate-500"}/></Field>
-            <Field label="Data prevista"><input value={calcDataPrevista(etapas[editIdx].dt_inicio, etapas[editIdx].dias_uteis_previsto) || "—"} readOnly className={inputCls + " bg-slate-50 text-slate-500"}/></Field>
+            <Field label="Data prevista"><input value={fmtBR(calcDataPrevista(etapas[editIdx].dt_inicio, etapas[editIdx].dias_uteis_previsto)) || "—"} readOnly className={inputCls + " bg-slate-50 text-slate-500"}/></Field>
             <Field label="Início"><input type="date" value={etapas[editIdx].dt_inicio} onChange={(ev) => setEt(editIdx, { dt_inicio: ev.target.value })} className={inputCls}/></Field>
             <Field label="Finalizado"><input type="date" value={etapas[editIdx].dt_fim} onChange={(ev) => setEt(editIdx, { dt_fim: ev.target.value })} className={inputCls}/></Field>
           </div>
