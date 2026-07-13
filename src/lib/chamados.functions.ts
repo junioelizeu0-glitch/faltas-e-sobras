@@ -298,6 +298,17 @@ export const createChamadoCompleto = createServerFn({ method: "POST" })
       if (e3) throw new Error("Erro nas etapas: " + e3.message);
     }
 
+    // Sync com planilha (fire-and-forget)
+    try {
+      const { syncToAppsScript, buildChamadoRow } = await import("@/lib/apps-script.server");
+      await syncToAppsScript({
+        action: "insert",
+        chamado: buildChamadoRow(chamadoRow),
+        referencias: refs,
+        etapas,
+      });
+    } catch (e) { console.error("[sync] insert:", e); }
+
     return { ok: true, id: chamado_id };
   });
 
