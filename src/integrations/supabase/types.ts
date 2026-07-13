@@ -217,6 +217,57 @@ export type Database = {
         }
         Relationships: []
       }
+      lojas: {
+        Row: {
+          agencia: string | null
+          agencia_dig: string | null
+          banco: string | null
+          cnpj: string | null
+          conta: string | null
+          conta_dig: string | null
+          created_at: string
+          id: string
+          numero: string
+          observacao: string | null
+          pix: string | null
+          razao_social: string | null
+          tipo_conta: string | null
+          updated_at: string
+        }
+        Insert: {
+          agencia?: string | null
+          agencia_dig?: string | null
+          banco?: string | null
+          cnpj?: string | null
+          conta?: string | null
+          conta_dig?: string | null
+          created_at?: string
+          id?: string
+          numero: string
+          observacao?: string | null
+          pix?: string | null
+          razao_social?: string | null
+          tipo_conta?: string | null
+          updated_at?: string
+        }
+        Update: {
+          agencia?: string | null
+          agencia_dig?: string | null
+          banco?: string | null
+          cnpj?: string | null
+          conta?: string | null
+          conta_dig?: string | null
+          created_at?: string
+          id?: string
+          numero?: string
+          observacao?: string | null
+          pix?: string | null
+          razao_social?: string | null
+          tipo_conta?: string | null
+          updated_at?: string
+        }
+        Relationships: []
+      }
       motivos: {
         Row: {
           created_at: string

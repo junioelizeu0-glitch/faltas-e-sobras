@@ -19,6 +19,7 @@ import ConsultaChamados from '@/components/ConsultaChamados';
 import CadastroProdutos from '@/components/CadastroProdutos';
 import CadastroTarefas from '@/components/CadastroTarefas';
 import CadastroSimples from '@/components/CadastroSimples';
+import CadastroLojas from '@/components/CadastroLojas';
 import {
   listTransportadoras, upsertTransportadora, deleteTransportadora,
   listConferentes, upsertConferente, deleteConferente,
@@ -1518,6 +1519,7 @@ export default function Dashboard() {
         )}
 
         {selectedSubmenu === 'cad_produtos' && <CadastroProdutos />}
+        {selectedSubmenu === 'cad_lojas' && <CadastroLojas />}
         {selectedSubmenu === 'cad_tarefas' && <CadastroTarefas />}
         {selectedSubmenu === 'cad_transportadoras' && (
           <CadastroSimples titulo="Transportadoras" nomeLabel="Transportadora" listFn={listTransportadoras} upsertFn={upsertTransportadora} deleteFn={deleteTransportadora} />

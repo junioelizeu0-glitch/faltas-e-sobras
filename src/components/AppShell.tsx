@@ -11,6 +11,7 @@ import {
   UserCheck,
   FileText,
   ListChecks,
+  Store,
   LogOut,
 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
@@ -132,6 +133,7 @@ export default function AppShell({
                 {openCadastros && (
                   <div className="mt-2 space-y-1">
                     {[
+                      { k: "cad_lojas", label: "Lojas", icon: Store },
                       { k: "cad_produtos", label: "Produtos", icon: Package },
                       { k: "cad_tarefas", label: "Tarefas / Etapas", icon: ListChecks },
                       { k: "cad_transportadoras", label: "Transportadoras", icon: Truck },
