@@ -93,9 +93,9 @@ export default function CadastroTarefas() {
                 <input autoFocus value={editing.nome || ""} onChange={(e) => setEditing({ ...editing, nome: e.target.value })} className="mt-1 w-full text-sm rounded-md border border-slate-300 px-3 py-2"/></label>
               <div className="grid grid-cols-2 gap-3">
                 <label><span className="text-xs font-semibold text-slate-600">SLA (dias úteis)</span>
-                  <input type="number" min={0} value={editing.dias_uteis ?? 1} onChange={(e) => setEditing({ ...editing, dias_uteis: Number(e.target.value) })} className="mt-1 w-full text-sm rounded-md border border-slate-300 px-3 py-2"/></label>
+                  <input type="number" min={0} value={editing.dias_uteis ?? ""} onChange={(e) => setEditing({ ...editing, dias_uteis: e.target.value === "" ? undefined : Number(e.target.value) })} className="mt-1 w-full text-sm rounded-md border border-slate-300 px-3 py-2"/></label>
                 <label><span className="text-xs font-semibold text-slate-600">Ordem</span>
-                  <input type="number" value={editing.ordem ?? 0} onChange={(e) => setEditing({ ...editing, ordem: Number(e.target.value) })} className="mt-1 w-full text-sm rounded-md border border-slate-300 px-3 py-2"/></label>
+                  <input type="number" value={editing.ordem ?? ""} onChange={(e) => setEditing({ ...editing, ordem: e.target.value === "" ? undefined : Number(e.target.value) })} className="mt-1 w-full text-sm rounded-md border border-slate-300 px-3 py-2"/></label>
               </div>
               <div className="flex gap-4 text-sm">
                 <label className="inline-flex items-center gap-2"><input type="checkbox" checked={!!editing.aplica_faltas} onChange={(e) => setEditing({ ...editing, aplica_faltas: e.target.checked })}/>Faltas</label>
