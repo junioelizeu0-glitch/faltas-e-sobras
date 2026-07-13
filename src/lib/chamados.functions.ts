@@ -1,8 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 
 async function getSupabase() {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  return supabaseAdmin;
+  const { getServerSupabase } = await import("@/integrations/supabase/server-client");
+  return getServerSupabase();
 }
 
 // ===== Feriados / dias úteis =====

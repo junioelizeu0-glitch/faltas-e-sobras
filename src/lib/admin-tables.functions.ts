@@ -5,8 +5,8 @@ export const ADMIN_TABLES = ["chamados_faltas"] as const;
 export type AdminTable = (typeof ADMIN_TABLES)[number];
 
 async function getSupabase() {
-  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
-  return supabaseAdmin;
+  const { getServerSupabase } = await import("@/integrations/supabase/server-client");
+  return getServerSupabase();
 }
 
 export const fetchTableRows = createServerFn({ method: "GET" })
