@@ -5,6 +5,31 @@ async function getSupabase() {
   return getServerSupabase();
 }
 
+// Cria/atualiza o conferente com o CD do chamado (silencioso em caso de erro).
+async function upsertConferenteCD(supabase: any, nome: string | null, cd: string | null) {
+  const n = (nome || "").trim();
+  if (!n) return;
+  try {
+    const { data: existing } = await supabase.from("conferentes").select("id, cd").ilike("nome", n).maybeSingle();
+    if (existing) {
+      if (cd && existing.cd !== cd) {
+        await supabase.from("conferentes").update({ cd }).eq("id", existing.id);
+      }
+    } else {
+      await supabase.from("conferentes").insert({ nome: n, cd: cd || null });
+    }
+  } catch { /* silencioso */ }
+}
+async function upsertTransportadora(supabase: any, nome: string | null) {
+  const n = (nome || "").trim();
+  if (!n) return;
+  try {
+    const { data: existing } = await supabase.from("transportadoras").select("id").ilike("nome", n).maybeSingle();
+    if (!existing) await supabase.from("transportadoras").insert({ nome: n });
+  } catch { /* silencioso */ }
+}
+
+
 // ===== Feriados / dias úteis =====
 const FERIADOS_FIXOS = new Set([
   "01-01", "04-21", "05-01", "09-07", "10-12", "11-02", "11-15", "12-25",
@@ -197,6 +222,10 @@ export const createChamadoCompleto = createServerFn({ method: "POST" })
       .single();
     if (e1) throw new Error(e1.message);
     const chamado_id = inserted.id;
+    await upsertConferenteCD(supabase, chamadoRow.conferente, chamadoRow.cd);
+    await upsertTransportadora(supabase, chamadoRow.transportadora);
+
+
 
     // Referências
     const refs = (data.referencias || [])
@@ -350,6 +379,9 @@ export const updateChamadoCompleto = createServerFn({ method: "POST" })
     };
     const { error: eu } = await supabase.from("chamados_faltas").update(row).eq("id", data.id);
     if (eu) throw new Error(eu.message);
+    await upsertConferenteCD(supabase, row.conferente, row.cd);
+    await upsertTransportadora(supabase, row.transportadora);
+
 
     // refs: delete + reinsert
     await supabase.from("chamados_referencias").delete().eq("chamado_id", data.id);
@@ -403,4 +435,21 @@ export const updateChamadoCompleto = createServerFn({ method: "POST" })
 
     return { ok: true, id: data.id };
   });
+
+// ===== Excluir chamado(s) =====
+export const deleteChamado = createServerFn({ method: "POST" })
+  .inputValidator((data: { ids: string[] }) => data)
+  .handler(async ({ data }) => {
+    const { requireUnlockedSession } = await import("@/lib/gate.server");
+    await requireUnlockedSession();
+    const supabase = await getSupabase();
+    const ids = (data.ids || []).filter(Boolean);
+    if (!ids.length) return { ok: true, count: 0 };
+    await supabase.from("chamados_etapas").delete().in("chamado_id", ids);
+    await supabase.from("chamados_referencias").delete().in("chamado_id", ids);
+    const { error } = await supabase.from("chamados_faltas").delete().in("id", ids);
+    if (error) throw new Error(error.message);
+    return { ok: true, count: ids.length };
+  });
+
 

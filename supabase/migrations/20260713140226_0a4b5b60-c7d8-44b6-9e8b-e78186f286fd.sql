@@ -1,0 +1,1 @@
+ALTER TABLE public.conferentes ADD COLUMN IF NOT EXISTS cd text;

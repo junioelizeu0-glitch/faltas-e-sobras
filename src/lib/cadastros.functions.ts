@@ -173,23 +173,25 @@ export const deleteTransportadora = createServerFn({ method: "POST" })
 export const listConferentes = createServerFn({ method: "GET" }).handler(async () => {
   const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
   const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
-  const { data, error } = await supabase.from("conferentes").select("*").order("nome");
+  const { data, error } = await supabase.from("conferentes").select("id, nome, cd").order("nome");
   if (error) throw new Error(error.message);
-  return (data || []) as Array<{ id: string; nome: string }>;
+  return (data || []) as Array<{ id: string; nome: string; cd: string | null }>;
 });
 export const upsertConferente = createServerFn({ method: "POST" })
-  .inputValidator((d: { id?: string; nome: string }) => d)
+  .inputValidator((d: { id?: string; nome: string; cd?: string | null }) => d)
   .handler(async ({ data }) => {
     const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
     const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
     const nome = (data.nome || "").trim();
     if (!nome) throw new Error("Nome é obrigatório");
+    const cd = data.cd ? String(data.cd).trim().toUpperCase() : null;
+    const row = { nome, cd } as any;
     if (data.id) {
-      const { error } = await supabase.from("conferentes").update({ nome }).eq("id", data.id);
+      const { error } = await supabase.from("conferentes").update(row).eq("id", data.id);
       if (error) throw new Error(error.message);
       return { ok: true, id: data.id };
     }
-    const { data: ins, error } = await supabase.from("conferentes").insert({ nome }).select().single();
+    const { data: ins, error } = await supabase.from("conferentes").insert(row).select().single();
     if (error) throw new Error(error.message);
     return { ok: true, id: ins.id };
   });
@@ -202,6 +204,7 @@ export const deleteConferente = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
 
 // ---- MOTIVOS ----
 export const listMotivos = createServerFn({ method: "GET" }).handler(async () => {
