@@ -490,7 +490,7 @@ function EtapasTab({ etapas, setEt, addEtapa, rmEtapa, tarefas }: any) {
               </select>
             </Field>
             <Field label="SLA (dias úteis)"><input value={etapas[editIdx].dias_uteis_previsto ?? ""} readOnly className={inputCls + " bg-slate-50 text-slate-500"}/></Field>
-            <Field label="Data prevista"><input value={calcDataPrevista(etapas[editIdx].dt_inicio, etapas[editIdx].dias_uteis_previsto) || "—"} readOnly className={inputCls + " bg-slate-50 text-slate-500"}/></Field>
+            <Field label="Data prevista"><input value={fmtBR(calcDataPrevista(etapas[editIdx].dt_inicio, etapas[editIdx].dias_uteis_previsto)) || "—"} readOnly className={inputCls + " bg-slate-50 text-slate-500"}/></Field>
             <Field label="Início"><input type="date" value={etapas[editIdx].dt_inicio} onChange={(ev) => setEt(editIdx, { dt_inicio: ev.target.value })} className={inputCls}/></Field>
             <Field label="Finalizado"><input type="date" value={etapas[editIdx].dt_fim} onChange={(ev) => setEt(editIdx, { dt_fim: ev.target.value })} className={inputCls}/></Field>
           </div>
