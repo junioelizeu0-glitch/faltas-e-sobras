@@ -50,6 +50,7 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
   const [filtro, setFiltro] = useState("Todos");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [page, setPage] = useState(0);
   const delFn = useServerFn(deleteChamado);
 
   const linhas = useMemo(() => {
@@ -64,7 +65,11 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
       .sort((a: any, b: any) => (parseDataBR(b["Dt Abertura"])?.getTime() ?? 0) - (parseDataBR(a["Dt Abertura"])?.getTime() ?? 0));
   }, [rawData, busca, filtro]);
 
-  const allSelected = linhas.length > 0 && linhas.every((r: any) => selected.has(r.id));
+  useEffect(() => { setPage(0); }, [busca, filtro]);
+  const totalPages = Math.max(1, Math.ceil(linhas.length / PAGE_SIZE));
+  const paginadas = useMemo(() => linhas.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE), [linhas, page]);
+
+  const allSelected = paginadas.length > 0 && paginadas.every((r: any) => selected.has(r.id));
   const toggleAll = () => {
     const next = new Set(selected);
     if (allSelected) linhas.forEach((r: any) => next.delete(r.id));
