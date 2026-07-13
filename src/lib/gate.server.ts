@@ -24,6 +24,7 @@ export function safeEq(a: string, b: string) {
 }
 
 export async function getGateSession() {
+  const { useSession } = await import("@tanstack/react-start/server");
   return useSession<GateSession>(sessionConfig());
 }
 
