@@ -1,14 +1,7 @@
 // Server functions dos cadastros mestres: produtos, transportadoras, conferentes, motivos.
 import { createServerFn } from "@tanstack/react-start";
 
-async function getSupabase() {
-  const { getServerSupabase } = await import("@/integrations/supabase/server-client");
-  return getServerSupabase();
-}
-async function gate() {
-  const { requireUnlockedSession } = await import("@/lib/gate.server");
-  await requireUnlockedSession();
-}
+
 
 // ============ PRODUTOS ============
 export type Produto = {
