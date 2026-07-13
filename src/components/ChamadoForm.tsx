@@ -465,15 +465,20 @@ function ReferenciasTab({ refs, setRef, addRef, rmRef, buscar, onSalvar, salvand
   );
 }
 
-function EtapasTab({ etapas, setEt, addEtapa, rmEtapa, tarefas }: any) {
+function EtapasTab({ etapas, setEt, addEtapa, rmEtapa, tarefas, onSalvar, salvando }: any) {
   const [editIdx, setEditIdx] = useState<number | null>(null);
   return (
     <div className="space-y-3">
       <div className="flex justify-between items-center">
         <p className="text-xs text-slate-500">Etapas do fluxo. Data prevista e SLA são calculados automaticamente em dias úteis.</p>
-        <button type="button" onClick={addEtapa} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-md">
-          <Plus className="w-3.5 h-3.5"/>Adicionar
-        </button>
+        <div className="flex items-center gap-2">
+          <button type="button" onClick={addEtapa} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md">
+            <Plus className="w-3.5 h-3.5"/>Adicionar
+          </button>
+          <button type="button" onClick={onSalvar} disabled={salvando} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50">
+            {salvando ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <Save className="w-3.5 h-3.5"/>}Salvar
+          </button>
+        </div>
       </div>
       {etapas.length === 0 && <div className="text-center py-8 text-slate-400 text-sm border border-dashed rounded-lg">Nenhuma etapa ainda.</div>}
       <div className="space-y-2">
