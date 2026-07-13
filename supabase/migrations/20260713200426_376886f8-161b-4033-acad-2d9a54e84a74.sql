@@ -1,0 +1,3 @@
+ALTER TABLE public.lojas ADD COLUMN IF NOT EXISTS tipo text;
+ALTER TABLE public.lojas DROP COLUMN IF EXISTS pix;
+ALTER TABLE public.lojas DROP COLUMN IF EXISTS tipo_conta;
