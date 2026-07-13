@@ -16,6 +16,14 @@ import {
 import { useDashboardData, isValidField, getTarefaAtual, isSemRetorno, parseDataBR, getBusinessDays } from '@/lib/data-processing';
 import NovoChamadoForm from '@/components/NovoChamadoForm';
 import ConsultaChamados from '@/components/ConsultaChamados';
+import CadastroProdutos from '@/components/CadastroProdutos';
+import CadastroTarefas from '@/components/CadastroTarefas';
+import CadastroSimples from '@/components/CadastroSimples';
+import {
+  listTransportadoras, upsertTransportadora, deleteTransportadora,
+  listConferentes, upsertConferente, deleteConferente,
+  listMotivos, upsertMotivo, deleteMotivo,
+} from '@/lib/cadastros.functions';
 
 import DrillDownModal from '@/components/DrillDownModal';
 import AppShell from '@/components/AppShell';
