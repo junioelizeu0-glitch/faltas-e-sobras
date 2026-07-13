@@ -372,7 +372,7 @@ export default function DrillDownModal({
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={10} className="p-8 text-center text-slate-400">
+                  <td colSpan={activeColumns.length} className="p-8 text-center text-slate-400">
                     Nenhum registro encontrado.
                   </td>
                 </tr>
