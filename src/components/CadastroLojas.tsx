@@ -208,7 +208,21 @@ export default function CadastroLojas() {
               {err && <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded p-2">{err}</div>}
               <div className="grid grid-cols-2 gap-3">
                 {field("Número da Loja *", "numero", { placeholder: "Ex.: 101" })}
-                {field("CNPJ", "cnpj", { placeholder: "00.000.000/0001-00" })}
+                <label className="block">
+                  <span className="text-xs font-semibold text-slate-600">CNPJ</span>
+                  <div className="mt-1 flex gap-1">
+                    <input
+                      value={editing?.cnpj ?? ""}
+                      onChange={(e) => setEditing({ ...(editing as Loja), cnpj: formatCnpj(e.target.value) })}
+                      onBlur={() => { if (String(editing?.cnpj || "").replace(/\D/g, "").length === 14 && !editing?.razao_social) buscarCnpj(); }}
+                      placeholder="00.000.000/0001-00"
+                      className="flex-1 text-sm rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <button type="button" onClick={buscarCnpj} disabled={lookupCnpj} title="Buscar dados na Receita" className="inline-flex items-center gap-1 px-2 text-sm text-white bg-emerald-600 hover:bg-emerald-700 rounded-md disabled:opacity-50">
+                      {lookupCnpj ? <Loader2 className="w-4 h-4 animate-spin"/> : <Download className="w-4 h-4"/>}
+                    </button>
+                  </div>
+                </label>
               </div>
               {field("Razão Social", "razao_social")}
               <div className="pt-2 border-t">
