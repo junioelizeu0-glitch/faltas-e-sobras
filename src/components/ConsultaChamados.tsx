@@ -141,15 +141,28 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
           </div>
         </header>
 
-        <div className="flex flex-wrap gap-3 mb-3 bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
-          <div className="relative flex-1 min-w-[240px]">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por chamado, loja, NF, CD, transportadora..." className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400" />
+        <div className="flex flex-wrap gap-3 mb-3 bg-white border border-slate-200 rounded-lg p-3 shadow-sm items-end">
+          <div className="relative w-[260px] min-w-[180px]">
+            <label className="block text-[11px] font-medium text-slate-500 mb-1 uppercase tracking-wide">Buscar chamado</label>
+            <div className="relative">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Nº chamado, loja, NF..." className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400" />
+            </div>
           </div>
-          <select value={filtro} onChange={(e) => setFiltro(e.target.value)} className="text-sm border border-slate-200 rounded-md px-3 py-2 bg-white cursor-pointer">
-            <option>Todos</option>
-            {STATUS_CHAMADO_OPCOES.map((s) => <option key={s}>{s}</option>)}
-          </select>
+          <div className="flex flex-col min-w-[160px]">
+            <label className="text-[11px] font-medium text-slate-500 mb-1 uppercase tracking-wide">Status chamado</label>
+            <select value={filtroStatus} onChange={(e) => setFiltroStatus(e.target.value)} className="text-sm border border-slate-200 rounded-md px-3 py-2 bg-white cursor-pointer">
+              <option>Todos</option>
+              {STATUS_CHAMADO_OPCOES.map((s) => <option key={s}>{s}</option>)}
+            </select>
+          </div>
+          <div className="flex flex-col min-w-[200px] flex-1 max-w-md">
+            <label className="text-[11px] font-medium text-slate-500 mb-1 uppercase tracking-wide">Tarefa atual</label>
+            <select value={filtroTarefa} onChange={(e) => setFiltroTarefa(e.target.value)} className="text-sm border border-slate-200 rounded-md px-3 py-2 bg-white cursor-pointer">
+              <option>Todas</option>
+              {tarefas.map((t) => <option key={t}>{t}</option>)}
+            </select>
+          </div>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
