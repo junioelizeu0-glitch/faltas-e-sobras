@@ -6,6 +6,10 @@ import {
   Search,
   BarChart2,
   Package,
+  Truck,
+  UserCheck,
+  FileText,
+  ListChecks,
   LogOut,
 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
