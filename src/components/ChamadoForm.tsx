@@ -312,7 +312,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
             {tab === "cadastro" && (
               <CadastroTab form={form} setField={setField} statusPagamento={statusPagamento} sla={slaCalc}
                 transp={transp} confs={confs} motivos={motivos} precisaTranspConf={precisaTranspConf} precisaMotivo={precisaMotivo}
-                statusChamado={statusChamado}
+                statusChamado={statusChamado} onManage={setManage}
               />
             )}
             {tab === "referencias" && (
