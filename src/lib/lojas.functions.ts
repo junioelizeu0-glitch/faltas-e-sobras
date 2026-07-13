@@ -39,6 +39,22 @@ export const upsertLoja = createServerFn({ method: "POST" })
     const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
     const numero = String(data.numero || "").trim();
     if (!numero) throw new Error("Número da loja é obrigatório");
+    const cnpjDigits = String(data.cnpj || "").replace(/\D/g, "");
+    // Regra anti-duplicidade: número da loja
+    {
+      let q = supabase.from("lojas").select("id").eq("numero", numero);
+      if (data.id) q = q.neq("id", data.id);
+      const { data: dupNum } = await q.limit(1).maybeSingle();
+      if (dupNum) throw new Error(`Já existe uma loja com o número ${numero}.`);
+    }
+    // Regra anti-duplicidade: CNPJ (comparando só dígitos)
+    if (cnpjDigits.length === 14) {
+      const { data: all } = await supabase.from("lojas").select("id, cnpj");
+      const conflict = (all || []).find((r: any) =>
+        String(r.cnpj || "").replace(/\D/g, "") === cnpjDigits && r.id !== data.id
+      );
+      if (conflict) throw new Error(`Já existe uma loja com o CNPJ ${data.cnpj}.`);
+    }
     const row: any = {
       numero,
       cnpj: data.cnpj?.trim() || null,
