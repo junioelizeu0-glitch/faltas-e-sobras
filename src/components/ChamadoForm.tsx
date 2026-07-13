@@ -288,16 +288,37 @@ export default function ChamadoForm({ mode, chamadoId, initialChamado, onSaved, 
             )}
           </div>
 
-          <div className="flex items-center justify-end gap-2 px-5 py-3 border-t border-slate-100">
-            {onCancel && <button type="button" onClick={onCancel} className="px-3 py-2 text-sm text-slate-600 hover:text-slate-900">Cancelar</button>}
-            <button
-              type="button" onClick={submit} disabled={submitting}
-              className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold disabled:opacity-50 cursor-pointer"
-            >
-              {submitting ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4"/>}
-              {mode === "editar" ? "Salvar alterações" : "Incluir chamado"}
-            </button>
+          <div className="flex items-center justify-between gap-2 px-5 py-3 border-t border-slate-100">
+            <div>
+              {mode === "editar" && chamadoId && (
+                <button
+                  type="button"
+                  onClick={async () => {
+                    if (!confirm("Excluir este chamado? Esta ação não pode ser desfeita.")) return;
+                    try {
+                      await delFn({ data: { ids: [chamadoId] } });
+                      toast.success("Chamado excluído.");
+                      onDeleted?.();
+                    } catch (e: any) { toast.error(e?.message || "Erro ao excluir"); }
+                  }}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100"
+                >
+                  <Trash2 className="w-4 h-4"/>Excluir chamado
+                </button>
+              )}
+            </div>
+            <div className="flex items-center gap-2">
+              {onCancel && <button type="button" onClick={onCancel} className="px-3 py-2 text-sm text-slate-600 hover:text-slate-900">Cancelar</button>}
+              <button
+                type="button" onClick={submit} disabled={submitting}
+                className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold disabled:opacity-50 cursor-pointer"
+              >
+                {submitting ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4"/>}
+                {mode === "editar" ? "Salvar alterações" : "Incluir chamado"}
+              </button>
+            </div>
           </div>
+
         </div>
       </div>
     </div>
