@@ -144,7 +144,7 @@ export default function CadastroSimples({ titulo, descricao, listFn, upsertFn, d
             <div className="p-4 space-y-3">
               {err && <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded p-2">{err}</div>}
               <label className="block">
-                <span className="text-xs font-semibold text-slate-600">Nome *</span>
+                <span className="text-xs font-semibold text-slate-600">{nomeLabel} *</span>
                 <input autoFocus value={editing.nome} onChange={(e) => setEditing({ ...editing, nome: e.target.value })} className="mt-1 w-full text-sm rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
               </label>
               {extraFields.map((f) => (
