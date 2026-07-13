@@ -71,11 +71,17 @@ export default function CadastroProdutos() {
   };
 
   const doExport = async () => {
-    const data: any = await exp();
-    const ws = XLSX.utils.json_to_sheet(data);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Produtos");
-    XLSX.writeFile(wb, "produtos.xlsx");
+    const data: any[] = await exp();
+    exportToExcel(data, {
+      filename: `produtos_${new Date().toISOString().slice(0, 10)}.xlsx`,
+      sheetName: "Produtos",
+      columns: [
+        { key: "Referência", header: "Referência" },
+        { key: "Cor", header: "Cor" },
+        { key: "Descrição", header: "Descrição" },
+        { key: "Nome Parceiro (Parceiro Fornecedor)", header: "Fornecedor" },
+      ],
+    });
   };
 
   const totalPages = Math.max(1, Math.ceil(total / limit));
