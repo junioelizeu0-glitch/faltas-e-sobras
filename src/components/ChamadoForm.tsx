@@ -81,6 +81,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "ok" | "err"; msg: string } | null>(null);
   const [loading, setLoading] = useState(mode === "editar");
+  const [manage, setManage] = useState<null | "transp" | "conf" | "motivo">(null);
 
   const [form, setForm] = useState<Record<string, string>>({
     Chamado: "", Loja: "", Tipo: "Franquia", NF: "",
@@ -94,20 +95,19 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   const [etapas, setEtapas] = useState<Etapa[]>([]);
 
   // Carrega listas + dados quando edita
-  useEffect(() => {
-    (async () => {
-      try {
-        const [ta, tr, cf, mo] = await Promise.all([
-          listTarefasFn({ data: { tipo: "FALTAS" } }),
-          listTFn(), listCFn(), listMFn(),
-        ]);
-        setTarefas((ta as any[]).map((t) => ({ id: t.id, nome: t.nome, dias_uteis: t.dias_uteis })));
-        setTransp((tr as any[]).map((x) => x.nome));
-        setConfs((cf as any[]).map((x) => x.nome));
-        setMotivos((mo as any[]).map((x) => x.nome));
-      } catch (e) { /* silent */ }
-    })();
-  }, []);
+  const loadListas = async () => {
+    try {
+      const [ta, tr, cf, mo] = await Promise.all([
+        listTarefasFn({ data: { tipo: "FALTAS" } }),
+        listTFn(), listCFn(), listMFn(),
+      ]);
+      setTarefas((ta as any[]).map((t) => ({ id: t.id, nome: t.nome, dias_uteis: t.dias_uteis })));
+      setTransp((tr as any[]).map((x) => x.nome));
+      setConfs((cf as any[]).map((x) => x.nome));
+      setMotivos((mo as any[]).map((x) => x.nome));
+    } catch (e) { /* silent */ }
+  };
+  useEffect(() => { loadListas(); }, []);
 
   useEffect(() => {
     if (mode !== "editar" || !chamadoId) return;
