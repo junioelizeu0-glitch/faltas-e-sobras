@@ -72,8 +72,8 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
   const allSelected = paginadas.length > 0 && paginadas.every((r: any) => selected.has(r.id));
   const toggleAll = () => {
     const next = new Set(selected);
-    if (allSelected) linhas.forEach((r: any) => next.delete(r.id));
-    else linhas.forEach((r: any) => r.id && next.add(r.id));
+    if (allSelected) paginadas.forEach((r: any) => next.delete(r.id));
+    else paginadas.forEach((r: any) => r.id && next.add(r.id));
     setSelected(next);
   };
   const toggleOne = (id: string) => {
