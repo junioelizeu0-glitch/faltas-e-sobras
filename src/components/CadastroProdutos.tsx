@@ -6,6 +6,7 @@ import {
   listProdutos, upsertProduto, deleteProduto, bulkUpsertProdutos, exportProdutos,
   type Produto,
 } from "@/lib/cadastros.functions";
+import Pagination from "./Pagination";
 
 export default function CadastroProdutos() {
   const list = useServerFn(listProdutos);
