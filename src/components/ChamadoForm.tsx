@@ -12,8 +12,12 @@ const fmtBR = (iso: string | null | undefined) => {
 import { createChamadoCompleto, updateChamadoCompleto, getChamadoCompleto, listTarefas, deleteChamado } from "@/lib/chamados.functions";
 import {
   listTransportadoras, listConferentes, listMotivos, searchProdutos,
+  upsertTransportadora, deleteTransportadora,
+  upsertConferente, deleteConferente,
+  upsertMotivo, deleteMotivo,
 } from "@/lib/cadastros.functions";
 import { diasUteisEntre, parseISO, calcDataPrevista } from "@/lib/business-days";
+import CadastroSimples from "./CadastroSimples";
 
 
 const STATUS_CHAMADO_OPCOES = ["Pendente Monitoramento", "Aprovado", "Recusado"];
