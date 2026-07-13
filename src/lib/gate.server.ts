@@ -25,7 +25,7 @@ export function safeEq(a: string, b: string) {
 
 export async function getGateSession() {
   const mod = "@tanstack/react-start/server";
-  const { useSession } = await import(/* @vite-ignore */ mod);
+  const { useSession } = (await import(/* @vite-ignore */ mod)) as typeof import("@tanstack/react-start/server");
   return useSession<GateSession>(sessionConfig());
 }
 
