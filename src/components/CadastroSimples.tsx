@@ -105,7 +105,7 @@ export default function CadastroSimples({ titulo, descricao, listFn, upsertFn, d
             <table className="min-w-full text-sm">
               <thead className="bg-slate-50 border-b text-xs uppercase text-slate-500">
                 <tr>
-                  <th className="text-left px-3 py-2">Nome</th>
+                  <th className="text-left px-3 py-2">{nomeLabel}</th>
                   {extraFields.map((f) => (
                     <th key={f.key} className="text-left px-3 py-2">{f.label}</th>
                   ))}
