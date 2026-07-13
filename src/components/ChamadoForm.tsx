@@ -49,13 +49,16 @@ type Props = {
   initialChamado?: any;
   onSaved?: () => void;
   onCancel?: () => void;
+  onDeleted?: () => void;
   compact?: boolean; // se true, sem cabeçalho externo (uso em modal)
 };
 
-export default function ChamadoForm({ mode, chamadoId, initialChamado, onSaved, onCancel, compact }: Props) {
+export default function ChamadoForm({ mode, chamadoId, initialChamado, onSaved, onCancel, onDeleted, compact }: Props) {
   const createFn = useServerFn(createChamadoCompleto);
   const updateFn = useServerFn(updateChamadoCompleto);
   const getFn = useServerFn(getChamadoCompleto);
+  const delFn = useServerFn(deleteChamado);
+
   const listTarefasFn = useServerFn(listTarefas);
   const listTFn = useServerFn(listTransportadoras);
   const listCFn = useServerFn(listConferentes);
