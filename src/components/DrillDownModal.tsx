@@ -141,8 +141,10 @@ export default function DrillDownModal({
           val = row["SLA por chamado (60dias)"] || row["sla"] || "";
         } else if (col === "Tarefa Atual") {
           val = getTarefaAtual(row) || "";
-        } else if (col === "NF") {
+        } else if (col === "NF" || col === "Numero da NF") {
           val = row["Nº Nfe"] || row["NF"] || row["nfe"] || "";
+        } else if (col === "Dt Emissão NF") {
+          val = formatarDataBR(row["Dt Emissão"] || row.dt_emissao);
         } else if (col.startsWith("Dt ") || col.includes("Dt ") || col.includes("Data")) {
           const cellVal = row[col] ?? row[Object.keys(row).find(
             (k) => k.trim().toLowerCase() === col.trim().toLowerCase()) || ""];
