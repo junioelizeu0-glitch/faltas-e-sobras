@@ -466,10 +466,23 @@ export const deleteChamado = createServerFn({ method: "POST" })
     const supabase = await getSupabase();
     const ids = (data.ids || []).filter(Boolean);
     if (!ids.length) return { ok: true, count: 0 };
+
+    // Pega os números dos chamados antes de deletar (para sincronizar com a planilha)
+    const { data: chamadosRows } = await supabase
+      .from("chamados_faltas").select("chamado").in("id", ids);
+    const chamadoNums = (chamadosRows || []).map((r: any) => String(r.chamado)).filter(Boolean);
+
     await supabase.from("chamados_etapas").delete().in("chamado_id", ids);
     await supabase.from("chamados_referencias").delete().in("chamado_id", ids);
     const { error } = await supabase.from("chamados_faltas").delete().in("id", ids);
     if (error) throw new Error(error.message);
+
+    // Sync com planilha
+    try {
+      const { syncToAppsScript } = await import("@/lib/apps-script.server");
+      await syncToAppsScript({ action: "delete", ids: chamadoNums });
+    } catch (e) { console.error("[sync] delete:", e); }
+
     return { ok: true, count: ids.length };
   });
 
