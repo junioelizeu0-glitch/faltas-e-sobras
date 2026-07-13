@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Plus, Loader2, Save, X, Search, Pencil, Trash2, Lock } from "lucide-react";
+import { Plus, Loader2, Save, X, Search, Pencil, Trash2, Lock, Download } from "lucide-react";
 import Pagination from "./Pagination";
 import { listLojas, upsertLoja, deleteLoja, type Loja } from "@/lib/lojas.functions";
 
