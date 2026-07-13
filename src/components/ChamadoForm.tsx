@@ -53,7 +53,12 @@ type Props = {
   compact?: boolean; // se true, sem cabeçalho externo (uso em modal)
 };
 
-export default function ChamadoForm({ mode, chamadoId, initialChamado, onSaved, onCancel, onDeleted, compact }: Props) {
+export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, initialChamado, onSaved, onCancel, onDeleted, compact }: Props) {
+  // Estado interno para transição automática de "novo" -> "editar" após primeiro save
+  const [mode, setMode] = useState<"novo" | "editar">(modeProp);
+  const [chamadoId, setChamadoId] = useState<string | undefined>(chamadoIdProp);
+  useEffect(() => { setMode(modeProp); setChamadoId(chamadoIdProp); }, [modeProp, chamadoIdProp]);
+
   const createFn = useServerFn(createChamadoCompleto);
   const updateFn = useServerFn(updateChamadoCompleto);
   const getFn = useServerFn(getChamadoCompleto);
