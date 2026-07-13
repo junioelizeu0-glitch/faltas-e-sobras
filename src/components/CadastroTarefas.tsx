@@ -61,8 +61,8 @@ export default function CadastroTarefas() {
                     <td className="px-3 py-2">{r.aplica_sobras ? "✓" : "—"}</td>
                     <td className="px-3 py-2">{r.ativo ? "Sim" : "Não"}</td>
                     <td className="px-3 py-2 text-right space-x-2">
-                      <button onClick={() => setEditing(r)} className="text-blue-600 text-xs font-semibold">Editar</button>
-                      <button onClick={() => remove(r.id)} className="text-red-500 text-xs font-semibold">Excluir</button>
+                      <button onClick={() => setEditing(r)} title="Editar" className="inline-flex items-center p-1.5 text-blue-600 hover:bg-blue-50 rounded"><Pencil className="w-3.5 h-3.5"/></button>
+                      <button onClick={() => remove(r.id)} title="Excluir" className="inline-flex items-center p-1.5 text-red-500 hover:bg-red-50 rounded ml-0.5"><Trash2 className="w-3.5 h-3.5"/></button>
                     </td>
                   </tr>
                 ))}
