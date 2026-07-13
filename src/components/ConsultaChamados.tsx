@@ -147,6 +147,24 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
           </div>
           <div className="flex items-center gap-1">
             <button
+              onClick={doPull}
+              disabled={syncing !== null}
+              title="Puxar dados atualizados da API (planilha → banco)"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-slate-700 border border-slate-200 hover:bg-slate-50 rounded disabled:opacity-40"
+            >
+              {syncing === "pull" ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <DownloadCloud className="w-3.5 h-3.5"/>}
+              Puxar da API
+            </button>
+            <button
+              onClick={doPush}
+              disabled={syncing !== null}
+              title="Enviar dados do banco para a API (banco → planilha)"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-slate-700 border border-slate-200 hover:bg-slate-50 rounded disabled:opacity-40 mr-2"
+            >
+              {syncing === "push" ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <UploadCloud className="w-3.5 h-3.5"/>}
+              Enviar p/ API
+            </button>
+            <button
               onClick={abrirEditarSelecionado}
               disabled={selected.size !== 1}
               title="Alterar"
