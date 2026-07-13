@@ -395,6 +395,12 @@ export const updateChamadoCompleto = createServerFn({ method: "POST" })
       conferente: nullIfEmpty(c.Conferente),
       periodo: dateOrNull(c.Periodo),
     };
+    // Regra: número do chamado não pode duplicar (exceto o próprio)
+    if (row.chamado) {
+      const { data: dup } = await supabase
+        .from("chamados_faltas").select("id").eq("chamado", row.chamado).neq("id", data.id).limit(1).maybeSingle();
+      if (dup) throw new Error(`Já existe outro chamado com o número ${row.chamado}.`);
+    }
     const { error: eu } = await supabase.from("chamados_faltas").update(row).eq("id", data.id);
     if (eu) throw new Error(eu.message);
     await upsertConferenteCD(supabase, row.conferente, row.cd);
