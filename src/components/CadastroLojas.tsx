@@ -7,8 +7,8 @@ import { listLojas, upsertLoja, deleteLoja, type Loja } from "@/lib/lojas.functi
 
 const PAGE_SIZE = 30;
 const EMPTY: Loja = {
-  id: "", numero: "", cnpj: "", razao_social: "", banco: "", agencia: "", agencia_dig: "",
-  conta: "", conta_dig: "", tipo_conta: "", pix: "", observacao: "",
+  id: "", numero: "", cnpj: "", razao_social: "", tipo: "", banco: "", agencia: "", agencia_dig: "",
+  conta: "", conta_dig: "", observacao: "",
 };
 
 export default function CadastroLojas() {
