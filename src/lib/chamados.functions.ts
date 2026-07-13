@@ -298,6 +298,17 @@ export const createChamadoCompleto = createServerFn({ method: "POST" })
       if (e3) throw new Error("Erro nas etapas: " + e3.message);
     }
 
+    // Sync com planilha (fire-and-forget)
+    try {
+      const { syncToAppsScript, buildChamadoRow } = await import("@/lib/apps-script.server");
+      await syncToAppsScript({
+        action: "insert",
+        chamado: buildChamadoRow(chamadoRow),
+        referencias: refs,
+        etapas,
+      });
+    } catch (e) { console.error("[sync] insert:", e); }
+
     return { ok: true, id: chamado_id };
   });
 
@@ -432,6 +443,16 @@ export const updateChamadoCompleto = createServerFn({ method: "POST" })
       const { error } = await supabase.from("chamados_etapas").insert(etapas);
       if (error) throw new Error("Erro nas etapas: " + error.message);
     }
+    // Sync com planilha (fire-and-forget)
+    try {
+      const { syncToAppsScript, buildChamadoRow } = await import("@/lib/apps-script.server");
+      await syncToAppsScript({
+        action: "update",
+        chamado: buildChamadoRow(row),
+        referencias: refs,
+        etapas,
+      });
+    } catch (e) { console.error("[sync] update:", e); }
 
     return { ok: true, id: data.id };
   });
@@ -445,10 +466,23 @@ export const deleteChamado = createServerFn({ method: "POST" })
     const supabase = await getSupabase();
     const ids = (data.ids || []).filter(Boolean);
     if (!ids.length) return { ok: true, count: 0 };
+
+    // Pega os números dos chamados antes de deletar (para sincronizar com a planilha)
+    const { data: chamadosRows } = await supabase
+      .from("chamados_faltas").select("chamado").in("id", ids);
+    const chamadoNums = (chamadosRows || []).map((r: any) => String(r.chamado)).filter(Boolean);
+
     await supabase.from("chamados_etapas").delete().in("chamado_id", ids);
     await supabase.from("chamados_referencias").delete().in("chamado_id", ids);
     const { error } = await supabase.from("chamados_faltas").delete().in("id", ids);
     if (error) throw new Error(error.message);
+
+    // Sync com planilha
+    try {
+      const { syncToAppsScript } = await import("@/lib/apps-script.server");
+      await syncToAppsScript({ action: "delete", ids: chamadoNums });
+    } catch (e) { console.error("[sync] delete:", e); }
+
     return { ok: true, count: ids.length };
   });
 
