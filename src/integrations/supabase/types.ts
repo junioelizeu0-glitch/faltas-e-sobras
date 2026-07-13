@@ -229,9 +229,8 @@ export type Database = {
           id: string
           numero: string
           observacao: string | null
-          pix: string | null
           razao_social: string | null
-          tipo_conta: string | null
+          tipo: string | null
           updated_at: string
         }
         Insert: {
@@ -245,9 +244,8 @@ export type Database = {
           id?: string
           numero: string
           observacao?: string | null
-          pix?: string | null
           razao_social?: string | null
-          tipo_conta?: string | null
+          tipo?: string | null
           updated_at?: string
         }
         Update: {
@@ -261,9 +259,8 @@ export type Database = {
           id?: string
           numero?: string
           observacao?: string | null
-          pix?: string | null
           razao_social?: string | null
-          tipo_conta?: string | null
+          tipo?: string | null
           updated_at?: string
         }
         Relationships: []
