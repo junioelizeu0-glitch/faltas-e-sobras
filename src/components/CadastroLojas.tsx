@@ -23,6 +23,38 @@ export default function CadastroLojas() {
   const [err, setErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [page, setPage] = useState(0);
+  const [lookupCnpj, setLookupCnpj] = useState(false);
+
+  const formatCnpj = (v: string) => {
+    const d = String(v || "").replace(/\D/g, "").slice(0, 14);
+    return d
+      .replace(/^(\d{2})(\d)/, "$1.$2")
+      .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+      .replace(/\.(\d{3})(\d)/, ".$1/$2")
+      .replace(/(\d{4})(\d)/, "$1-$2");
+  };
+
+  const buscarCnpj = async () => {
+    if (!editing) return;
+    const digits = String(editing.cnpj || "").replace(/\D/g, "");
+    if (digits.length !== 14) { toast.error("Informe um CNPJ com 14 dígitos."); return; }
+    setLookupCnpj(true);
+    try {
+      const resp = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${digits}`);
+      if (!resp.ok) throw new Error("CNPJ não encontrado.");
+      const j: any = await resp.json();
+      setEditing({
+        ...editing,
+        cnpj: formatCnpj(digits),
+        razao_social: editing.razao_social?.trim() ? editing.razao_social : (j.razao_social || j.nome_fantasia || ""),
+      });
+      toast.success("Razão social preenchida pela Receita.");
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao consultar CNPJ.");
+    } finally {
+      setLookupCnpj(false);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
