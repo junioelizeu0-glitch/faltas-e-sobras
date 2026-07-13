@@ -85,54 +85,52 @@ export default function CadastroSimples({ titulo, descricao, listFn, upsertFn, d
           <div>
             <h1 className="text-xl font-bold text-slate-800">{titulo}</h1>
             {descricao && <p className="text-sm text-slate-500 mt-1">{descricao}</p>}
+            <p className="text-sm text-slate-500 mt-1">Total: {filtered.length.toLocaleString("pt-BR")}</p>
           </div>
           <div className="flex items-center gap-2">
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar..." className="pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400 w-56" />
-            </div>
             <button onClick={openNew} className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-md cursor-pointer">
               <Plus className="w-4 h-4"/>Novo
             </button>
           </div>
         </header>
 
-        {loading ? (
-          <div className="p-10 text-center text-slate-500 bg-white rounded-lg border">
-            <Loader2 className="w-5 h-5 animate-spin inline mr-2"/>Carregando...
-          </div>
-        ) : filtered.length === 0 ? (
-          <div className="p-10 text-center text-slate-400 bg-white rounded-lg border">Nenhum registro.</div>
-        ) : (
-          <>
-            <div className="bg-white border border-slate-200 rounded-lg overflow-hidden">
-              <div className="px-3 py-2 text-xs text-slate-500 border-b bg-slate-50">
-                {filtered.length} {filtered.length === 1 ? "registro" : "registros"}
-              </div>
-              <ul className="divide-y divide-slate-100">
+        <div className="mb-3 relative">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar..." className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"/>
+        </div>
+
+        <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+          {loading ? <div className="p-8 text-center"><Loader2 className="inline w-5 h-5 animate-spin mr-2"/>Carregando...</div> : (
+            <table className="min-w-full text-sm">
+              <thead className="bg-slate-50 border-b text-xs uppercase text-slate-500">
+                <tr>
+                  <th className="text-left px-3 py-2">Nome</th>
+                  {extraFields.map((f) => (
+                    <th key={f.key} className="text-left px-3 py-2">{f.label}</th>
+                  ))}
+                  <th className="text-right px-3 py-2">Ações</th>
+                </tr>
+              </thead>
+              <tbody>
                 {paginated.map((r) => (
-                  <li key={r.id} className="group flex items-center gap-3 px-3 py-2 hover:bg-slate-50 transition-colors">
-                    <div className="min-w-0 flex-1 flex items-center gap-3 flex-wrap">
-                      <span className="text-sm font-medium text-slate-800 truncate" title={r.nome}>{r.nome}</span>
-                      {extraFields.map((f) => (
-                        r[f.key] ? (
-                          <span key={f.key} className="text-[11px] text-slate-500 bg-slate-100 rounded px-1.5 py-0.5">
-                            {f.label}: <span className="font-medium text-slate-700">{String(r[f.key])}</span>
-                          </span>
-                        ) : null
-                      ))}
-                    </div>
-                    <div className="flex items-center gap-0.5 shrink-0 opacity-60 group-hover:opacity-100 transition-opacity">
-                      <button onClick={() => setEditing(r)} title="Editar" className="p-1.5 text-slate-500 hover:text-blue-600 hover:bg-blue-50 rounded"><Pencil className="w-3.5 h-3.5"/></button>
-                      <button onClick={() => remove(r)} title="Excluir" className="p-1.5 text-slate-500 hover:text-red-600 hover:bg-red-50 rounded"><Trash2 className="w-3.5 h-3.5"/></button>
-                    </div>
-                  </li>
+                  <tr key={r.id} className="border-b border-slate-100 hover:bg-slate-50">
+                    <td className="px-3 py-2 font-medium text-slate-800">{r.nome}</td>
+                    {extraFields.map((f) => (
+                      <td key={f.key} className="px-3 py-2 text-slate-600">{r[f.key] || "—"}</td>
+                    ))}
+                    <td className="px-3 py-2 text-right space-x-2">
+                      <button onClick={() => setEditing(r)} title="Editar" className="inline-flex items-center p-1.5 text-blue-600 hover:bg-blue-50 rounded"><Pencil className="w-3.5 h-3.5"/></button>
+                      <button onClick={() => remove(r)} title="Excluir" className="inline-flex items-center p-1.5 text-red-500 hover:bg-red-50 rounded ml-0.5"><Trash2 className="w-3.5 h-3.5"/></button>
+                    </td>
+                  </tr>
                 ))}
-              </ul>
-            </div>
-            <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={filtered.length} pageSize={PAGE_SIZE} />
-          </>
-        )}
+                {filtered.length === 0 && <tr><td colSpan={2 + extraFields.length} className="px-3 py-6 text-center text-slate-400">Nenhum registro.</td></tr>}
+              </tbody>
+            </table>
+          )}
+        </div>
+
+        <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={filtered.length} pageSize={PAGE_SIZE} />
       </div>
 
       {editing && (

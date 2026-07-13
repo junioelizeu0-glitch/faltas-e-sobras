@@ -109,20 +109,22 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
               {selected.size > 0 ? `${selected.size} selecionado(s) de ${linhas.length}` : `Clique em um chamado para editar. Total: ${linhas.length}`}
             </p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1">
             <button
               onClick={abrirEditarSelecionado}
               disabled={selected.size !== 1}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed"
+              title="Alterar"
+              className="inline-flex items-center p-2 text-blue-600 hover:bg-blue-50 rounded disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <Pencil className="w-4 h-4"/>Alterar
+              <Pencil className="w-4 h-4"/>
             </button>
             <button
               onClick={() => excluirIds(Array.from(selected))}
               disabled={selected.size === 0}
-              className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 disabled:opacity-40 disabled:cursor-not-allowed"
+              title="Excluir"
+              className="inline-flex items-center p-2 text-red-500 hover:bg-red-50 rounded disabled:opacity-40 disabled:cursor-not-allowed"
             >
-              <Trash2 className="w-4 h-4"/>Excluir
+              <Trash2 className="w-4 h-4"/>
             </button>
           </div>
         </header>

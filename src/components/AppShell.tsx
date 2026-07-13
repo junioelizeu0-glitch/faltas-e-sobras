@@ -31,7 +31,7 @@ export default function AppShell({
   setSelectedSubmenu,
 }: AppShellProps) {
   const [menuAberto, setMenuAberto] = useState(false);
-  const [openFaltas, setOpenFaltas] = useState(true);
+  const [openFaltas, setOpenFaltas] = useState(false);
   const [openCadastros, setOpenCadastros] = useState(false);
   const lock = useServerFn(lockSite);
   const router = useRouter();
