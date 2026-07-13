@@ -175,8 +175,6 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
                   <th className="text-left px-3 py-2 font-semibold">Abertura</th>
                   <th className="text-left px-3 py-2 font-semibold">Tarefa Atual</th>
                   <th className="text-left px-3 py-2 font-semibold">Status</th>
-                  <th className="text-left px-3 py-2 font-semibold">Transportadora</th>
-                  <th className="text-left px-3 py-2 font-semibold">Conferente</th>
                   <th className="text-left px-3 py-2 font-semibold">SLA (dias úteis)</th>
                   <th className="text-right px-3 py-2 font-semibold">Ações</th>
                 </tr>
