@@ -405,7 +405,7 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
 }
 
 
-function ItemEditModal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
+function ItemEditModal({ title, onClose, onAdd, children }: { title: string; onClose: () => void; onAdd?: () => void; children: React.ReactNode }) {
   return (
     <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4" onClick={onClose}>
       <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-2xl w-full max-w-2xl">
@@ -414,7 +414,12 @@ function ItemEditModal({ title, onClose, children }: { title: string; onClose: (
           <button onClick={onClose} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5"/></button>
         </div>
         <div className="p-4">{children}</div>
-        <div className="flex justify-end px-4 py-3 border-t bg-slate-50">
+        <div className="flex justify-between items-center px-4 py-3 border-t bg-slate-50">
+          {onAdd ? (
+            <button onClick={() => { onAdd(); onClose(); }} className="inline-flex items-center gap-1 px-3 py-2 text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 rounded-md">
+              <Plus className="w-4 h-4"/>Adicionar novo
+            </button>
+          ) : <span/>}
           <button onClick={onClose} className="inline-flex items-center gap-1 px-3 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-md"><Save className="w-4 h-4"/>Concluir</button>
         </div>
       </div>
@@ -460,7 +465,7 @@ function ReferenciasTab({ refs, setRef, addRef, rmRef, buscar, onSalvar, salvand
         ))}
       </div>
       {editIdx != null && refs[editIdx] && (
-        <ItemEditModal title={`Editar referência ${refs[editIdx].referencia || `#${editIdx + 1}`}`} onClose={() => setEditIdx(null)}>
+        <ItemEditModal title={`Editar referência ${refs[editIdx].referencia || `#${editIdx + 1}`}`} onClose={() => setEditIdx(null)} onAdd={addRef}>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Referência"><input value={refs[editIdx].referencia} onChange={(e) => setRef(editIdx, { referencia: e.target.value })} className={inputCls}/></Field>
             <Field label="Cor"><input value={refs[editIdx].cor} onChange={(e) => setRef(editIdx, { cor: e.target.value })} className={inputCls}/></Field>
@@ -531,7 +536,7 @@ function EtapasTab({ etapas, setEt, addEtapa, rmEtapa, tarefas, onSalvar, salvan
         })}
       </div>
       {editIdx != null && etapas[editIdx] && (
-        <ItemEditModal title={`Editar etapa ${etapas[editIdx].nome_tarefa || `#${editIdx + 1}`}`} onClose={() => setEditIdx(null)}>
+        <ItemEditModal title={`Editar etapa ${etapas[editIdx].nome_tarefa || `#${editIdx + 1}`}`} onClose={() => setEditIdx(null)} onAdd={addEtapa}>
           <div className="grid grid-cols-2 gap-3">
             <Field label="Tarefa" className="col-span-2">
               <select
