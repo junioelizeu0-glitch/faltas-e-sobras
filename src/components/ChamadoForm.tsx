@@ -570,7 +570,7 @@ function EtapasTab({ etapas, setEt, addEtapa, rmEtapa, tarefas, onSalvar, salvan
                 className={inputCls}
               >
                 <option value="">— Selecionar —</option>
-                {SITUACAO_OPCOES.map((s) => <option key={s} value={s}>{s}</option>)}
+                {tarefas.map((t: any) => <option key={t.id} value={t.nome}>{t.nome}</option>)}
               </select>
             </Field>
             <Field label="SLA (dias úteis)"><input type="number" min={0} value={etapas[editIdx].dias_uteis_previsto ?? ""} onChange={(ev) => setEt(editIdx, { dias_uteis_previsto: ev.target.value === "" ? null : Number(ev.target.value) })} className={inputCls}/></Field>
