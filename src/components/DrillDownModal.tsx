@@ -205,7 +205,7 @@ export default function DrillDownModal({
             onClick={exportCSV}
             className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
           >
-            <Download className="w-4 h-4" /> Exportar CSV
+            <Download className="w-4 h-4" /> Exportar Excel
           </button>
         </div>
         <div className="flex-1 overflow-auto bg-white px-4">
