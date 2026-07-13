@@ -147,15 +147,14 @@ export default function ChamadoForm({ mode, chamadoId, initialChamado, onSaved, 
   const setRef = (idx: number, patch: Partial<Referencia>) =>
     setRefs((p) => p.map((r, i) => (i === idx ? { ...r, ...patch } : r)));
 
+  const searchProdutosFn = useServerFn(searchProdutos);
   const buscarProduto = async (idx: number) => {
     const r = refs[idx]; if (!r?.referencia) return;
     try {
-      const rows: any = await useServerFn(searchProdutos).length ? null : null;
-      // fallback direto:
-      const list = await searchProdutos({ data: { q: r.referencia } });
-      const match = (list as any[]).find(
+      const list: any[] = await searchProdutosFn({ data: { q: r.referencia } }) as any;
+      const match = list.find(
         (p) => String(p.referencia).toLowerCase() === r.referencia.toLowerCase() && (!r.cor || String(p.cor).toLowerCase() === r.cor.toLowerCase())
-      ) || (list as any[])[0];
+      ) || list[0];
       if (match) {
         setRef(idx, {
           referencia: match.referencia,
@@ -166,6 +165,7 @@ export default function ChamadoForm({ mode, chamadoId, initialChamado, onSaved, 
       }
     } catch (e) { /* silent */ }
   };
+
 
   const addEtapa = () => setEtapas((p) => [...p, { tarefa_id: null, nome_tarefa: "", dias_uteis_previsto: null, dt_inicio: hojeISO(), dt_fim: "" }]);
   const rmEtapa = (idx: number) => setEtapas((p) => p.filter((_, i) => i !== idx));
