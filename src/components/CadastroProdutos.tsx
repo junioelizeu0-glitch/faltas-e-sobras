@@ -24,7 +24,7 @@ export default function CadastroProdutos() {
   const [importing, setImporting] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const limit = 50;
+  const limit = 30;
 
   const load = async () => {
     setLoading(true);
