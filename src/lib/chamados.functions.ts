@@ -215,6 +215,13 @@ export const createChamadoCompleto = createServerFn({ method: "POST" })
       periodo: dateOrNull(c.Periodo),
     };
 
+    // Regra: número do chamado não pode duplicar
+    if (chamadoRow.chamado) {
+      const { data: dup } = await supabase
+        .from("chamados_faltas").select("id").eq("chamado", chamadoRow.chamado).limit(1).maybeSingle();
+      if (dup) throw new Error(`Já existe um chamado com o número ${chamadoRow.chamado}.`);
+    }
+
     const { data: inserted, error: e1 } = await supabase
       .from("chamados_faltas")
       .insert(chamadoRow)
