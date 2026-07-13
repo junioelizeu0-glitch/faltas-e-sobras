@@ -189,6 +189,27 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   const setEt = (idx: number, patch: Partial<Etapa>) =>
     setEtapas((p) => p.map((e, i) => (i === idx ? { ...e, ...patch } : e)));
 
+  // Regra: Situação (tarefa atual) = etapa em aberto (com início e sem finalização).
+  // Se nenhuma em aberto, usa a última finalizada (maior dt_fim).
+  useEffect(() => {
+    if (!etapas.length) return;
+    const abertas = etapas.filter((e) => e.dt_inicio && !e.dt_fim && e.nome_tarefa);
+    let alvo = "";
+    if (abertas.length) {
+      const ord = [...abertas].sort((a, b) => (a.dt_inicio < b.dt_inicio ? 1 : -1));
+      alvo = ord[0].nome_tarefa;
+    } else {
+      const finalizadas = etapas.filter((e) => e.dt_fim && e.nome_tarefa);
+      if (finalizadas.length) {
+        const ord = [...finalizadas].sort((a, b) => (a.dt_fim < b.dt_fim ? 1 : -1));
+        alvo = ord[0].nome_tarefa;
+      }
+    }
+    if (alvo && alvo !== form["Situação "]) {
+      setForm((p) => ({ ...p, "Situação ": alvo }));
+    }
+  }, [etapas]);
+
   const validate = (): string | null => {
     if (!form.Chamado) return "Número do chamado é obrigatório";
     if (!form.Loja) return "Loja é obrigatória";
