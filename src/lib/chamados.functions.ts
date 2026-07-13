@@ -379,6 +379,9 @@ export const updateChamadoCompleto = createServerFn({ method: "POST" })
     };
     const { error: eu } = await supabase.from("chamados_faltas").update(row).eq("id", data.id);
     if (eu) throw new Error(eu.message);
+    await upsertConferenteCD(supabase, row.conferente, row.cd);
+    await upsertTransportadora(supabase, row.transportadora);
+
 
     // refs: delete + reinsert
     await supabase.from("chamados_referencias").delete().eq("chamado_id", data.id);
