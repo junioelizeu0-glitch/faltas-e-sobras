@@ -195,18 +195,21 @@ export type Database = {
       }
       conferentes: {
         Row: {
+          cd: string | null
           created_at: string
           id: string
           nome: string
           updated_at: string
         }
         Insert: {
+          cd?: string | null
           created_at?: string
           id?: string
           nome: string
           updated_at?: string
         }
         Update: {
+          cd?: string | null
           created_at?: string
           id?: string
           nome?: string
