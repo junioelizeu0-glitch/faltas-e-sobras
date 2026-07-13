@@ -47,25 +47,37 @@ type Props = { rawData: any[] | undefined; onChanged?: () => void };
 
 export default function ConsultaChamados({ rawData, onChanged }: Props) {
   const [busca, setBusca] = useState("");
-  const [filtro, setFiltro] = useState("Todos");
+  const [filtroStatus, setFiltroStatus] = useState("Todos");
+  const [filtroTarefa, setFiltroTarefa] = useState("Todas");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(0);
   const delFn = useServerFn(deleteChamado);
 
+  const tarefas = useMemo(() => {
+    const set = new Set<string>();
+    (rawData || []).forEach((r: any) => {
+      const t = String(r["Situação "] || r.situacao || "").trim();
+      if (t) set.add(t);
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [rawData]);
+
   const linhas = useMemo(() => {
     const f = busca.trim().toLowerCase();
     return (rawData || [])
       .filter((r: any) => {
-        if (filtro !== "Todos" && String(r["Status Chamado"] || "") !== filtro) return false;
+        if (filtroStatus !== "Todos" && String(r["Status Chamado"] || "") !== filtroStatus) return false;
+        const t = String(r["Situação "] || r.situacao || "").trim();
+        if (filtroTarefa !== "Todas" && t !== filtroTarefa) return false;
         if (!f) return true;
         return [r.Chamado, r.Loja, r.NF, r.CD, r.Transportadora, r.Conferente, r["Situação "]]
           .map((v) => String(v ?? "").toLowerCase()).some((s) => s.includes(f));
       })
       .sort((a: any, b: any) => (parseDataBR(b["Dt Abertura"])?.getTime() ?? 0) - (parseDataBR(a["Dt Abertura"])?.getTime() ?? 0));
-  }, [rawData, busca, filtro]);
+  }, [rawData, busca, filtroStatus, filtroTarefa]);
 
-  useEffect(() => { setPage(0); }, [busca, filtro]);
+  useEffect(() => { setPage(0); }, [busca, filtroStatus, filtroTarefa]);
   const totalPages = Math.max(1, Math.ceil(linhas.length / PAGE_SIZE));
   const paginadas = useMemo(() => linhas.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE), [linhas, page]);
 
@@ -129,15 +141,28 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
           </div>
         </header>
 
-        <div className="flex flex-wrap gap-3 mb-3 bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
-          <div className="relative flex-1 min-w-[240px]">
-            <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por chamado, loja, NF, CD, transportadora..." className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400" />
+        <div className="flex flex-wrap gap-3 mb-3 bg-white border border-slate-200 rounded-lg p-3 shadow-sm items-end">
+          <div className="relative w-[260px] min-w-[180px]">
+            <label className="block text-[11px] font-medium text-slate-500 mb-1 uppercase tracking-wide">Buscar chamado</label>
+            <div className="relative">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Nº chamado, loja, NF..." className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400" />
+            </div>
           </div>
-          <select value={filtro} onChange={(e) => setFiltro(e.target.value)} className="text-sm border border-slate-200 rounded-md px-3 py-2 bg-white cursor-pointer">
-            <option>Todos</option>
-            {STATUS_CHAMADO_OPCOES.map((s) => <option key={s}>{s}</option>)}
-          </select>
+          <div className="flex flex-col min-w-[160px]">
+            <label className="text-[11px] font-medium text-slate-500 mb-1 uppercase tracking-wide">Status chamado</label>
+            <select value={filtroStatus} onChange={(e) => setFiltroStatus(e.target.value)} className="text-sm border border-slate-200 rounded-md px-3 py-2 bg-white cursor-pointer">
+              <option>Todos</option>
+              {STATUS_CHAMADO_OPCOES.map((s) => <option key={s}>{s}</option>)}
+            </select>
+          </div>
+          <div className="flex flex-col min-w-[200px] flex-1 max-w-md">
+            <label className="text-[11px] font-medium text-slate-500 mb-1 uppercase tracking-wide">Tarefa atual</label>
+            <select value={filtroTarefa} onChange={(e) => setFiltroTarefa(e.target.value)} className="text-sm border border-slate-200 rounded-md px-3 py-2 bg-white cursor-pointer">
+              <option>Todas</option>
+              {tarefas.map((t) => <option key={t}>{t}</option>)}
+            </select>
+          </div>
         </div>
 
         <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
