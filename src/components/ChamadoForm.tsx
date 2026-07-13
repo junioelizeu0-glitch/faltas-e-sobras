@@ -222,10 +222,14 @@ export default function ChamadoForm({ mode, chamadoId, initialChamado, onSaved, 
       } else {
         await createFn({ data: payload });
       }
-      setFeedback({ type: "ok", msg: mode === "editar" ? "Chamado atualizado com sucesso." : "Chamado incluído com sucesso." });
-      setTimeout(() => onSaved?.(), 700);
+      const msg = mode === "editar" ? "Chamado atualizado com sucesso." : "Chamado incluído com sucesso.";
+      setFeedback({ type: "ok", msg });
+      toast.success(msg);
+      onSaved?.();
     } catch (e: any) {
-      setFeedback({ type: "err", msg: e?.message || "Erro ao salvar" });
+      const msg = e?.message || "Erro ao salvar";
+      setFeedback({ type: "err", msg });
+      toast.error(msg);
     } finally { setSubmitting(false); }
   };
 
