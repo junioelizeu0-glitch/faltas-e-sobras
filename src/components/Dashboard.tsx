@@ -1262,10 +1262,14 @@ export default function Dashboard() {
       });
       {
         const etapaLower = etapaInfo.toLowerCase();
-        const needsNF = etapaLower.includes('provision') || etapaLower.includes('pagamento');
-        cols = needsNF
-          ? ['Chamado', 'Loja', 'CD', 'NF', 'Tarefa Atual', 'Status', 'Valor', 'Dt Abertura', 'SLA']
-          : ['Chamado', 'Loja', 'CD', 'Tarefa Atual', 'Status', 'Valor', 'Dt Abertura', 'SLA'];
+        if (etapaLower.includes('provisionamento financeiro')) {
+          cols = ['Chamado', 'Loja', 'Tipo', 'Dt Emissão NF', 'Numero da NF', 'Valor', 'Dt Abertura', 'SLA', 'Tarefa Atual'];
+        } else {
+          const needsNF = etapaLower.includes('provision') || etapaLower.includes('pagamento');
+          cols = needsNF
+            ? ['Chamado', 'Loja', 'CD', 'NF', 'Tarefa Atual', 'Status', 'Valor', 'Dt Abertura', 'SLA']
+            : ['Chamado', 'Loja', 'CD', 'Tarefa Atual', 'Status', 'Valor', 'Dt Abertura', 'SLA'];
+        }
       }
       title = `Detalhamento - Etapa: ${etapaInfo}`;
     } else if (type.startsWith('TRANSP - ')) {
