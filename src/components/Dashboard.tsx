@@ -1519,6 +1519,7 @@ export default function Dashboard() {
         )}
 
         {selectedSubmenu === 'cad_produtos' && <CadastroProdutos />}
+        {selectedSubmenu === 'cad_lojas' && <CadastroLojas />}
         {selectedSubmenu === 'cad_tarefas' && <CadastroTarefas />}
         {selectedSubmenu === 'cad_transportadoras' && (
           <CadastroSimples titulo="Transportadoras" nomeLabel="Transportadora" listFn={listTransportadoras} upsertFn={upsertTransportadora} deleteFn={deleteTransportadora} />
