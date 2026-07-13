@@ -443,6 +443,16 @@ export const updateChamadoCompleto = createServerFn({ method: "POST" })
       const { error } = await supabase.from("chamados_etapas").insert(etapas);
       if (error) throw new Error("Erro nas etapas: " + error.message);
     }
+    // Sync com planilha (fire-and-forget)
+    try {
+      const { syncToAppsScript, buildChamadoRow } = await import("@/lib/apps-script.server");
+      await syncToAppsScript({
+        action: "update",
+        chamado: buildChamadoRow(row),
+        referencias: refs,
+        etapas,
+      });
+    } catch (e) { console.error("[sync] update:", e); }
 
     return { ok: true, id: data.id };
   });
