@@ -9,11 +9,12 @@ const fmtBR = (iso: string | null | undefined) => {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
   return m ? `${m[3]}/${m[2]}/${m[1]}` : s;
 };
-import { createChamadoCompleto, updateChamadoCompleto, getChamadoCompleto, listTarefas } from "@/lib/chamados.functions";
+import { createChamadoCompleto, updateChamadoCompleto, getChamadoCompleto, listTarefas, deleteChamado } from "@/lib/chamados.functions";
 import {
   listTransportadoras, listConferentes, listMotivos, searchProdutos,
 } from "@/lib/cadastros.functions";
 import { diasUteisEntre, parseISO, calcDataPrevista } from "@/lib/business-days";
+
 
 const STATUS_CHAMADO_OPCOES = ["Pendente Monitoramento", "Aprovado", "Recusado"];
 const SITUACAO_OPCOES = [
