@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useDashboardData, isValidField, getTarefaAtual, isSemRetorno, parseDataBR, getBusinessDays } from '@/lib/data-processing';
 import NovoChamadoForm from '@/components/NovoChamadoForm';
+import ConsultaChamados from '@/components/ConsultaChamados';
 
 import DrillDownModal from '@/components/DrillDownModal';
 import AppShell from '@/components/AppShell';
