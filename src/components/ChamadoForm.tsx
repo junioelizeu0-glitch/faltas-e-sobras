@@ -484,18 +484,19 @@ function EtapasTab({ etapas, setEt, addEtapa, rmEtapa, tarefas }: any) {
           <div className="grid grid-cols-2 gap-3">
             <Field label="Tarefa" className="col-span-2">
               <select
-                value={etapas[editIdx].tarefa_id || ""}
+                value={etapas[editIdx].nome_tarefa || ""}
                 onChange={(ev) => {
-                  const t = tarefas.find((x: any) => x.id === ev.target.value);
-                  setEt(editIdx, { tarefa_id: t?.id || null, nome_tarefa: t?.nome || "", dias_uteis_previsto: t?.dias_uteis ?? null });
+                  const nome = ev.target.value;
+                  const t = tarefas.find((x: any) => x.nome === nome);
+                  setEt(editIdx, { tarefa_id: t?.id || null, nome_tarefa: nome, dias_uteis_previsto: t?.dias_uteis ?? etapas[editIdx].dias_uteis_previsto ?? 1 });
                 }}
                 className={inputCls}
               >
                 <option value="">— Selecionar —</option>
-                {tarefas.map((t: any) => <option key={t.id} value={t.id}>{t.nome}</option>)}
+                {SITUACAO_OPCOES.map((s) => <option key={s} value={s}>{s}</option>)}
               </select>
             </Field>
-            <Field label="SLA (dias úteis)"><input value={etapas[editIdx].dias_uteis_previsto ?? ""} readOnly className={inputCls + " bg-slate-50 text-slate-500"}/></Field>
+            <Field label="SLA (dias úteis)"><input type="number" min={0} value={etapas[editIdx].dias_uteis_previsto ?? ""} onChange={(ev) => setEt(editIdx, { dias_uteis_previsto: ev.target.value === "" ? null : Number(ev.target.value) })} className={inputCls}/></Field>
             <Field label="Data prevista"><input value={fmtBR(calcDataPrevista(etapas[editIdx].dt_inicio, etapas[editIdx].dias_uteis_previsto)) || "—"} readOnly className={inputCls + " bg-slate-50 text-slate-500"}/></Field>
             <Field label="Início"><input type="date" value={etapas[editIdx].dt_inicio} onChange={(ev) => setEt(editIdx, { dt_inicio: ev.target.value })} className={inputCls}/></Field>
             <Field label="Finalizado"><input type="date" value={etapas[editIdx].dt_fim} onChange={(ev) => setEt(editIdx, { dt_fim: ev.target.value })} className={inputCls}/></Field>
