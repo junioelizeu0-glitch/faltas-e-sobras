@@ -1,6 +1,9 @@
 import { useMemo, useState } from "react";
-import { Search, X, Pencil } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
+import { toast } from "sonner";
+import { Search, X, Pencil, Trash2 } from "lucide-react";
 import { parseDataBR } from "@/lib/data-processing";
+import { deleteChamado } from "@/lib/chamados.functions";
 import ChamadoForm from "./ChamadoForm";
 
 const STATUS_CHAMADO_OPCOES = ["Pendente Monitoramento", "Aprovado", "Recusado"];
@@ -43,6 +46,8 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
   const [busca, setBusca] = useState("");
   const [filtro, setFiltro] = useState("Todos");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const delFn = useServerFn(deleteChamado);
 
   const linhas = useMemo(() => {
     const f = busca.trim().toLowerCase();
@@ -50,24 +55,74 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
       .filter((r: any) => {
         if (filtro !== "Todos" && String(r["Status Chamado"] || "") !== filtro) return false;
         if (!f) return true;
-        return [r.Chamado, r.Loja, r.NF, r.Transportadora, r.Conferente, r["Situação "]]
+        return [r.Chamado, r.Loja, r.NF, r.CD, r.Transportadora, r.Conferente, r["Situação "]]
           .map((v) => String(v ?? "").toLowerCase()).some((s) => s.includes(f));
       })
       .sort((a: any, b: any) => (parseDataBR(b["Dt Abertura"])?.getTime() ?? 0) - (parseDataBR(a["Dt Abertura"])?.getTime() ?? 0));
   }, [rawData, busca, filtro]);
 
+  const allSelected = linhas.length > 0 && linhas.every((r: any) => selected.has(r.id));
+  const toggleAll = () => {
+    const next = new Set(selected);
+    if (allSelected) linhas.forEach((r: any) => next.delete(r.id));
+    else linhas.forEach((r: any) => r.id && next.add(r.id));
+    setSelected(next);
+  };
+  const toggleOne = (id: string) => {
+    const next = new Set(selected);
+    if (next.has(id)) next.delete(id); else next.add(id);
+    setSelected(next);
+  };
+
+  const excluirIds = async (ids: string[]) => {
+    if (!ids.length) return;
+    if (!confirm(`Excluir ${ids.length} chamado(s)? Esta ação não pode ser desfeita.`)) return;
+    try {
+      const res: any = await delFn({ data: { ids } });
+      toast.success(`${res?.count ?? ids.length} chamado(s) excluído(s).`);
+      setSelected(new Set());
+      onChanged?.();
+    } catch (e: any) { toast.error(e?.message || "Erro ao excluir"); }
+  };
+
+  const abrirEditarSelecionado = () => {
+    const ids = Array.from(selected);
+    if (ids.length !== 1) { toast.info("Selecione exatamente 1 chamado para alterar."); return; }
+    setEditingId(ids[0]);
+  };
+
   return (
     <div className="flex-1 overflow-auto bg-slate-50 p-4">
       <div className="w-full">
-        <header className="mb-4">
-          <h1 className="text-xl font-bold text-slate-800">Consulta de Chamados — Faltas</h1>
-          <p className="text-sm text-slate-500 mt-1">Clique em um chamado para editar. Total: {linhas.length}</p>
+        <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
+          <div>
+            <h1 className="text-xl font-bold text-slate-800">Consulta de Chamados — Faltas</h1>
+            <p className="text-sm text-slate-500 mt-1">
+              {selected.size > 0 ? `${selected.size} selecionado(s) de ${linhas.length}` : `Clique em um chamado para editar. Total: ${linhas.length}`}
+            </p>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={abrirEditarSelecionado}
+              disabled={selected.size !== 1}
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-200 rounded-md hover:bg-blue-100 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Pencil className="w-4 h-4"/>Alterar
+            </button>
+            <button
+              onClick={() => excluirIds(Array.from(selected))}
+              disabled={selected.size === 0}
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 disabled:opacity-40 disabled:cursor-not-allowed"
+            >
+              <Trash2 className="w-4 h-4"/>Excluir
+            </button>
+          </div>
         </header>
 
         <div className="flex flex-wrap gap-3 mb-3 bg-white border border-slate-200 rounded-lg p-3 shadow-sm">
           <div className="relative flex-1 min-w-[240px]">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-            <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por chamado, loja, NF, transportadora..." className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400" />
+            <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por chamado, loja, NF, CD, transportadora..." className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400" />
           </div>
           <select value={filtro} onChange={(e) => setFiltro(e.target.value)} className="text-sm border border-slate-200 rounded-md px-3 py-2 bg-white cursor-pointer">
             <option>Todos</option>
@@ -76,12 +131,14 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
         </div>
 
         <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-          <div className="overflow-x-auto max-h-[calc(100vh-260px)]">
+          <div className="overflow-x-auto max-h-[calc(100vh-280px)]">
             <table className="min-w-full text-xs">
-              <thead className="sticky top-0 bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-500">
+              <thead className="sticky top-0 bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-500 z-10">
                 <tr>
+                  <th className="w-8 px-2 py-2"><input type="checkbox" checked={allSelected} onChange={toggleAll} className="cursor-pointer"/></th>
                   <th className="text-left px-3 py-2 font-semibold">Chamado</th>
                   <th className="text-left px-3 py-2 font-semibold">Loja</th>
+                  <th className="text-left px-3 py-2 font-semibold">CD</th>
                   <th className="text-left px-3 py-2 font-semibold">Abertura</th>
                   <th className="text-left px-3 py-2 font-semibold">Tarefa Atual</th>
                   <th className="text-left px-3 py-2 font-semibold">Status</th>
@@ -91,21 +148,24 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
               </thead>
               <tbody>
                 {linhas.map((r: any) => (
-                  <tr key={r.id || r.Chamado} onClick={() => setEditingId(r.id)} className="border-b border-slate-100 hover:bg-blue-50/40 cursor-pointer">
-                    <td className="px-3 py-2 font-semibold text-slate-800">{r.Chamado || "—"}</td>
-                    <td className="px-3 py-2">{r.Loja || "—"}</td>
-                    <td className="px-3 py-2">{fmtBR(r["Dt Abertura"])}</td>
-                    <td className="px-3 py-2 max-w-[220px] truncate" title={r["Situação "]}>{r["Situação "] || "—"}</td>
-                    <td className="px-3 py-2">{statusBadge(r["Status Chamado"])}</td>
-                    <td className="px-3 py-2">{slaBadge(r["Dt Abertura"], r["Dt Finalização"])}</td>
-                    <td className="px-3 py-2 text-right">
-                      <button onClick={(e) => { e.stopPropagation(); setEditingId(r.id); }} className="inline-flex items-center gap-1 text-blue-600 hover:text-blue-800 text-xs font-semibold">
-                        <Pencil className="w-3.5 h-3.5"/>Editar
-                      </button>
+                  <tr key={r.id || r.Chamado} onClick={() => r.id && setEditingId(r.id)} className={`border-b border-slate-100 hover:bg-blue-50/40 cursor-pointer ${selected.has(r.id) ? "bg-blue-50/60" : ""}`}>
+                    <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
+                      <input type="checkbox" checked={selected.has(r.id)} onChange={() => toggleOne(r.id)} className="cursor-pointer"/>
+                    </td>
+                    <td className="px-3 py-2 font-semibold text-slate-800 whitespace-nowrap">{r.Chamado || "—"}</td>
+                    <td className="px-3 py-2 whitespace-nowrap">{r.Loja || "—"}</td>
+                    <td className="px-3 py-2 whitespace-nowrap">{r.CD || "—"}</td>
+                    <td className="px-3 py-2 whitespace-nowrap">{fmtBR(r["Dt Abertura"])}</td>
+                    <td className="px-3 py-2 max-w-[240px] truncate" title={r["Situação "]}>{r["Situação "] || "—"}</td>
+                    <td className="px-3 py-2 whitespace-nowrap">{statusBadge(r["Status Chamado"])}</td>
+                    <td className="px-3 py-2 whitespace-nowrap">{slaBadge(r["Dt Abertura"], r["Dt Finalização"])}</td>
+                    <td className="px-3 py-2 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                      <button onClick={() => setEditingId(r.id)} title="Editar" className="inline-flex items-center p-1.5 text-blue-600 hover:bg-blue-50 rounded"><Pencil className="w-3.5 h-3.5"/></button>
+                      <button onClick={() => excluirIds([r.id])} title="Excluir" className="inline-flex items-center p-1.5 text-red-500 hover:bg-red-50 rounded ml-0.5"><Trash2 className="w-3.5 h-3.5"/></button>
                     </td>
                   </tr>
                 ))}
-                {linhas.length === 0 && <tr><td colSpan={7} className="px-4 py-8 text-center text-slate-400">Nenhum chamado encontrado.</td></tr>}
+                {linhas.length === 0 && <tr><td colSpan={9} className="px-4 py-8 text-center text-slate-400">Nenhum chamado encontrado.</td></tr>}
               </tbody>
             </table>
           </div>
@@ -120,7 +180,12 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
               <button onClick={() => setEditingId(null)} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5"/></button>
             </div>
             <div className="p-4">
-              <ChamadoForm mode="editar" chamadoId={editingId} compact onSaved={() => { onChanged?.(); }} onCancel={() => setEditingId(null)} />
+              <ChamadoForm
+                mode="editar" chamadoId={editingId} compact
+                onSaved={() => { onChanged?.(); }}
+                onCancel={() => setEditingId(null)}
+                onDeleted={() => { setEditingId(null); onChanged?.(); }}
+              />
             </div>
           </div>
         </div>
