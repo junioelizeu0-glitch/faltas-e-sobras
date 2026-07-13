@@ -349,7 +349,7 @@ export default function DrillDownModal({
                         </td>
                       );
                     }
-                    if (col === "NF") {
+                    if (col === "NF" || col === "Numero da NF") {
                       val = row["Nº Nfe"] || row["NF"] || row["nfe"] || "Sem informação";
                       return (
                         <td key={col} className="p-3 text-slate-600">
