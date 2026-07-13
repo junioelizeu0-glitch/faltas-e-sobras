@@ -50,6 +50,8 @@ export type ReferenciaInput = {
   cor?: string;
   tamanho?: string;
   fornecedor?: string;
+  descricao?: string;
+  quantidade?: number | string;
 };
 
 export type EtapaInput = {
