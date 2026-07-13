@@ -78,14 +78,14 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     meta: [
       { charSet: "utf-8" },
       { name: "viewport", content: "width=device-width, initial-scale=1" },
-      { title: "Lovable App" },
-      { name: "description", content: "Lovable Generated Project" },
-      { name: "author", content: "Lovable" },
-      { property: "og:title", content: "Lovable App" },
-      { property: "og:description", content: "Lovable Generated Project" },
+      { title: "Sistema de Faltas e Sobras" },
+      { name: "description", content: "Sistema de gestão de faltas e sobras" },
+      { name: "author", content: "Elizeu" },
+      { property: "og:title", content: "Sistema de Faltas e Sobras" },
+      { property: "og:description", content: "Sistema de gestão de faltas e sobras" },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary_large_image" },
-      { name: "twitter:site", content: "@Lovable" },
+      { name: "twitter:site", content: "" },
     ],
     links: [
       {
