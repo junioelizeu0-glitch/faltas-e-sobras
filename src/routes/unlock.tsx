@@ -23,9 +23,8 @@ function UnlockPage() {
     setLoading(true);
     setError(null);
     try {
-      const { ok, token } = await unlock({ data: { username, password } });
+      const { ok } = await unlock({ data: { username, password } });
       if (ok) {
-        if (token) window.localStorage.setItem("site-gate-token", token);
         await router.invalidate();
         await router.navigate({ to: "/" });
       } else {
