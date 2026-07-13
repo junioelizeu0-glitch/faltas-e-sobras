@@ -1514,15 +1514,15 @@ export default function Dashboard() {
         {selectedSubmenu === 'cad_produtos' && <CadastroProdutos />}
         {selectedSubmenu === 'cad_tarefas' && <CadastroTarefas />}
         {selectedSubmenu === 'cad_transportadoras' && (
-          <CadastroSimples titulo="Transportadoras" listFn={listTransportadoras} upsertFn={upsertTransportadora} deleteFn={deleteTransportadora} />
+          <CadastroSimples titulo="Transportadoras" nomeLabel="Transportadora" listFn={listTransportadoras} upsertFn={upsertTransportadora} deleteFn={deleteTransportadora} />
         )}
         {selectedSubmenu === 'cad_conferentes' && (
-          <CadastroSimples titulo="Conferentes" listFn={listConferentes} upsertFn={upsertConferente} deleteFn={deleteConferente}
+          <CadastroSimples titulo="Conferentes" nomeLabel="Conferente" listFn={listConferentes} upsertFn={upsertConferente} deleteFn={deleteConferente}
             extraFields={[{ key: "cd", label: "CD", type: "select", options: ["ES", "PB"] }]} />
         )}
 
         {selectedSubmenu === 'cad_motivos' && (
-          <CadastroSimples titulo="Motivos" listFn={listMotivos} upsertFn={upsertMotivo} deleteFn={deleteMotivo} />
+          <CadastroSimples titulo="Motivos" nomeLabel="Motivo" listFn={listMotivos} upsertFn={upsertMotivo} deleteFn={deleteMotivo} />
         )}
 
         {selectedSubmenu === 'relatorio' && (
