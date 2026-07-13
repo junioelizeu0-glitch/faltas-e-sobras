@@ -384,6 +384,7 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
           <Field label="CD" style={{ width: "90px" }}><select value={form.CD} onChange={(e) => setField("CD", e.target.value)} className={inputCls}>{CD_OPCOES.map((o) => <option key={o}>{o}</option>)}</select></Field>
           <Field label="NF" style={{ width: "140px" }}><input type="number" value={form.NF} onChange={(e) => setField("NF", e.target.value.slice(0, 10))} className={inputCls} /></Field>
           <Field label="Data Emissão" style={{ width: "160px" }}><input type="date" value={form["Dt Emissão"]} onChange={(e) => setField("Dt Emissão", e.target.value)} className={inputCls} /></Field>
+          <Field label="Valor" style={{ width: "160px" }}><input type="number" step="0.01" value={form._valor} onChange={(e) => setField("_valor", e.target.value.slice(0, 14))} className={inputCls} /></Field>
         </div>
       </section>
       <section>
