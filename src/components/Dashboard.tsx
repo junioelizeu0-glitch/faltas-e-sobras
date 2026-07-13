@@ -1517,8 +1517,10 @@ export default function Dashboard() {
           <CadastroSimples titulo="Transportadoras" listFn={listTransportadoras} upsertFn={upsertTransportadora} deleteFn={deleteTransportadora} />
         )}
         {selectedSubmenu === 'cad_conferentes' && (
-          <CadastroSimples titulo="Conferentes" listFn={listConferentes} upsertFn={upsertConferente} deleteFn={deleteConferente} />
+          <CadastroSimples titulo="Conferentes" listFn={listConferentes} upsertFn={upsertConferente} deleteFn={deleteConferente}
+            extraFields={[{ key: "cd", label: "CD", type: "select", options: ["ES", "PB"] }]} />
         )}
+
         {selectedSubmenu === 'cad_motivos' && (
           <CadastroSimples titulo="Motivos" listFn={listMotivos} upsertFn={upsertMotivo} deleteFn={deleteMotivo} />
         )}
