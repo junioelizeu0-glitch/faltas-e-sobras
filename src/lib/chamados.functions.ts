@@ -236,7 +236,137 @@ export const createChamadoCompleto = createServerFn({ method: "POST" })
         sla_status: sla,
         ordem: et.ordem ?? idx + 1,
       };
-    });
+  });
+
+// ===== Ler chamado completo =====
+export const getChamadoCompleto = createServerFn({ method: "GET" })
+  .inputValidator((data: { id: string }) => data)
+  .handler(async ({ data }) => {
+    const { requireUnlockedSession } = await import("@/lib/gate.server");
+    await requireUnlockedSession();
+    const supabase = await getSupabase();
+    const { data: chamado, error: e1 } = await supabase
+      .from("chamados_faltas").select("*").eq("id", data.id).maybeSingle();
+    if (e1) throw new Error(e1.message);
+    const { data: refs, error: e2 } = await supabase
+      .from("chamados_referencias").select("*").eq("chamado_id", data.id);
+    if (e2) throw new Error(e2.message);
+    const { data: etapas, error: e3 } = await supabase
+      .from("chamados_etapas").select("*").eq("chamado_id", data.id).order("ordem");
+    if (e3) throw new Error(e3.message);
+    return { chamado, referencias: refs || [], etapas: etapas || [] };
+  });
+
+// ===== Atualizar chamado completo (substitui refs e etapas) =====
+export const updateChamadoCompleto = createServerFn({ method: "POST" })
+  .inputValidator((data: {
+    id: string;
+    chamado: any;
+    referencias: any[];
+    etapas: EtapaInput[];
+  }) => data)
+  .handler(async ({ data }) => {
+    const { requireUnlockedSession } = await import("@/lib/gate.server");
+    await requireUnlockedSession();
+    const supabase = await getSupabase();
+
+    const c = data.chamado;
+    const nullIfEmpty = (v: any) => {
+      if (v === undefined || v === null) return null;
+      const s = String(v).trim();
+      return s === "" ? null : s;
+    };
+    const numOrNull = (v: any) => {
+      const s = nullIfEmpty(v);
+      if (!s) return null;
+      const n = Number(String(s).replace(",", "."));
+      return isNaN(n) ? null : n;
+    };
+    const dateOrNull = (v: any) => {
+      const s = nullIfEmpty(v);
+      if (!s) return null;
+      const m = /^(\d{4})-(\d{2})-(\d{2})/.exec(s);
+      if (m) return `${m[1]}-${m[2]}-${m[3]}`;
+      const d = new Date(s);
+      if (isNaN(d.getTime())) return null;
+      return d.toISOString().slice(0, 10);
+    };
+
+    const row = {
+      chamado: nullIfEmpty(c.Chamado),
+      loja: nullIfEmpty(c.Loja),
+      tipo: nullIfEmpty(c.Tipo),
+      nf: nullIfEmpty(c.NF),
+      dt_emissao: dateOrNull(c["Dt Emissão"]),
+      valor: numOrNull(c[" Valor "]),
+      cd: nullIfEmpty(c.CD),
+      situacao: nullIfEmpty(c["Situação "]),
+      dt_abertura: dateOrNull(c["Dt Abertura"]),
+      dt_finalizacao: dateOrNull(c["Dt Finalização"]),
+      dt_pagamento: dateOrNull(c["Dt Pagamento"]),
+      sla_status: nullIfEmpty(c["SLA por chamado (60dias)"]),
+      status_pagamento: nullIfEmpty(c["Status Pagamento"]),
+      status_chamado: nullIfEmpty(c["Status Chamado"]),
+      motivo: nullIfEmpty(c.Motivo),
+      transportadora: nullIfEmpty(c.Transportadora),
+      conferente: nullIfEmpty(c.Conferente),
+      periodo: dateOrNull(c.Periodo),
+    };
+    const { error: eu } = await supabase.from("chamados_faltas").update(row).eq("id", data.id);
+    if (eu) throw new Error(eu.message);
+
+    // refs: delete + reinsert
+    await supabase.from("chamados_referencias").delete().eq("chamado_id", data.id);
+    const refs = (data.referencias || [])
+      .map((r: any) => ({
+        chamado_id: data.id,
+        referencia: nullIfEmpty(r.referencia),
+        cor: nullIfEmpty(r.cor),
+        tamanho: nullIfEmpty(r.tamanho),
+        fornecedor: nullIfEmpty(r.fornecedor),
+        descricao: nullIfEmpty(r.descricao),
+        quantidade: numOrNull(r.quantidade),
+      } as any))
+      .filter((r: any) => r.referencia || r.cor || r.tamanho || r.fornecedor || r.descricao);
+    if (refs.length > 0) {
+      const { error } = await (supabase.from("chamados_referencias") as any).insert(refs);
+      if (error) throw new Error("Erro nas referências: " + error.message);
+    }
+
+    // etapas: delete + reinsert
+    await supabase.from("chamados_etapas").delete().eq("chamado_id", data.id);
+    const etapas = (data.etapas || []).map((et, idx) => {
+      const inicio = parseISO(et.dt_inicio ?? null);
+      const fim = parseISO(et.dt_fim ?? null);
+      let dias_real: number | null = null;
+      let sla: string | null = null;
+      if (inicio && fim) {
+        dias_real = diasUteisEntre(inicio, fim);
+        if (et.dias_uteis_previsto != null) {
+          sla = dias_real <= et.dias_uteis_previsto ? "Dentro do SLA" : "Fora do SLA";
+        }
+      } else if (inicio && !fim) {
+        sla = "Em Aberto";
+      }
+      return {
+        chamado_id: data.id,
+        tarefa_id: et.tarefa_id || null,
+        nome_tarefa: et.nome_tarefa,
+        dias_uteis_previsto: et.dias_uteis_previsto ?? null,
+        dt_inicio: et.dt_inicio || null,
+        dt_fim: et.dt_fim || null,
+        dias_uteis_real: dias_real,
+        sla_status: sla,
+        ordem: et.ordem ?? idx + 1,
+      };
+    }).filter((e) => e.nome_tarefa);
+    if (etapas.length > 0) {
+      const { error } = await supabase.from("chamados_etapas").insert(etapas);
+      if (error) throw new Error("Erro nas etapas: " + error.message);
+    }
+
+    return { ok: true, id: data.id };
+  });
 
     // Se não veio nenhuma etapa, cria "Aguardando Monitoramento" default
     if (etapas.length === 0) {
