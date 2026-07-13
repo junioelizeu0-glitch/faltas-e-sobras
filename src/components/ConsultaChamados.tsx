@@ -47,25 +47,37 @@ type Props = { rawData: any[] | undefined; onChanged?: () => void };
 
 export default function ConsultaChamados({ rawData, onChanged }: Props) {
   const [busca, setBusca] = useState("");
-  const [filtro, setFiltro] = useState("Todos");
+  const [filtroStatus, setFiltroStatus] = useState("Todos");
+  const [filtroTarefa, setFiltroTarefa] = useState("Todas");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(0);
   const delFn = useServerFn(deleteChamado);
 
+  const tarefas = useMemo(() => {
+    const set = new Set<string>();
+    (rawData || []).forEach((r: any) => {
+      const t = String(r["Situação "] || r.situacao || "").trim();
+      if (t) set.add(t);
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b));
+  }, [rawData]);
+
   const linhas = useMemo(() => {
     const f = busca.trim().toLowerCase();
     return (rawData || [])
       .filter((r: any) => {
-        if (filtro !== "Todos" && String(r["Status Chamado"] || "") !== filtro) return false;
+        if (filtroStatus !== "Todos" && String(r["Status Chamado"] || "") !== filtroStatus) return false;
+        const t = String(r["Situação "] || r.situacao || "").trim();
+        if (filtroTarefa !== "Todas" && t !== filtroTarefa) return false;
         if (!f) return true;
         return [r.Chamado, r.Loja, r.NF, r.CD, r.Transportadora, r.Conferente, r["Situação "]]
           .map((v) => String(v ?? "").toLowerCase()).some((s) => s.includes(f));
       })
       .sort((a: any, b: any) => (parseDataBR(b["Dt Abertura"])?.getTime() ?? 0) - (parseDataBR(a["Dt Abertura"])?.getTime() ?? 0));
-  }, [rawData, busca, filtro]);
+  }, [rawData, busca, filtroStatus, filtroTarefa]);
 
-  useEffect(() => { setPage(0); }, [busca, filtro]);
+  useEffect(() => { setPage(0); }, [busca, filtroStatus, filtroTarefa]);
   const totalPages = Math.max(1, Math.ceil(linhas.length / PAGE_SIZE));
   const paginadas = useMemo(() => linhas.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE), [linhas, page]);
 
