@@ -134,56 +134,106 @@ export const exportProdutos = createServerFn({ method: "GET" }).handler(async ()
 });
 
 // ============ CRUD SIMPLES (só nome) ============
-function makeSimpleCrud(table: "transportadoras" | "conferentes" | "motivos") {
-  const list = createServerFn({ method: "GET" }).handler(async () => {
+
+// ---- TRANSPORTADORAS ----
+export const listTransportadoras = createServerFn({ method: "GET" }).handler(async () => {
+  const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
+  const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
+  const { data, error } = await supabase.from("transportadoras").select("*").order("nome");
+  if (error) throw new Error(error.message);
+  return (data || []) as Array<{ id: string; nome: string }>;
+});
+export const upsertTransportadora = createServerFn({ method: "POST" })
+  .inputValidator((d: { id?: string; nome: string }) => d)
+  .handler(async ({ data }) => {
     const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
     const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
-    const { data, error } = await (supabase.from(table) as any).select("*").order("nome");
+    const nome = (data.nome || "").trim();
+    if (!nome) throw new Error("Nome é obrigatório");
+    if (data.id) {
+      const { error } = await supabase.from("transportadoras").update({ nome }).eq("id", data.id);
+      if (error) throw new Error(error.message);
+      return { ok: true, id: data.id };
+    }
+    const { data: ins, error } = await supabase.from("transportadoras").insert({ nome }).select().single();
     if (error) throw new Error(error.message);
-    return (data || []) as Array<{ id: string; nome: string }>;
+    return { ok: true, id: ins.id };
   });
-  const upsert = createServerFn({ method: "POST" })
-    .inputValidator((d: { id?: string; nome: string }) => d)
-    .handler(async ({ data }) => {
-      const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
-      const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
-      const nome = (data.nome || "").trim();
-      if (!nome) throw new Error("Nome é obrigatório");
-      if (data.id) {
-        const { error } = await (supabase.from(table) as any).update({ nome }).eq("id", data.id);
-        if (error) throw new Error(error.message);
-        return { ok: true, id: data.id };
-      }
-      const { data: ins, error } = await (supabase.from(table) as any).insert({ nome }).select().single();
+export const deleteTransportadora = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string }) => d)
+  .handler(async ({ data }) => {
+    const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
+    const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
+    const { error } = await supabase.from("transportadoras").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+// ---- CONFERENTES ----
+export const listConferentes = createServerFn({ method: "GET" }).handler(async () => {
+  const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
+  const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
+  const { data, error } = await supabase.from("conferentes").select("*").order("nome");
+  if (error) throw new Error(error.message);
+  return (data || []) as Array<{ id: string; nome: string }>;
+});
+export const upsertConferente = createServerFn({ method: "POST" })
+  .inputValidator((d: { id?: string; nome: string }) => d)
+  .handler(async ({ data }) => {
+    const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
+    const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
+    const nome = (data.nome || "").trim();
+    if (!nome) throw new Error("Nome é obrigatório");
+    if (data.id) {
+      const { error } = await supabase.from("conferentes").update({ nome }).eq("id", data.id);
       if (error) throw new Error(error.message);
-      return { ok: true, id: ins.id };
-    });
-  const del = createServerFn({ method: "POST" })
-    .inputValidator((d: { id: string }) => d)
-    .handler(async ({ data }) => {
-      const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
-      const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
-      const { error } = await (supabase.from(table) as any).delete().eq("id", data.id);
+      return { ok: true, id: data.id };
+    }
+    const { data: ins, error } = await supabase.from("conferentes").insert({ nome }).select().single();
+    if (error) throw new Error(error.message);
+    return { ok: true, id: ins.id };
+  });
+export const deleteConferente = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string }) => d)
+  .handler(async ({ data }) => {
+    const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
+    const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
+    const { error } = await supabase.from("conferentes").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
+
+// ---- MOTIVOS ----
+export const listMotivos = createServerFn({ method: "GET" }).handler(async () => {
+  const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
+  const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
+  const { data, error } = await supabase.from("motivos").select("*").order("nome");
+  if (error) throw new Error(error.message);
+  return (data || []) as Array<{ id: string; nome: string }>;
+});
+export const upsertMotivo = createServerFn({ method: "POST" })
+  .inputValidator((d: { id?: string; nome: string }) => d)
+  .handler(async ({ data }) => {
+    const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
+    const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
+    const nome = (data.nome || "").trim();
+    if (!nome) throw new Error("Nome é obrigatório");
+    if (data.id) {
+      const { error } = await supabase.from("motivos").update({ nome }).eq("id", data.id);
       if (error) throw new Error(error.message);
-      return { ok: true };
-    });
-  return { list, upsert, del };
-}
+      return { ok: true, id: data.id };
+    }
+    const { data: ins, error } = await supabase.from("motivos").insert({ nome }).select().single();
+    if (error) throw new Error(error.message);
+    return { ok: true, id: ins.id };
+  });
+export const deleteMotivo = createServerFn({ method: "POST" })
+  .inputValidator((d: { id: string }) => d)
+  .handler(async ({ data }) => {
+    const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
+    const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
+    const { error } = await supabase.from("motivos").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
 
-export const {
-  list: listTransportadoras,
-  upsert: upsertTransportadora,
-  del: deleteTransportadora,
-} = makeSimpleCrud("transportadoras");
-
-export const {
-  list: listConferentes,
-  upsert: upsertConferente,
-  del: deleteConferente,
-} = makeSimpleCrud("conferentes");
-
-export const {
-  list: listMotivos,
-  upsert: upsertMotivo,
-  del: deleteMotivo,
-} = makeSimpleCrud("motivos");
