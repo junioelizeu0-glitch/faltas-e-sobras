@@ -2,16 +2,16 @@ import { createServerFn } from "@tanstack/react-start";
 
 export const checkUnlocked = createServerFn({ method: "GET" }).handler(
   async () => {
-    const { getGateSession } = await import("./gate.server");
+    const { getGateSession, hasGateHeaderToken } = await import("./gate.server");
     const session = await getGateSession();
-    return { unlocked: !!session.data.unlocked };
+    return { unlocked: !!session.data.unlocked || hasGateHeaderToken() };
   },
 );
 
 export const unlockSite = createServerFn({ method: "POST" })
   .inputValidator((data: { username: string; password: string }) => data)
   .handler(async ({ data }) => {
-    const { getGateSession, safeEq } = await import("./gate.server");
+    const { createGateToken, getGateSession, safeEq } = await import("./gate.server");
     const expectedUser = process.env.SITE_USERNAME;
     const expectedPass = process.env.SITE_PASSWORD;
     if (!expectedUser || !expectedPass) {
@@ -24,7 +24,7 @@ export const unlockSite = createServerFn({ method: "POST" })
     }
     const session = await getGateSession();
     await session.update({ unlocked: true });
-    return { ok: true as const };
+    return { ok: true as const, token: createGateToken() };
   });
 
 export const lockSite = createServerFn({ method: "POST" }).handler(async () => {

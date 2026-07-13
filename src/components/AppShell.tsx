@@ -29,6 +29,7 @@ export default function AppShell({
   const lock = useServerFn(lockSite);
   const router = useRouter();
   async function handleLogout() {
+    window.localStorage.removeItem("site-gate-token");
     try { await lock(); } catch {}
     await router.navigate({ to: "/unlock" });
   }
