@@ -317,6 +317,14 @@ export default function DrillDownModal({
                         </td>
                       );
                     }
+                    if (col === "Dt Emissão NF") {
+                      val = formatarDataBR(row["Dt Emissão"] || row.dt_emissao);
+                      return (
+                        <td key={col} className="p-3 text-slate-500">
+                          {val}
+                        </td>
+                      );
+                    }
                     if (col.startsWith("Dt ") || col.includes("Dt ") || col.includes("Data")) {
                       const cellVal =
                         row[col] !== undefined
