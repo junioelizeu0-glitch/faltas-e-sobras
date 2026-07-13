@@ -120,7 +120,7 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
               <button onClick={() => setEditingId(null)} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5"/></button>
             </div>
             <div className="p-4">
-              <ChamadoForm mode="editar" chamadoId={editingId} compact onSaved={() => { setEditingId(null); onChanged?.(); }} onCancel={() => setEditingId(null)} />
+              <ChamadoForm mode="editar" chamadoId={editingId} compact onSaved={() => { onChanged?.(); }} onCancel={() => setEditingId(null)} />
             </div>
           </div>
         </div>
