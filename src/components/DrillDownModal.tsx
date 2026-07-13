@@ -10,6 +10,7 @@ import {
   ArrowDown,
 } from "lucide-react";
 import { getTarefaAtual, parseDataBR, formatarDataBR } from "@/lib/data-processing";
+import { exportToExcel } from "@/lib/excel-export";
 
 interface DrillDownModalProps {
   isOpen: boolean;
@@ -119,73 +120,43 @@ export default function DrillDownModal({
 
   const exportCSV = () => {
     if (!filtered.length) return;
-    const headers = activeColumns.join(",");
-    const rows = filtered
-      .map((row: any) => {
-        return activeColumns
-          .map((col: string) => {
-            let val = "";
-            if (col === "Chamado") {
-              val =
-                row["Chamados"] ||
-                row["Chamado"] ||
-                row["Chave"] ||
-                row["Número"] ||
-                row["Nº"] ||
-                row["N° Chamado"] ||
-                row["Nº Chamado"] ||
-                row["chamadoId"] ||
-                "";
-              if (!val) {
-                const k = Object.keys(row).find(
-                  (key) =>
-                    key.trim().toLowerCase() === "chamado" ||
-                    key.trim().toLowerCase() === "chamados" ||
-                    key.trim().toLowerCase() === "nº" ||
-                    key.trim().toLowerCase() === "n° chamado" ||
-                    key.trim().toLowerCase() === "nº chamado" ||
-                    key.trim().toLowerCase() === "chamadoid",
-                );
-                if (k) val = row[k];
-              }
-              if (!val) val = "Sem informação";
-            } else if (col === "Status") {
-              val = row["Status Chamado"] || row["status"] || "Sem informação";
-            } else if (col === "Valor") {
-              val = row[" Valor "] || row["valor"] || "0";
-            } else if (col === "SLA") {
-              val = row["SLA por chamado (60dias)"] || row["sla"] || "Sem informação";
-            } else if (col === "Tarefa Atual") {
-              val = getTarefaAtual(row) || "Sem informação";
-            } else if (col === "NF") {
-              val = row["Nº Nfe"] || row["NF"] || row["nfe"] || "Sem informação";
-            } else if (col.startsWith("Dt ") || col.includes("Dt ") || col.includes("Data")) {
-              val = formatarDataBR(
-                row[col] ||
-                  row[
-                    Object.keys(row).find(
-                      (k) => k.trim().toLowerCase() === col.trim().toLowerCase(),
-                    ) || ""
-                  ] ||
-                  "",
-              );
-            } else {
-              const exactKey = Object.keys(row).find(
-                (k) => k.trim().toLowerCase() === col.trim().toLowerCase(),
-              );
-              val = exactKey ? row[exactKey] : row[col] || "Sem informação";
-            }
-            return `"${val}"`;
-          })
-          .join(",");
-      })
-      .join("\n");
-    const csv = `${headers}\n${rows}`;
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "detalhamento_chamados.csv";
-    link.click();
+    const rows = filtered.map((row: any) => {
+      const out: Record<string, any> = {};
+      activeColumns.forEach((col: string) => {
+        let val: any = "";
+        if (col === "Chamado") {
+          val =
+            row["Chamados"] || row["Chamado"] || row["Chave"] || row["Número"] ||
+            row["Nº"] || row["N° Chamado"] || row["Nº Chamado"] || row["chamadoId"] || "";
+          if (val && !isNaN(Number(val))) val = Math.trunc(Number(val)).toString();
+        } else if (col === "Status") {
+          val = row["Status Chamado"] || row["status"] || "";
+        } else if (col === "Valor") {
+          val = Number(row[" Valor "] || row["valor"] || 0);
+        } else if (col === "SLA") {
+          val = row["SLA por chamado (60dias)"] || row["sla"] || "";
+        } else if (col === "Tarefa Atual") {
+          val = getTarefaAtual(row) || "";
+        } else if (col === "NF") {
+          val = row["Nº Nfe"] || row["NF"] || row["nfe"] || "";
+        } else if (col.startsWith("Dt ") || col.includes("Dt ") || col.includes("Data")) {
+          const cellVal = row[col] ?? row[Object.keys(row).find(
+            (k) => k.trim().toLowerCase() === col.trim().toLowerCase()) || ""];
+          val = formatarDataBR(cellVal);
+        } else {
+          const exactKey = Object.keys(row).find(
+            (k) => k.trim().toLowerCase() === col.trim().toLowerCase());
+          val = exactKey ? row[exactKey] : (row[col] ?? "");
+        }
+        out[col] = val;
+      });
+      return out;
+    });
+    exportToExcel(rows, {
+      filename: `detalhamento_chamados_${new Date().toISOString().slice(0, 10)}.xlsx`,
+      sheetName: "Chamados",
+      columns: activeColumns.map((c) => ({ key: c, header: c })),
+    });
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -234,7 +205,7 @@ export default function DrillDownModal({
             onClick={exportCSV}
             className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
           >
-            <Download className="w-4 h-4" /> Exportar CSV
+            <Download className="w-4 h-4" /> Exportar Excel
           </button>
         </div>
         <div className="flex-1 overflow-auto bg-white px-4">
