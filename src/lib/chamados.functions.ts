@@ -198,14 +198,16 @@ export const createChamadoCompleto = createServerFn({ method: "POST" })
 
     // Referências
     const refs = (data.referencias || [])
-      .map((r) => ({
+      .map((r: any) => ({
         chamado_id,
         referencia: nullIfEmpty(r.referencia),
         cor: nullIfEmpty(r.cor),
         tamanho: nullIfEmpty(r.tamanho),
         fornecedor: nullIfEmpty(r.fornecedor),
-      }))
-      .filter((r) => r.referencia || r.cor || r.tamanho || r.fornecedor);
+        descricao: nullIfEmpty(r.descricao),
+        quantidade: numOrNull(r.quantidade),
+      } as any))
+      .filter((r: any) => r.referencia || r.cor || r.tamanho || r.fornecedor || r.descricao);
     if (refs.length > 0) {
       const { error: e2 } = await supabase.from("chamados_referencias").insert(refs);
       if (e2) throw new Error("Erro nas referências: " + e2.message);
