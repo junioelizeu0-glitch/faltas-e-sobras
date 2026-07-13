@@ -236,7 +236,39 @@ export const createChamadoCompleto = createServerFn({ method: "POST" })
         sla_status: sla,
         ordem: et.ordem ?? idx + 1,
       };
+    });
+
+    // Se não veio nenhuma etapa, cria "Aguardando Monitoramento" default
+    if (etapas.length === 0) {
+      const { data: t } = await supabase
+        .from("tarefas_catalogo")
+        .select("*")
+        .ilike("nome", "%aguardando monitoramento%")
+        .limit(1)
+        .maybeSingle();
+      const hoje = new Date().toISOString().slice(0, 10);
+      etapas.push({
+        chamado_id,
+        tarefa_id: t?.id ?? null,
+        nome_tarefa: t?.nome ?? "Aguardando Monitoramento",
+        dias_uteis_previsto: t?.dias_uteis ?? 2,
+        dt_inicio: hoje,
+        dt_fim: null,
+        dias_uteis_real: null,
+        sla_status: "Em Aberto",
+        ordem: 1,
+      });
+    }
+
+    if (etapas.length > 0) {
+      const { error: e3 } = await supabase.from("chamados_etapas").insert(etapas);
+      if (e3) throw new Error("Erro nas etapas: " + e3.message);
+    }
+
+    return { ok: true, id: chamado_id };
   });
+
+
 
 // ===== Ler chamado completo =====
 export const getChamadoCompleto = createServerFn({ method: "GET" })
