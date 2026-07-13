@@ -15,8 +15,8 @@ export type Produto = {
 export const listProdutos = createServerFn({ method: "GET" })
   .inputValidator((data: { search?: string; limit?: number; offset?: number } | undefined) => data ?? {})
   .handler(async ({ data }) => {
-    await gate();
-    const supabase = await getSupabase();
+    const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
+    const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
     const limit = Math.min(data?.limit ?? 100, 500);
     const offset = data?.offset ?? 0;
     let q = supabase.from("produtos").select("*", { count: "exact" });
@@ -34,8 +34,8 @@ export const listProdutos = createServerFn({ method: "GET" })
 export const searchProdutos = createServerFn({ method: "GET" })
   .inputValidator((data: { q: string }) => data)
   .handler(async ({ data }) => {
-    await gate();
-    const supabase = await getSupabase();
+    const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
+    const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
     const q = (data.q || "").trim();
     if (!q) return [] as Produto[];
     const { data: rows, error } = await supabase
@@ -51,8 +51,8 @@ export const searchProdutos = createServerFn({ method: "GET" })
 export const upsertProduto = createServerFn({ method: "POST" })
   .inputValidator((data: { id?: string; referencia: string; cor: string; descricao?: string; nome_parceiro?: string }) => data)
   .handler(async ({ data }) => {
-    await gate();
-    const supabase = await getSupabase();
+    const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
+    const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
     const row = {
       referencia: data.referencia.trim(),
       cor: (data.cor ?? "").trim(),
@@ -77,8 +77,8 @@ export const upsertProduto = createServerFn({ method: "POST" })
 export const deleteProduto = createServerFn({ method: "POST" })
   .inputValidator((data: { id: string }) => data)
   .handler(async ({ data }) => {
-    await gate();
-    const supabase = await getSupabase();
+    const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
+    const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
     const { error } = await supabase.from("produtos").delete().eq("id", data.id);
     if (error) throw new Error(error.message);
     return { ok: true };
@@ -90,8 +90,8 @@ export const bulkUpsertProdutos = createServerFn({ method: "POST" })
     rows: Array<{ referencia: string; cor?: string; descricao?: string; nome_parceiro?: string }>;
   }) => data)
   .handler(async ({ data }) => {
-    await gate();
-    const supabase = await getSupabase();
+    const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
+    const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
     const norm = (data.rows || [])
       .map((r) => ({
         referencia: String(r.referencia || "").trim(),
@@ -114,8 +114,8 @@ export const bulkUpsertProdutos = createServerFn({ method: "POST" })
 
 /** Exportar tudo (para download em xlsx no cliente). */
 export const exportProdutos = createServerFn({ method: "GET" }).handler(async () => {
-  await gate();
-  const supabase = await getSupabase();
+  const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
+  const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
   const all: any[] = [];
   const step = 1000;
   let from = 0;
@@ -136,8 +136,8 @@ export const exportProdutos = createServerFn({ method: "GET" }).handler(async ()
 // ============ CRUD SIMPLES (só nome) ============
 function makeSimpleCrud(table: "transportadoras" | "conferentes" | "motivos") {
   const list = createServerFn({ method: "GET" }).handler(async () => {
-    await gate();
-    const supabase = await getSupabase();
+    const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
+    const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
     const { data, error } = await (supabase.from(table) as any).select("*").order("nome");
     if (error) throw new Error(error.message);
     return (data || []) as Array<{ id: string; nome: string }>;
@@ -145,8 +145,8 @@ function makeSimpleCrud(table: "transportadoras" | "conferentes" | "motivos") {
   const upsert = createServerFn({ method: "POST" })
     .inputValidator((d: { id?: string; nome: string }) => d)
     .handler(async ({ data }) => {
-      await gate();
-      const supabase = await getSupabase();
+      const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
+      const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
       const nome = (data.nome || "").trim();
       if (!nome) throw new Error("Nome é obrigatório");
       if (data.id) {
@@ -161,8 +161,8 @@ function makeSimpleCrud(table: "transportadoras" | "conferentes" | "motivos") {
   const del = createServerFn({ method: "POST" })
     .inputValidator((d: { id: string }) => d)
     .handler(async ({ data }) => {
-      await gate();
-      const supabase = await getSupabase();
+      const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
+      const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
       const { error } = await (supabase.from(table) as any).delete().eq("id", data.id);
       if (error) throw new Error(error.message);
       return { ok: true };
