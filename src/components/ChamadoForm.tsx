@@ -341,45 +341,45 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
     <div className="space-y-5">
       <section>
         <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Identificação</h2>
-        <div className="grid grid-cols-2 md:grid-cols-6 gap-3">
-          <Field label="Chamado *"><input type="number" value={form.Chamado} onChange={(e) => setField("Chamado", e.target.value.slice(0, 8))} className={inputCls} required /></Field>
-          <Field label="Loja *"><input type="number" value={form.Loja} onChange={(e) => setField("Loja", e.target.value.slice(0, 5))} className={inputCls} required /></Field>
-          <Field label="Tipo"><select value={form.Tipo} onChange={(e) => setField("Tipo", e.target.value)} className={inputCls}>{TIPO_OPCOES.map((o) => <option key={o}>{o}</option>)}</select></Field>
-          <Field label="CD"><select value={form.CD} onChange={(e) => setField("CD", e.target.value)} className={inputCls}>{CD_OPCOES.map((o) => <option key={o}>{o}</option>)}</select></Field>
-          <Field label="NF"><input type="number" value={form.NF} onChange={(e) => setField("NF", e.target.value.slice(0, 10))} className={inputCls} /></Field>
-          <Field label="Data Emissão"><input type="date" value={form["Dt Emissão"]} onChange={(e) => setField("Dt Emissão", e.target.value)} className={inputCls} /></Field>
+        <div className="flex flex-wrap gap-3">
+          <Field label="Chamado *" style={{ width: "120px" }}><input type="number" value={form.Chamado} onChange={(e) => setField("Chamado", e.target.value.slice(0, 8))} className={inputCls} required /></Field>
+          <Field label="Loja *" style={{ width: "90px" }}><input type="number" value={form.Loja} onChange={(e) => setField("Loja", e.target.value.slice(0, 5))} className={inputCls} required /></Field>
+          <Field label="Tipo" style={{ width: "130px" }}><select value={form.Tipo} onChange={(e) => setField("Tipo", e.target.value)} className={inputCls}>{TIPO_OPCOES.map((o) => <option key={o}>{o}</option>)}</select></Field>
+          <Field label="CD" style={{ width: "90px" }}><select value={form.CD} onChange={(e) => setField("CD", e.target.value)} className={inputCls}>{CD_OPCOES.map((o) => <option key={o}>{o}</option>)}</select></Field>
+          <Field label="NF" style={{ width: "140px" }}><input type="number" value={form.NF} onChange={(e) => setField("NF", e.target.value.slice(0, 10))} className={inputCls} /></Field>
+          <Field label="Data Emissão" style={{ width: "160px" }}><input type="date" value={form["Dt Emissão"]} onChange={(e) => setField("Dt Emissão", e.target.value)} className={inputCls} /></Field>
         </div>
       </section>
       <section>
         <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Status e Datas</h2>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-          <Field label="Data Abertura *"><input type="date" value={form["Dt Abertura"]} onChange={(e) => setField("Dt Abertura", e.target.value)} className={inputCls} required /></Field>
-          <Field label="Data Finalização"><input type="date" value={form["Dt Finalização"]} onChange={(e) => setField("Dt Finalização", e.target.value)} className={inputCls} /></Field>
-          <Field label="Data Pagamento"><input type="date" value={form["Dt Pagamento"]} onChange={(e) => setField("Dt Pagamento", e.target.value)} className={inputCls} /></Field>
-          <Field label="Status Pagamento (auto)"><input value={statusPagamento} readOnly className={inputCls + " bg-slate-50 text-slate-500"} /></Field>
-          <Field label="Situação (tarefa atual)" className="col-span-2">
+        <div className="flex flex-wrap gap-3">
+          <Field label="Data Abertura *" style={{ width: "160px" }}><input type="date" value={form["Dt Abertura"]} onChange={(e) => setField("Dt Abertura", e.target.value)} className={inputCls} required /></Field>
+          <Field label="Data Finalização" style={{ width: "160px" }}><input type="date" value={form["Dt Finalização"]} onChange={(e) => setField("Dt Finalização", e.target.value)} className={inputCls} /></Field>
+          <Field label="Data Pagamento" style={{ width: "160px" }}><input type="date" value={form["Dt Pagamento"]} onChange={(e) => setField("Dt Pagamento", e.target.value)} className={inputCls} /></Field>
+          <Field label="Status Pagamento (auto)" style={{ width: "170px" }}><input value={statusPagamento} readOnly className={inputCls + " bg-slate-50 text-slate-500"} /></Field>
+          <Field label="Situação (tarefa atual)" style={{ minWidth: "260px", flex: "1 1 260px" }}>
             <select value={form["Situação "]} onChange={(e) => setField("Situação ", e.target.value)} className={inputCls}>{SITUACAO_OPCOES.map((o) => <option key={o}>{o}</option>)}</select>
           </Field>
-          <Field label="Status Chamado">
+          <Field label="Status Chamado" style={{ width: "210px" }}>
             <select value={form["Status Chamado"]} onChange={(e) => setField("Status Chamado", e.target.value)} className={inputCls}>{STATUS_CHAMADO_OPCOES.map((o) => <option key={o}>{o}</option>)}</select>
           </Field>
-          <Field label="SLA (auto, dias úteis)"><input value={sla || "—"} readOnly className={inputCls + " bg-slate-50 text-slate-500"} /></Field>
+          <Field label="SLA (auto, dias úteis)" style={{ width: "160px" }}><input value={sla || "—"} readOnly className={inputCls + " bg-slate-50 text-slate-500"} /></Field>
         </div>
       </section>
       <section>
         <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
           Responsáveis {precisaTranspConf && <span className="ml-2 text-[10px] text-blue-600 normal-case">(obrigatório para {statusChamado})</span>}
         </h2>
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
-          <Field label={`Transportadora ${precisaTranspConf ? "*" : ""}`}>
+        <div className="flex flex-wrap gap-3">
+          <Field label={`Transportadora ${precisaTranspConf ? "*" : ""}`} style={{ minWidth: "240px", flex: "1 1 240px" }}>
             <input list="transp-list-form" value={form.Transportadora} onChange={(e) => setField("Transportadora", e.target.value.toUpperCase().slice(0, 60))} className={inputCls} />
             <datalist id="transp-list-form">{transp.map((t: string) => <option key={t} value={t} />)}</datalist>
           </Field>
-          <Field label={`Conferente ${precisaTranspConf ? "*" : ""}`}>
+          <Field label={`Conferente ${precisaTranspConf ? "*" : ""}`} style={{ minWidth: "240px", flex: "1 1 240px" }}>
             <input list="conf-list-form" value={form.Conferente} onChange={(e) => setField("Conferente", e.target.value.toUpperCase().slice(0, 60))} className={inputCls} />
             <datalist id="conf-list-form">{confs.map((c: string) => <option key={c} value={c} />)}</datalist>
           </Field>
-          <Field label={`Motivo ${precisaMotivo ? "*" : ""}`} className="md:col-span-2">
+          <Field label={`Motivo ${precisaMotivo ? "*" : ""}`} style={{ minWidth: "320px", flex: "2 1 320px" }}>
             <input list="mot-list-form" value={form.Motivo} onChange={(e) => setField("Motivo", e.target.value.slice(0, 200))} className={inputCls} />
             <datalist id="mot-list-form">{motivos.map((m: string) => <option key={m} value={m} />)}</datalist>
           </Field>
@@ -388,6 +388,7 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
     </div>
   );
 }
+
 
 function ItemEditModal({ title, onClose, children }: { title: string; onClose: () => void; children: React.ReactNode }) {
   return (
