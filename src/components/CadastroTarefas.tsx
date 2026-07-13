@@ -1,7 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Plus, Loader2, Save, X, Pencil, Trash2 } from "lucide-react";
 import { listAllTarefas, upsertTarefa, deleteTarefa } from "@/lib/chamados.functions";
+import Pagination from "./Pagination";
+
+const PAGE_SIZE = 30;
 
 type T = { id: string; nome: string; dias_uteis: number; aplica_faltas: boolean; aplica_sobras: boolean; ativo: boolean; ordem: number };
 
