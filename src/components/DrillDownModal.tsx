@@ -10,6 +10,7 @@ import {
   ArrowDown,
 } from "lucide-react";
 import { getTarefaAtual, parseDataBR, formatarDataBR } from "@/lib/data-processing";
+import { exportToExcel } from "@/lib/excel-export";
 
 interface DrillDownModalProps {
   isOpen: boolean;
