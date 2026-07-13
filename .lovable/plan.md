@@ -1,122 +1,49 @@
-## Mudanças solicitadas
 
-### 1. Popup de erro no login
-Hoje o `/unlock` mostra o erro em texto no card. Trocar por um dialog/alert modal (shadcn `AlertDialog`) quando as credenciais falharem ou a API retornar erro.
+Vou implementar tudo em fases para você conseguir validar aos poucos. Antes de começar, dois pontos que preciso te confirmar (já ajusto conforme sua resposta):
 
-### 2. Tela inicial em branco após login
-Hoje `/` redireciona (após unlock) direto ao Dashboard (Relatório). Vamos:
-- Criar rota `/` como página em branco com apenas título "Bem-vindo" (ou logo Constance).
-- Mover o Dashboard atual para `/relatorio` (o menu já aponta para o submenu "relatorio").
-- Ajustar `AppShell` para não abrir automaticamente nenhum submenu.
+### Decisões que preciso confirmar
 
-### 3. Novo Chamado com abas: Cadastro / Referências / Etapas
-O formulário `NovoChamadoForm` vira uma tela com 3 abas (`Tabs` shadcn):
+1. **Reuso de tabelas já existentes no banco.** Você pediu "não reaproveite tabelas existentes a menos que eu confirme". Só que já existem, criadas para este mesmo projeto, três tabelas que casam 100% com o que você descreveu:
+   - `tarefas_catalogo` → o "Cadastro de Tarefas/Etapas" (nome, dias_uteis, aplica_faltas/sobras)
+   - `chamados_referencias` → linhas da aba Referências (chamado_id, referencia, cor, tamanho, fornecedor)
+   - `chamados_etapas` → linhas da aba Etapas (chamado_id, nome_tarefa, dias_uteis_previsto, dt_inicio, dt_fim, dias_uteis_real, sla_status)
+   
+   Minha recomendação é **reusar essas três** (só adicionando `descricao` e `quantidade` em `chamados_referencias`) e **criar novas** para o resto (`produtos`, `transportadoras`, `conferentes`, `motivos`). Se preferir tabelas totalmente novas, me diga e crio zeradas.
 
-**Aba 1 — Cadastro**
-Campos atuais do chamado (Loja, NF, Data Abertura, Valor, Status, Transportadora, Conferente, Motivo, etc).
+2. **Cadastro de Tarefas.** Você mencionou "SLA padrão em dias úteis" só. A tabela `tarefas_catalogo` já tem também os flags `aplica_faltas` e `aplica_sobras` (para filtrar quais tarefas aparecem por tipo de chamado). Mantenho esses flags no cadastro? (Recomendo manter — é útil pra quando entrar Sobras.)
 
-**Aba 2 — Referências** (1..N por chamado)
-Lista editável com botão "Adicionar referência". Cada linha:
-- Referência (código)
-- Cor
-- Tamanho
-- Fornecedor
+### Fases da implementação
 
-Validação: mínimo 1 referência para salvar.
+**Fase 1 — Banco (nesta primeira mensagem)**
+- `produtos` (referencia, cor, descricao, nome_parceiro; UNIQUE em referencia+cor) + índices de busca
+- `transportadoras`, `conferentes`, `motivos` (só id + nome único)
+- Adiciona `descricao` e `quantidade` em `chamados_referencias`
+- RLS liberado sob o gate de senha (padrão do projeto)
+- Import da sua planilha `base_produto.xlsx` (12.633 linhas) via `INSERT` em lotes, aplicando `ON CONFLICT (referencia, cor) DO UPDATE`
 
-**Aba 3 — Etapas** (fluxo de tarefas)
-Lista de etapas do chamado. Cada linha:
-- Tarefa (select alimentado por `tarefas_catalogo` filtrado pelo tipo do chamado — FALTA/SOBRA)
-- Data de início
-- Data de finalização (opcional)
-- Dias úteis previstos (auto da tarefa cadastrada)
-- Dias úteis reais (calculado quando finalizada)
-- SLA (Dentro / Fora) calculado
+**Fase 2 — Cadastros mestres e menu**
+- Novo grupo "Cadastros" no menu lateral: Produtos, Tarefas/Etapas, Transportadoras, Conferentes, Motivos
+- Tela genérica de CRUD reaproveitada para transportadora/conferente/motivo (só nome)
+- Tela de Tarefas: nome + SLA (dias úteis) + flags Faltas/Sobras
+- Tela de Produtos: tabela com busca (referência/cor/descrição/fornecedor), edição inline, exclusão, **import .xlsx/.csv** (upsert por ref+cor), **export .xlsx**
 
-Ao criar o chamado, a primeira etapa "Aguardando monitoramento" é inserida automaticamente com data de início = hoje.
+**Fase 3 — Chamado em 3 abas**
+- Refatorar `NovoChamadoForm` para 3 abas: **Cadastro / Referências / Etapas**
+- **Cadastro**: Transportadora, Conferente, Motivo passam a puxar das tabelas mestras (combobox — digita ou seleciona)
+  - Campo "Situação (tarefa atual)" vira **read-only, calculado**: mostra a primeira etapa sem `dt_fim` (ou "Finalizado" se todas estão concluídas)
+- **Referências**: linhas com Ref → busca em `produtos` (autocomplete), ao escolher preenche Cor/Descrição/Fornecedor automaticamente; Tamanho e Quantidade manuais; botão + para adicionar linha, lixeira para remover
+- **Etapas**: linhas com Nome (select puxa de `tarefas_catalogo` → traz SLA padrão), Data início, **Data prevista (auto = início + SLA em dias úteis)**, Data finalizado (manual), **Dias úteis gastos (auto)**, badge dentro do prazo / no limite / atrasado
+- Salvar grava chamado + referências + etapas em uma transação lógica (chama `createChamadoCompleto`, que já existe e vou estender)
 
-### 4. Cadastro de Tarefas (novo)
-Nova rota `/tarefas` (submenu "Cadastros" → "Tarefas") com CRUD simples:
-- Nome da tarefa
-- Dias úteis (SLA)
-- Aplica em: FALTA / SOBRA / AMBOS (checkboxes)
-- Ativo (bool)
+**Fase 4 — Consulta e Editar**
+- Modal de edição do `ConsultaChamados` também vira 3 abas (mesmo formulário)
+- Coluna "Tarefa Atual" na consulta passa a refletir a etapa em aberto
 
-Quando o usuário seleciona a tarefa na aba Etapas do chamado, o sistema filtra pelo tipo do chamado aberto.
+**Fase 5 — Utilitário de dias úteis**
+- Já existe `isDiaUtil` e `diasUteisEntre` espalhados em 2 arquivos. Consolido em `src/lib/business-days.ts` e adiciono `addBusinessDays(date, n)` para calcular data prevista.
 
----
+### Nota técnica
+- 12.633 produtos: rodo o import em batches de ~500 por INSERT para não estourar limite de payload.
+- A autopreenchimento de referência usa server function com `ilike` + limit(20) — leve.
 
-## Mudanças no banco (Lovable Cloud)
-
-Nova migration com 3 tabelas:
-
-**`tarefas_catalogo`**
-- `id uuid pk`
-- `nome text not null`
-- `dias_uteis int not null`
-- `aplica_faltas bool default false`
-- `aplica_sobras bool default false`
-- `ativo bool default true`
-- timestamps
-
-**`chamados_referencias`**
-- `id uuid pk`
-- `chamado_id uuid fk → chamados_faltas(id) on delete cascade`
-- `referencia text`
-- `cor text`
-- `tamanho text`
-- `fornecedor text`
-- timestamps
-
-**`chamados_etapas`**
-- `id uuid pk`
-- `chamado_id uuid fk → chamados_faltas(id) on delete cascade`
-- `tarefa_id uuid fk → tarefas_catalogo(id)`
-- `nome_tarefa text` (snapshot)
-- `dias_uteis_previsto int`
-- `dt_inicio date`
-- `dt_fim date null`
-- `dias_uteis_real int null`
-- `sla_status text null` (Dentro/Fora)
-- `ordem int`
-- timestamps
-
-Todas com RLS fechada (só service_role) — segue o padrão gate atual.
-Adicionar tabelas ao visualizador `/admin/tabelas`.
-
----
-
-## Server functions
-
-Em `src/lib/chamados.functions.ts` (novo):
-- `createChamadoCompleto({ chamado, referencias[], etapas[] })` — transação: insere chamado, referências e etapas. Cria etapa "Aguardando monitoramento" default.
-- `listTarefas({ tipo })` — retorna catálogo filtrado.
-- `createTarefa`, `updateTarefa`, `deleteTarefa`.
-- `addReferencia`, `removeReferencia` (para edição futura).
-- `updateEtapa` — recalcula SLA ao preencher `dt_fim`.
-
-Utilitário de dias úteis reaproveitado do form atual.
-
----
-
-## Sugestão / observações
-
-1. **Snapshot do nome da tarefa** em `chamados_etapas.nome_tarefa` para não perder histórico se você editar/excluir uma tarefa do catálogo.
-2. **Não replicar referências/etapas na planilha Apps Script** — o dual-write hoje só cobre a linha do chamado. Referências e etapas ficam só no banco (a planilha não tem essas colunas). Confirme se está ok.
-3. **Etapas pré-cadastradas**: já criar no seed as tarefas comuns (Aguardando monitoramento, Em análise transportadora, Aguardando aprovação, Aprovado/Pago, etc.) — me confirme a lista ou deixo genérica pra você editar depois.
-4. **Ordem das etapas**: o sistema respeita ordem de inserção (`ordem` incremental). Você pode arrastar/reordenar depois se quiser (fica pra próxima iteração).
-
----
-
-## Ordem de execução
-
-1. Migration (3 tabelas + grants + RLS fechada).
-2. `chamados.functions.ts` + `tarefas.functions.ts`.
-3. Refatorar `NovoChamadoForm` para abas.
-4. Nova rota `/tarefas` (cadastro).
-5. Nova rota `/relatorio` (dashboard) + `/` em branco.
-6. Popup de erro no `/unlock`.
-7. Ajustar `AppShell` (menu Cadastros → Tarefas; sem submenu default).
-8. Atualizar `/admin/tabelas` com novas tabelas.
-
-Confirma que posso seguir? Se quiser mudar algo (ex.: campos das tabelas, seed das tarefas, se quer replicar referências na planilha), me avisa antes.
+Posso rodar direto a **Fase 1** (migration + import da planilha) já nessa aprovação? Depois sigo pra Fase 2/3/4 em mensagens subsequentes sem pausar.
