@@ -1,6 +1,7 @@
 import React, { useState } from "react";
 import {
   ChevronDown,
+  ChevronRight,
   ChevronLeft,
   Plus,
   Search,
@@ -30,6 +31,8 @@ export default function AppShell({
   setSelectedSubmenu,
 }: AppShellProps) {
   const [menuAberto, setMenuAberto] = useState(false);
+  const [openFaltas, setOpenFaltas] = useState(true);
+  const [openCadastros, setOpenCadastros] = useState(false);
   const lock = useServerFn(lockSite);
   const router = useRouter();
   async function handleLogout() {
@@ -82,88 +85,74 @@ export default function AppShell({
             <div className="flex-1 p-3 space-y-6">
               {/* Grupo Faltas */}
               <div>
-                <div
-                  className={`px-3 py-1 text-xs font-bold uppercase tracking-wider flex items-center justify-between transition-colors ${
-                    selectedSubmenu ? "text-blue-600" : "text-slate-400"
+                <button
+                  type="button"
+                  onClick={() => setOpenFaltas((v) => !v)}
+                  className={`w-full px-3 py-1 text-xs font-bold uppercase tracking-wider flex items-center justify-between transition-colors hover:text-slate-700 cursor-pointer ${
+                    selectedSubmenu && ["novo","consulta","relatorio"].includes(selectedSubmenu) ? "text-blue-600" : "text-slate-400"
                   }`}
                 >
                   <span>Faltas</span>
-                  <ChevronDown className="w-3.5 h-3.5" />
-                </div>
-                <div className="mt-2 space-y-1">
-                  <button
-                    onClick={() => {
-                      setSelectedSubmenu("novo");
-                      setMenuAberto(false);
-                    }}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                      selectedSubmenu === "novo"
-                        ? "bg-blue-50 text-blue-600"
-                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                    } cursor-pointer`}
-                  >
-                    <Plus className="w-4 h-4 shrink-0" />
-                    <span>Novo Chamado</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setSelectedSubmenu("consulta");
-                      setMenuAberto(false);
-                    }}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                      selectedSubmenu === "consulta"
-                        ? "bg-blue-50 text-blue-600"
-                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                    } cursor-pointer`}
-                  >
-                    <Search className="w-4 h-4 shrink-0" />
-                    <span>Consulta</span>
-                  </button>
-                  <button
-                    onClick={() => {
-                      setSelectedSubmenu("relatorio");
-                      setMenuAberto(false);
-                    }}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${
-                      selectedSubmenu === "relatorio"
-                        ? "bg-blue-50 text-blue-600"
-                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
-                    } cursor-pointer`}
-                  >
-                    <BarChart2 className="w-4 h-4 shrink-0" />
-                    <span>Relatório</span>
-                  </button>
-                </div>
+                  {openFaltas ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                </button>
+                {openFaltas && (
+                  <div className="mt-2 space-y-1">
+                    {[
+                      { k: "novo", label: "Novo Chamado", icon: Plus },
+                      { k: "consulta", label: "Consulta", icon: Search },
+                      { k: "relatorio", label: "Relatório", icon: BarChart2 },
+                    ].map((item) => {
+                      const Icon = item.icon;
+                      const active = selectedSubmenu === item.k;
+                      return (
+                        <button
+                          key={item.k}
+                          onClick={() => { setSelectedSubmenu(item.k); setMenuAberto(false); }}
+                          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${active ? "bg-blue-50 text-blue-600" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"} cursor-pointer`}
+                        >
+                          <Icon className="w-4 h-4 shrink-0" />
+                          <span>{item.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
               {/* Cadastros */}
               <div>
-                <div className="px-3 py-1 text-xs font-bold uppercase tracking-wider flex items-center justify-between text-slate-400">
+                <button
+                  type="button"
+                  onClick={() => setOpenCadastros((v) => !v)}
+                  className="w-full px-3 py-1 text-xs font-bold uppercase tracking-wider flex items-center justify-between text-slate-400 hover:text-slate-700 cursor-pointer"
+                >
                   <span>Cadastros</span>
-                  <ChevronDown className="w-3.5 h-3.5" />
-                </div>
-                <div className="mt-2 space-y-1">
-                  {[
-                    { k: "cad_produtos", label: "Produtos", icon: Package },
-                    { k: "cad_tarefas", label: "Tarefas / Etapas", icon: ListChecks },
-                    { k: "cad_transportadoras", label: "Transportadoras", icon: Truck },
-                    { k: "cad_conferentes", label: "Conferentes", icon: UserCheck },
-                    { k: "cad_motivos", label: "Motivos", icon: FileText },
-                  ].map((item) => {
-                    const Icon = item.icon;
-                    const active = selectedSubmenu === item.k;
-                    return (
-                      <button
-                        key={item.k}
-                        onClick={() => { setSelectedSubmenu(item.k); setMenuAberto(false); }}
-                        className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${active ? "bg-blue-50 text-blue-600" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"} cursor-pointer`}
-                      >
-                        <Icon className="w-4 h-4 shrink-0" />
-                        <span>{item.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
+                  {openCadastros ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                </button>
+                {openCadastros && (
+                  <div className="mt-2 space-y-1">
+                    {[
+                      { k: "cad_produtos", label: "Produtos", icon: Package },
+                      { k: "cad_tarefas", label: "Tarefas / Etapas", icon: ListChecks },
+                      { k: "cad_transportadoras", label: "Transportadoras", icon: Truck },
+                      { k: "cad_conferentes", label: "Conferentes", icon: UserCheck },
+                      { k: "cad_motivos", label: "Motivos", icon: FileText },
+                    ].map((item) => {
+                      const Icon = item.icon;
+                      const active = selectedSubmenu === item.k;
+                      return (
+                        <button
+                          key={item.k}
+                          onClick={() => { setSelectedSubmenu(item.k); setMenuAberto(false); }}
+                          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${active ? "bg-blue-50 text-blue-600" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"} cursor-pointer`}
+                        >
+                          <Icon className="w-4 h-4 shrink-0" />
+                          <span>{item.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
 
             </div>
