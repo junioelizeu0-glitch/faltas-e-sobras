@@ -59,7 +59,7 @@ export default function CadastroTarefas() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r) => (
+                {paginated.map((r) => (
                   <tr key={r.id} className="border-b border-slate-100 hover:bg-slate-50">
                     <td className="px-3 py-2">{r.ordem}</td>
                     <td className="px-3 py-2 font-semibold">{r.nome}</td>
@@ -78,6 +78,7 @@ export default function CadastroTarefas() {
             </table>
           )}
         </div>
+        <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={rows.length} pageSize={PAGE_SIZE} />
       </div>
 
       {editing && (
