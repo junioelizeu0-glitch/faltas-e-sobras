@@ -175,11 +175,10 @@ export default function CadastroLojas() {
               {[
                 ["Razão Social", viewing.razao_social],
                 ["CNPJ", viewing.cnpj],
+                ["Tipo", viewing.tipo],
                 ["Banco", viewing.banco],
-                ["Tipo de Conta", viewing.tipo_conta],
                 ["Agência", viewing.agencia ? `${viewing.agencia}${viewing.agencia_dig ? "-" + viewing.agencia_dig : ""}` : null],
                 ["Conta", viewing.conta ? `${viewing.conta}${viewing.conta_dig ? "-" + viewing.conta_dig : ""}` : null],
-                ["PIX", viewing.pix],
                 ["Observação", viewing.observacao],
               ].map(([label, val]) => (
                 <div key={label as string}>
