@@ -1090,7 +1090,7 @@ const AbaConferentes = ({ mode, data, onOpenModal }: { mode: 'geral', data: any,
 
 // --- MAIN COMPONENT ---
 export default function Dashboard() {
-  const [selectedSubmenu, setSelectedSubmenu] = useState<string | null>("relatorio");
+  const [selectedSubmenu, setSelectedSubmenu] = useState<string | null>(null);
   const [activeTab, setActiveTab] = useState('executivo');
   const dashboardRef = useRef<HTMLDivElement>(null);
   const [isDrillDownOpen, setIsDrillDownOpen] = useState(false);
