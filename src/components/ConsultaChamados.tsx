@@ -1,9 +1,10 @@
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Search, X, Pencil, Trash2 } from "lucide-react";
+import { Search, X, Pencil, Trash2, DownloadCloud, UploadCloud, Loader2 } from "lucide-react";
 import { parseDataBR } from "@/lib/data-processing";
 import { deleteChamado } from "@/lib/chamados.functions";
+import { pullFromAppsScript, pushToAppsScript } from "@/lib/sync.functions";
 import ChamadoForm from "./ChamadoForm";
 import Pagination from "./Pagination";
 
@@ -52,7 +53,30 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(0);
+  const [syncing, setSyncing] = useState<"pull" | "push" | null>(null);
   const delFn = useServerFn(deleteChamado);
+  const pullFn = useServerFn(pullFromAppsScript);
+  const pushFn = useServerFn(pushToAppsScript);
+
+  const doPull = async () => {
+    if (!confirm("Puxar dados da API? Chamados existentes serão atualizados e novos serão adicionados.")) return;
+    setSyncing("pull");
+    try {
+      const r: any = await pullFn({ data: undefined as any });
+      toast.success(`API → Banco: ${r.inseridos} novos, ${r.atualizados} atualizados (de ${r.total}).`);
+      onChanged?.();
+    } catch (e: any) { toast.error(e?.message || "Erro ao puxar da API"); }
+    finally { setSyncing(null); }
+  };
+  const doPush = async () => {
+    if (!confirm("Enviar TODOS os chamados do banco para a planilha? A aba será substituída.")) return;
+    setSyncing("push");
+    try {
+      const r: any = await pushFn({ data: undefined as any });
+      toast.success(`Banco → API: ${r.enviados} registros enviados.`);
+    } catch (e: any) { toast.error(e?.message || "Erro ao enviar para API"); }
+    finally { setSyncing(null); }
+  };
 
   const tarefas = useMemo(() => {
     const set = new Set<string>();
@@ -122,6 +146,24 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
             </p>
           </div>
           <div className="flex items-center gap-1">
+            <button
+              onClick={doPull}
+              disabled={syncing !== null}
+              title="Puxar dados atualizados da API (planilha → banco)"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-slate-700 border border-slate-200 hover:bg-slate-50 rounded disabled:opacity-40"
+            >
+              {syncing === "pull" ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <DownloadCloud className="w-3.5 h-3.5"/>}
+              Puxar da API
+            </button>
+            <button
+              onClick={doPush}
+              disabled={syncing !== null}
+              title="Enviar dados do banco para a API (banco → planilha)"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-slate-700 border border-slate-200 hover:bg-slate-50 rounded disabled:opacity-40 mr-2"
+            >
+              {syncing === "push" ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <UploadCloud className="w-3.5 h-3.5"/>}
+              Enviar p/ API
+            </button>
             <button
               onClick={abrirEditarSelecionado}
               disabled={selected.size !== 1}
