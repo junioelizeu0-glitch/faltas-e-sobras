@@ -229,7 +229,12 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
       if (mode === "editar" && chamadoId) {
         await updateFn({ data: { id: chamadoId, ...payload } });
       } else {
-        await createFn({ data: payload });
+        const res: any = await createFn({ data: payload });
+        // Após criar, transiciona para modo edição para que próximas ações (add referência/etapa) atualizem o mesmo registro
+        if (res?.id) {
+          setChamadoId(res.id);
+          setMode("editar");
+        }
       }
       const msg = successMsg || (mode === "editar" ? "Chamado atualizado com sucesso." : "Chamado incluído com sucesso.");
       setFeedback({ type: "ok", msg });
