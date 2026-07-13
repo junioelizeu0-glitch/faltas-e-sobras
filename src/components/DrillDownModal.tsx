@@ -77,7 +77,11 @@ export default function DrillDownModal({
         if (col === "Tarefa Atual") {
           return getTarefaAtual(row);
         }
-        if (col === "NF") return row["Nº Nfe"] || row["NF"] || row["nfe"] || "";
+        if (col === "NF" || col === "Numero da NF") return row["Nº Nfe"] || row["NF"] || row["nfe"] || "";
+        if (col === "Dt Emissão NF") {
+          const parsed = parseDataBR(row["Dt Emissão"] || row.dt_emissao);
+          return parsed ? parsed.getTime() : 0;
+        }
         if (col.startsWith("Dt ") || col.includes("Dt ") || col.includes("Data")) {
           const parsed = parseDataBR(row[col]);
           return parsed ? parsed.getTime() : 0;
@@ -137,8 +141,10 @@ export default function DrillDownModal({
           val = row["SLA por chamado (60dias)"] || row["sla"] || "";
         } else if (col === "Tarefa Atual") {
           val = getTarefaAtual(row) || "";
-        } else if (col === "NF") {
+        } else if (col === "NF" || col === "Numero da NF") {
           val = row["Nº Nfe"] || row["NF"] || row["nfe"] || "";
+        } else if (col === "Dt Emissão NF") {
+          val = formatarDataBR(row["Dt Emissão"] || row.dt_emissao);
         } else if (col.startsWith("Dt ") || col.includes("Dt ") || col.includes("Data")) {
           const cellVal = row[col] ?? row[Object.keys(row).find(
             (k) => k.trim().toLowerCase() === col.trim().toLowerCase()) || ""];
@@ -311,6 +317,14 @@ export default function DrillDownModal({
                         </td>
                       );
                     }
+                    if (col === "Dt Emissão NF") {
+                      val = formatarDataBR(row["Dt Emissão"] || row.dt_emissao);
+                      return (
+                        <td key={col} className="p-3 text-slate-500">
+                          {val}
+                        </td>
+                      );
+                    }
                     if (col.startsWith("Dt ") || col.includes("Dt ") || col.includes("Data")) {
                       const cellVal =
                         row[col] !== undefined
@@ -335,7 +349,7 @@ export default function DrillDownModal({
                         </td>
                       );
                     }
-                    if (col === "NF") {
+                    if (col === "NF" || col === "Numero da NF") {
                       val = row["Nº Nfe"] || row["NF"] || row["nfe"] || "Sem informação";
                       return (
                         <td key={col} className="p-3 text-slate-600">
@@ -358,7 +372,7 @@ export default function DrillDownModal({
               ))}
               {filtered.length === 0 && (
                 <tr>
-                  <td colSpan={10} className="p-8 text-center text-slate-400">
+                  <td colSpan={activeColumns.length} className="p-8 text-center text-slate-400">
                     Nenhum registro encontrado.
                   </td>
                 </tr>
