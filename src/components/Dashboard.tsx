@@ -1127,16 +1127,10 @@ export default function Dashboard() {
     const p = e.target.value;
     let start = '';
     let end = '';
-    
+
     if (p !== 'Todos') {
       const today = new Date();
-      const formatDate = (d: Date) => {
-        const year = d.getFullYear();
-        const month = String(d.getMonth() + 1).padStart(2, '0');
-        const day = String(d.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
-      };
-      
+
       if (p === 'Últimos 7 dias') {
         const dStart = new Date();
         dStart.setDate(today.getDate() - 7);
@@ -1149,12 +1143,11 @@ export default function Dashboard() {
         end = formatDate(today);
       } else if (p === 'Mês Atual') {
         const dStart = new Date(today.getFullYear(), today.getMonth(), 1);
-        const dEnd = new Date(today.getFullYear(), today.getMonth() + 1, 0);
         start = formatDate(dStart);
-        end = formatDate(dEnd);
+        end = formatDate(today);
       }
     }
-    
+
     setFilterSelections(prev => ({
       ...prev,
       periodo: p,
