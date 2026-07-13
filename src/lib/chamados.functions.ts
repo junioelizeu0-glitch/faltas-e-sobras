@@ -436,3 +436,20 @@ export const updateChamadoCompleto = createServerFn({ method: "POST" })
     return { ok: true, id: data.id };
   });
 
+// ===== Excluir chamado(s) =====
+export const deleteChamado = createServerFn({ method: "POST" })
+  .inputValidator((data: { ids: string[] }) => data)
+  .handler(async ({ data }) => {
+    const { requireUnlockedSession } = await import("@/lib/gate.server");
+    await requireUnlockedSession();
+    const supabase = await getSupabase();
+    const ids = (data.ids || []).filter(Boolean);
+    if (!ids.length) return { ok: true, count: 0 };
+    await supabase.from("chamados_etapas").delete().in("chamado_id", ids);
+    await supabase.from("chamados_referencias").delete().in("chamado_id", ids);
+    const { error } = await supabase.from("chamados_faltas").delete().in("id", ids);
+    if (error) throw new Error(error.message);
+    return { ok: true, count: ids.length };
+  });
+
+
