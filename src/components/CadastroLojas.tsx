@@ -206,9 +206,11 @@ export default function CadastroLojas() {
             </div>
             <div className="p-4 space-y-3">
               {err && <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded p-2">{err}</div>}
-              <div className="grid grid-cols-2 gap-3">
-                {field("Número da Loja *", "numero", { placeholder: "Ex.: 101" })}
-                <label className="block">
+              <div className="grid grid-cols-12 gap-3 items-start">
+                <div className="col-span-3">
+                  {field("Número da Loja *", "numero", { placeholder: "Ex.: 101" })}
+                </div>
+                <label className="col-span-9 block">
                   <span className="text-xs font-semibold text-slate-600">CNPJ</span>
                   <div className="mt-1 flex gap-1">
                     <input
