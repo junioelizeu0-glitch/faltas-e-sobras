@@ -175,8 +175,6 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
                   <th className="text-left px-3 py-2 font-semibold">Abertura</th>
                   <th className="text-left px-3 py-2 font-semibold">Tarefa Atual</th>
                   <th className="text-left px-3 py-2 font-semibold">Status</th>
-                  <th className="text-left px-3 py-2 font-semibold">Transportadora</th>
-                  <th className="text-left px-3 py-2 font-semibold">Conferente</th>
                   <th className="text-left px-3 py-2 font-semibold">SLA (dias úteis)</th>
                   <th className="text-right px-3 py-2 font-semibold">Ações</th>
                 </tr>
@@ -193,8 +191,6 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
                     <td className="px-3 py-2">{fmtDateBR(r["Dt Abertura"])}</td>
                     <td className="px-3 py-2 max-w-[220px] truncate" title={r["Situação "]}>{r["Situação "] || "—"}</td>
                     <td className="px-3 py-2">{statusBadge(r["Status Chamado"])}</td>
-                    <td className="px-3 py-2 max-w-[160px] truncate" title={r.Transportadora}>{r.Transportadora || "—"}</td>
-                    <td className="px-3 py-2 max-w-[160px] truncate" title={r.Conferente}>{r.Conferente || "—"}</td>
                     <td className="px-3 py-2">{slaBadge(r["Dt Abertura"], r["Dt Finalização"])}</td>
                     <td className="px-3 py-2 text-right">
                       <button
@@ -208,7 +204,7 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
                 ))}
                 {linhas.length === 0 && (
                   <tr>
-                    <td colSpan={9} className="px-4 py-8 text-center text-slate-400">Nenhum chamado encontrado.</td>
+                    <td colSpan={7} className="px-4 py-8 text-center text-slate-400">Nenhum chamado encontrado.</td>
                   </tr>
                 )}
               </tbody>
