@@ -360,6 +360,33 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
 
         </div>
       </div>
+
+      {manage && (
+        <div className="fixed inset-0 z-[70] bg-black/50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) { setManage(null); loadListas(); } }}>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between px-4 py-3 border-b bg-slate-50">
+              <h3 className="font-semibold text-slate-800">
+                {manage === "transp" && "Cadastro de Transportadoras"}
+                {manage === "conf" && "Cadastro de Conferentes"}
+                {manage === "motivo" && "Cadastro de Motivos"}
+              </h3>
+              <button onClick={() => { setManage(null); loadListas(); }} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5"/></button>
+            </div>
+            <div className="flex-1 overflow-auto">
+              {manage === "transp" && (
+                <CadastroSimples titulo="Transportadoras" listFn={listTransportadoras} upsertFn={upsertTransportadora} deleteFn={deleteTransportadora} />
+              )}
+              {manage === "conf" && (
+                <CadastroSimples titulo="Conferentes" listFn={listConferentes} upsertFn={upsertConferente} deleteFn={deleteConferente}
+                  extraFields={[{ key: "cd", label: "CD", type: "select", options: ["ES", "PB"] }]} />
+              )}
+              {manage === "motivo" && (
+                <CadastroSimples titulo="Motivos" listFn={listMotivos} upsertFn={upsertMotivo} deleteFn={deleteMotivo} />
+              )}
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
