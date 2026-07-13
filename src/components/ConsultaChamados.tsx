@@ -204,7 +204,7 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
                 ))}
                 {linhas.length === 0 && (
                   <tr>
-                    <td colSpan={9} className="px-4 py-8 text-center text-slate-400">Nenhum chamado encontrado.</td>
+                    <td colSpan={7} className="px-4 py-8 text-center text-slate-400">Nenhum chamado encontrado.</td>
                   </tr>
                 )}
               </tbody>
