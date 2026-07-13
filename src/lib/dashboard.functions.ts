@@ -7,6 +7,7 @@ async function getSupabase() {
 
 function toApiShape(row: any) {
   return {
+    id: row.id ?? "",
     Chamado: row.chamado ?? "",
     Loja: row.loja ?? "",
     Tipo: row.tipo ?? "",
