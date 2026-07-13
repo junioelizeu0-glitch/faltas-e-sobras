@@ -37,6 +37,7 @@ export default function CadastroSimples({ titulo, descricao, listFn, upsertFn, d
   const [editing, setEditing] = useState<Row | null>(null);
   const [err, setErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
+  const [page, setPage] = useState(0);
 
   const load = async () => {
     setLoading(true);
@@ -51,6 +52,10 @@ export default function CadastroSimples({ titulo, descricao, listFn, upsertFn, d
       [r.nome, ...extraFields.map((f) => r[f.key])].some((v) => String(v ?? "").toLowerCase().includes(q))
     );
   }, [rows, busca, extraFields]);
+
+  useEffect(() => { setPage(0); }, [busca, rows.length]);
+  const totalPages = Math.max(1, Math.ceil(filtered.length / PAGE_SIZE));
+  const paginated = useMemo(() => filtered.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE), [filtered, page]);
 
   const openNew = () => setEditing({ id: "", nome: "" } as Row);
 
