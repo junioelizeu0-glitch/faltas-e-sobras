@@ -194,7 +194,7 @@ export default function ChamadoForm({ mode, chamadoId, initialChamado, onSaved, 
     return null;
   };
 
-  const submit = async () => {
+  const submit = async (successMsg?: string) => {
     setFeedback(null);
     const err = validate();
     if (err) { setFeedback({ type: "err", msg: err }); return; }
@@ -226,7 +226,7 @@ export default function ChamadoForm({ mode, chamadoId, initialChamado, onSaved, 
       } else {
         await createFn({ data: payload });
       }
-      const msg = mode === "editar" ? "Chamado atualizado com sucesso." : "Chamado incluído com sucesso.";
+      const msg = successMsg || (mode === "editar" ? "Chamado atualizado com sucesso." : "Chamado incluído com sucesso.");
       setFeedback({ type: "ok", msg });
       toast.success(msg);
       onSaved?.();
