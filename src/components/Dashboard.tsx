@@ -1503,6 +1503,18 @@ export default function Dashboard() {
           <ConsultaChamados rawData={rawData} onChanged={() => refetch()} />
         )}
 
+        {selectedSubmenu === 'cad_produtos' && <CadastroProdutos />}
+        {selectedSubmenu === 'cad_tarefas' && <CadastroTarefas />}
+        {selectedSubmenu === 'cad_transportadoras' && (
+          <CadastroSimples titulo="Transportadoras" listFn={listTransportadoras} upsertFn={upsertTransportadora} deleteFn={deleteTransportadora} />
+        )}
+        {selectedSubmenu === 'cad_conferentes' && (
+          <CadastroSimples titulo="Conferentes" listFn={listConferentes} upsertFn={upsertConferente} deleteFn={deleteConferente} />
+        )}
+        {selectedSubmenu === 'cad_motivos' && (
+          <CadastroSimples titulo="Motivos" listFn={listMotivos} upsertFn={upsertMotivo} deleteFn={deleteMotivo} />
+        )}
+
         {selectedSubmenu === 'relatorio' && (
           <div className="flex-1 flex flex-col overflow-hidden bg-slate-50">
             {/* Header Corporativo */}
