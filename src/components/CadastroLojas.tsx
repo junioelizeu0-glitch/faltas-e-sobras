@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Plus, Loader2, Save, X, Search, Pencil, Trash2, Lock } from "lucide-react";
+import { Plus, Loader2, Save, X, Search, Pencil, Trash2, Lock, Download } from "lucide-react";
 import Pagination from "./Pagination";
 import { listLojas, upsertLoja, deleteLoja, type Loja } from "@/lib/lojas.functions";
 
@@ -23,6 +23,38 @@ export default function CadastroLojas() {
   const [err, setErr] = useState<string | null>(null);
   const [saving, setSaving] = useState(false);
   const [page, setPage] = useState(0);
+  const [lookupCnpj, setLookupCnpj] = useState(false);
+
+  const formatCnpj = (v: string) => {
+    const d = String(v || "").replace(/\D/g, "").slice(0, 14);
+    return d
+      .replace(/^(\d{2})(\d)/, "$1.$2")
+      .replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3")
+      .replace(/\.(\d{3})(\d)/, ".$1/$2")
+      .replace(/(\d{4})(\d)/, "$1-$2");
+  };
+
+  const buscarCnpj = async () => {
+    if (!editing) return;
+    const digits = String(editing.cnpj || "").replace(/\D/g, "");
+    if (digits.length !== 14) { toast.error("Informe um CNPJ com 14 dígitos."); return; }
+    setLookupCnpj(true);
+    try {
+      const resp = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${digits}`);
+      if (!resp.ok) throw new Error("CNPJ não encontrado.");
+      const j: any = await resp.json();
+      setEditing({
+        ...editing,
+        cnpj: formatCnpj(digits),
+        razao_social: editing.razao_social?.trim() ? editing.razao_social : (j.razao_social || j.nome_fantasia || ""),
+      });
+      toast.success("Razão social preenchida pela Receita.");
+    } catch (e: any) {
+      toast.error(e?.message || "Falha ao consultar CNPJ.");
+    } finally {
+      setLookupCnpj(false);
+    }
+  };
 
   const load = async () => {
     setLoading(true);
@@ -176,7 +208,21 @@ export default function CadastroLojas() {
               {err && <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded p-2">{err}</div>}
               <div className="grid grid-cols-2 gap-3">
                 {field("Número da Loja *", "numero", { placeholder: "Ex.: 101" })}
-                {field("CNPJ", "cnpj", { placeholder: "00.000.000/0001-00" })}
+                <label className="block">
+                  <span className="text-xs font-semibold text-slate-600">CNPJ</span>
+                  <div className="mt-1 flex gap-1">
+                    <input
+                      value={editing?.cnpj ?? ""}
+                      onChange={(e) => setEditing({ ...(editing as Loja), cnpj: formatCnpj(e.target.value) })}
+                      onBlur={() => { if (String(editing?.cnpj || "").replace(/\D/g, "").length === 14 && !editing?.razao_social) buscarCnpj(); }}
+                      placeholder="00.000.000/0001-00"
+                      className="flex-1 text-sm rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                    <button type="button" onClick={buscarCnpj} disabled={lookupCnpj} title="Buscar dados na Receita" className="inline-flex items-center gap-1 px-2 text-sm text-white bg-emerald-600 hover:bg-emerald-700 rounded-md disabled:opacity-50">
+                      {lookupCnpj ? <Loader2 className="w-4 h-4 animate-spin"/> : <Download className="w-4 h-4"/>}
+                    </button>
+                  </div>
+                </label>
               </div>
               {field("Razão Social", "razao_social")}
               <div className="pt-2 border-t">
