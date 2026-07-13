@@ -25,6 +25,7 @@ type Props = {
   upsertFn: ServerFn;
   deleteFn: ServerFn;
   extraFields?: ExtraField[];
+  nomeLabel?: string;
 };
 
 export default function CadastroSimples({ titulo, descricao, listFn, upsertFn, deleteFn, extraFields = [] }: Props) {
