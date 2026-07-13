@@ -6,6 +6,7 @@ import {
   listProdutos, upsertProduto, deleteProduto, bulkUpsertProdutos, exportProdutos,
   type Produto,
 } from "@/lib/cadastros.functions";
+import Pagination from "./Pagination";
 
 export default function CadastroProdutos() {
   const list = useServerFn(listProdutos);
@@ -23,7 +24,7 @@ export default function CadastroProdutos() {
   const [importing, setImporting] = useState(false);
   const [msg, setMsg] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
-  const limit = 50;
+  const limit = 30;
 
   const load = async () => {
     setLoading(true);
@@ -132,13 +133,7 @@ export default function CadastroProdutos() {
           )}
         </div>
 
-        <div className="flex items-center justify-between mt-3 text-sm text-slate-600">
-          <span>Página {page + 1} de {totalPages}</span>
-          <div className="flex gap-2">
-            <button disabled={page === 0} onClick={() => setPage((p) => Math.max(0, p - 1))} className="px-3 py-1.5 border border-slate-300 rounded-md bg-white disabled:opacity-40">Anterior</button>
-            <button disabled={page + 1 >= totalPages} onClick={() => setPage((p) => p + 1)} className="px-3 py-1.5 border border-slate-300 rounded-md bg-white disabled:opacity-40">Próxima</button>
-          </div>
-        </div>
+        <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={total} pageSize={limit} />
       </div>
 
       {editing && (

@@ -53,7 +53,12 @@ type Props = {
   compact?: boolean; // se true, sem cabeçalho externo (uso em modal)
 };
 
-export default function ChamadoForm({ mode, chamadoId, initialChamado, onSaved, onCancel, onDeleted, compact }: Props) {
+export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, initialChamado, onSaved, onCancel, onDeleted, compact }: Props) {
+  // Estado interno para transição automática de "novo" -> "editar" após primeiro save
+  const [mode, setMode] = useState<"novo" | "editar">(modeProp);
+  const [chamadoId, setChamadoId] = useState<string | undefined>(chamadoIdProp);
+  useEffect(() => { setMode(modeProp); setChamadoId(chamadoIdProp); }, [modeProp, chamadoIdProp]);
+
   const createFn = useServerFn(createChamadoCompleto);
   const updateFn = useServerFn(updateChamadoCompleto);
   const getFn = useServerFn(getChamadoCompleto);
@@ -224,7 +229,12 @@ export default function ChamadoForm({ mode, chamadoId, initialChamado, onSaved, 
       if (mode === "editar" && chamadoId) {
         await updateFn({ data: { id: chamadoId, ...payload } });
       } else {
-        await createFn({ data: payload });
+        const res: any = await createFn({ data: payload });
+        // Após criar, transiciona para modo edição para que próximas ações (add referência/etapa) atualizem o mesmo registro
+        if (res?.id) {
+          setChamadoId(res.id);
+          setMode("editar");
+        }
       }
       const msg = successMsg || (mode === "editar" ? "Chamado atualizado com sucesso." : "Chamado incluído com sucesso.");
       setFeedback({ type: "ok", msg });

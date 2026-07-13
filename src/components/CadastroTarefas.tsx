@@ -1,7 +1,10 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Plus, Loader2, Save, X, Pencil, Trash2 } from "lucide-react";
 import { listAllTarefas, upsertTarefa, deleteTarefa } from "@/lib/chamados.functions";
+import Pagination from "./Pagination";
+
+const PAGE_SIZE = 30;
 
 type T = { id: string; nome: string; dias_uteis: number; aplica_faltas: boolean; aplica_sobras: boolean; ativo: boolean; ordem: number };
 
@@ -12,9 +15,13 @@ export default function CadastroTarefas() {
   const [rows, setRows] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
   const [editing, setEditing] = useState<Partial<T> | null>(null);
+  const [page, setPage] = useState(0);
 
   const load = async () => { setLoading(true); try { setRows(await list() as any); } finally { setLoading(false); } };
   useEffect(() => { load(); }, []);
+  const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
+  const paginated = useMemo(() => rows.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE), [rows, page]);
+  useEffect(() => { setPage(0); }, [rows.length]);
 
   const save = async () => {
     if (!editing?.nome) return;
@@ -52,7 +59,7 @@ export default function CadastroTarefas() {
                 </tr>
               </thead>
               <tbody>
-                {rows.map((r) => (
+                {paginated.map((r) => (
                   <tr key={r.id} className="border-b border-slate-100 hover:bg-slate-50">
                     <td className="px-3 py-2">{r.ordem}</td>
                     <td className="px-3 py-2 font-semibold">{r.nome}</td>
@@ -71,6 +78,7 @@ export default function CadastroTarefas() {
             </table>
           )}
         </div>
+        <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={rows.length} pageSize={PAGE_SIZE} />
       </div>
 
       {editing && (

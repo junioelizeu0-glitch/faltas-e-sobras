@@ -1,10 +1,13 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Search, X, Pencil, Trash2 } from "lucide-react";
 import { parseDataBR } from "@/lib/data-processing";
 import { deleteChamado } from "@/lib/chamados.functions";
 import ChamadoForm from "./ChamadoForm";
+import Pagination from "./Pagination";
+
+const PAGE_SIZE = 30;
 
 const STATUS_CHAMADO_OPCOES = ["Pendente Monitoramento", "Aprovado", "Recusado"];
 
@@ -47,6 +50,7 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
   const [filtro, setFiltro] = useState("Todos");
   const [editingId, setEditingId] = useState<string | null>(null);
   const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [page, setPage] = useState(0);
   const delFn = useServerFn(deleteChamado);
 
   const linhas = useMemo(() => {
@@ -61,11 +65,15 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
       .sort((a: any, b: any) => (parseDataBR(b["Dt Abertura"])?.getTime() ?? 0) - (parseDataBR(a["Dt Abertura"])?.getTime() ?? 0));
   }, [rawData, busca, filtro]);
 
-  const allSelected = linhas.length > 0 && linhas.every((r: any) => selected.has(r.id));
+  useEffect(() => { setPage(0); }, [busca, filtro]);
+  const totalPages = Math.max(1, Math.ceil(linhas.length / PAGE_SIZE));
+  const paginadas = useMemo(() => linhas.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE), [linhas, page]);
+
+  const allSelected = paginadas.length > 0 && paginadas.every((r: any) => selected.has(r.id));
   const toggleAll = () => {
     const next = new Set(selected);
-    if (allSelected) linhas.forEach((r: any) => next.delete(r.id));
-    else linhas.forEach((r: any) => r.id && next.add(r.id));
+    if (allSelected) paginadas.forEach((r: any) => next.delete(r.id));
+    else paginadas.forEach((r: any) => r.id && next.add(r.id));
     setSelected(next);
   };
   const toggleOne = (id: string) => {
@@ -147,7 +155,7 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {linhas.map((r: any) => (
+                {paginadas.map((r: any) => (
                   <tr key={r.id || r.Chamado} onClick={() => r.id && setEditingId(r.id)} className={`border-b border-slate-100 hover:bg-blue-50/40 cursor-pointer ${selected.has(r.id) ? "bg-blue-50/60" : ""}`}>
                     <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
                       <input type="checkbox" checked={selected.has(r.id)} onChange={() => toggleOne(r.id)} className="cursor-pointer"/>
@@ -170,6 +178,8 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
             </table>
           </div>
         </div>
+
+        <Pagination page={page} totalPages={totalPages} onChange={setPage} totalItems={linhas.length} pageSize={PAGE_SIZE} />
       </div>
 
       {editingId && (
