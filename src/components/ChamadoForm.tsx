@@ -327,14 +327,15 @@ export default function ChamadoForm({ mode, chamadoId, initialChamado, onSaved, 
 
 const inputCls = "w-full text-sm rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500";
 
-function Field({ label, children, className = "" }: { label: string; children: React.ReactNode; className?: string }) {
+function Field({ label, children, className = "", style }: { label: string; children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
   return (
-    <label className={`flex flex-col gap-1 ${className}`}>
+    <label className={`flex flex-col gap-1 ${className}`} style={style}>
       <span className="text-xs font-semibold text-slate-600">{label}</span>
       {children}
     </label>
   );
 }
+
 
 function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, motivos, precisaTranspConf, precisaMotivo, statusChamado }: any) {
   return (
