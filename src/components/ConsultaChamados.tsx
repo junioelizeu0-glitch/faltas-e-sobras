@@ -1,10 +1,13 @@
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Search, X, Pencil, Trash2 } from "lucide-react";
 import { parseDataBR } from "@/lib/data-processing";
 import { deleteChamado } from "@/lib/chamados.functions";
 import ChamadoForm from "./ChamadoForm";
+import Pagination from "./Pagination";
+
+const PAGE_SIZE = 30;
 
 const STATUS_CHAMADO_OPCOES = ["Pendente Monitoramento", "Aprovado", "Recusado"];
 
