@@ -28,6 +28,7 @@ export async function getGateSession() {
   return useSession<GateSession>(sessionConfig());
 }
 
+
 export async function requireUnlockedSession() {
   const session = await getGateSession();
   if (!session.data.unlocked) {
