@@ -197,6 +197,10 @@ export const createChamadoCompleto = createServerFn({ method: "POST" })
       .single();
     if (e1) throw new Error(e1.message);
     const chamado_id = inserted.id;
+    await upsertConferenteCD(supabase, chamadoRow.conferente, chamadoRow.cd);
+    await upsertTransportadora(supabase, chamadoRow.transportadora);
+
+
 
     // Referências
     const refs = (data.referencias || [])
