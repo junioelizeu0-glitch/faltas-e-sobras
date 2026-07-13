@@ -403,7 +403,13 @@ function Field({ label, children, className = "", style }: { label: string; chil
 }
 
 
-function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, motivos, precisaTranspConf, precisaMotivo, statusChamado }: any) {
+function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, motivos, precisaTranspConf, precisaMotivo, statusChamado, onManage }: any) {
+  const ManageBtn = ({ onClick, title }: { onClick: () => void; title: string }) => (
+    <button type="button" onClick={onClick} title={title}
+      className="inline-flex items-center justify-center p-0.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded">
+      <Pencil className="w-3 h-3"/>
+    </button>
+  );
   return (
     <div className="space-y-5">
       <section>
@@ -439,18 +445,30 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
           Responsáveis {precisaTranspConf && <span className="ml-2 text-[10px] text-blue-600 normal-case">(obrigatório para {statusChamado})</span>}
         </h2>
         <div className="flex flex-wrap gap-3">
-          <Field label={`Transportadora ${precisaTranspConf ? "*" : ""}`} style={{ minWidth: "240px", flex: "1 1 240px" }}>
+          <label className="flex flex-col gap-1" style={{ minWidth: "240px", flex: "1 1 240px" }}>
+            <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+              Transportadora {precisaTranspConf ? "*" : ""}
+              <ManageBtn onClick={() => onManage("transp")} title="Cadastrar transportadoras" />
+            </span>
             <input list="transp-list-form" value={form.Transportadora} onChange={(e) => setField("Transportadora", e.target.value.toUpperCase().slice(0, 60))} className={inputCls} />
             <datalist id="transp-list-form">{transp.map((t: string) => <option key={t} value={t} />)}</datalist>
-          </Field>
-          <Field label={`Conferente ${precisaTranspConf ? "*" : ""}`} style={{ minWidth: "240px", flex: "1 1 240px" }}>
+          </label>
+          <label className="flex flex-col gap-1" style={{ minWidth: "240px", flex: "1 1 240px" }}>
+            <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+              Conferente {precisaTranspConf ? "*" : ""}
+              <ManageBtn onClick={() => onManage("conf")} title="Cadastrar conferentes" />
+            </span>
             <input list="conf-list-form" value={form.Conferente} onChange={(e) => setField("Conferente", e.target.value.toUpperCase().slice(0, 60))} className={inputCls} />
             <datalist id="conf-list-form">{confs.map((c: string) => <option key={c} value={c} />)}</datalist>
-          </Field>
-          <Field label={`Motivo ${precisaMotivo ? "*" : ""}`} style={{ minWidth: "320px", flex: "2 1 320px" }}>
+          </label>
+          <label className="flex flex-col gap-1" style={{ minWidth: "320px", flex: "2 1 320px" }}>
+            <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+              Motivo {precisaMotivo ? "*" : ""}
+              <ManageBtn onClick={() => onManage("motivo")} title="Cadastrar motivos" />
+            </span>
             <input list="mot-list-form" value={form.Motivo} onChange={(e) => setField("Motivo", e.target.value.slice(0, 200))} className={inputCls} />
             <datalist id="mot-list-form">{motivos.map((m: string) => <option key={m} value={m} />)}</datalist>
-          </Field>
+          </label>
         </div>
       </section>
     </div>
