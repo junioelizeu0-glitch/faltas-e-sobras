@@ -1264,7 +1264,13 @@ export default function Dashboard() {
 
         return true;
       });
-      cols = ['Chamado', 'Loja', 'CD', 'Tarefa Atual', 'Status', 'Valor', 'Dt Abertura', 'SLA'];
+      {
+        const etapaLower = etapaInfo.toLowerCase();
+        const needsNF = etapaLower.includes('provision') || etapaLower.includes('pagamento');
+        cols = needsNF
+          ? ['Chamado', 'Loja', 'CD', 'NF', 'Tarefa Atual', 'Status', 'Valor', 'Dt Abertura', 'SLA']
+          : ['Chamado', 'Loja', 'CD', 'Tarefa Atual', 'Status', 'Valor', 'Dt Abertura', 'SLA'];
+      }
       title = `Detalhamento - Etapa: ${etapaInfo}`;
     } else if (type.startsWith('TRANSP - ')) {
       const transpInfo = type.replace('TRANSP - ', '');
