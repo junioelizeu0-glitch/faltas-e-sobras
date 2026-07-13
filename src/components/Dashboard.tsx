@@ -1499,9 +1499,7 @@ export default function Dashboard() {
         )}
 
         {selectedSubmenu === 'consulta' && (
-          <div className="flex-1 bg-white flex items-center justify-center">
-            <span className="text-slate-400 font-medium text-sm">Em construção</span>
-          </div>
+          <ConsultaChamados rawData={rawData} onChanged={() => refetch()} />
         )}
 
         {selectedSubmenu === 'relatorio' && (
