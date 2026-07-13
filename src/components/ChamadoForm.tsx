@@ -402,7 +402,7 @@ function ReferenciasTab({ refs, setRef, addRef, rmRef, buscar }: any) {
             <Field label="Tam."><input value={r.tamanho} onChange={(e) => setRef(idx, { tamanho: e.target.value })} className={inputCls} /></Field>
             <div className="flex items-center gap-1">
               <Field label="Qtd"><input type="number" value={r.quantidade} onChange={(e) => setRef(idx, { quantidade: e.target.value })} className={inputCls} /></Field>
-              <button type="button" onClick={() => setEditIdx(idx)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-md mb-0.5" title="Editar"><Save className="w-4 h-4"/></button>
+              <button type="button" onClick={() => setEditIdx(idx)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-md mb-0.5" title="Editar"><Pencil className="w-4 h-4"/></button>
               <button type="button" onClick={() => rmRef(idx)} className="p-2 text-red-500 hover:bg-red-50 rounded-md mb-0.5" title="Remover"><Trash2 className="w-4 h-4"/></button>
             </div>
           </div>
