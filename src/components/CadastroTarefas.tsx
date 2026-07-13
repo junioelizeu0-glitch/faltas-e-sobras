@@ -45,7 +45,7 @@ export default function CadastroTarefas() {
             <h1 className="text-xl font-bold text-slate-800">Cadastro de Tarefas (Etapas)</h1>
             <p className="text-sm text-slate-500 mt-1">Define nome, SLA em dias úteis e a qual tipo de chamado se aplica.</p>
           </div>
-          <button onClick={() => setEditing({ ativo: true, aplica_faltas: true, dias_uteis: 2, ordem: (rows.length + 1) * 10 })} className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-md"><Plus className="w-4 h-4"/>Nova tarefa</button>
+          <button onClick={() => setEditing({ ativo: true, aplica_faltas: true })} className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-md"><Plus className="w-4 h-4"/>Nova tarefa</button>
         </header>
         <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
           {loading ? <div className="p-8 text-center"><Loader2 className="inline w-5 h-5 animate-spin mr-2"/>Carregando...</div> : (
