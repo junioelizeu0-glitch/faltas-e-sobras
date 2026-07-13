@@ -1098,27 +1098,30 @@ export default function Dashboard() {
   const [drillDownCols, setDrillDownCols] = useState<string[]>([]);
   const [drillDownTitle, setDrillDownTitle] = useState('');
 
-  const [filterSelections, setFilterSelections] = useState({
-    dateRef: 'Ref: Data de Abertura',
-    periodo: 'Todos',
-    dataInicio: '',
-    dataFim: '',
-    cd: 'Todos',
-    transp: 'Todas',
-    status: 'Todos',
-    tipo: 'Todos'
-  });
-  
-  const [activeFilters, setActiveFilters] = useState({
-    dateRef: 'Ref: Data de Abertura',
-    periodo: 'Todos',
-    dataInicio: '',
-    dataFim: '',
-    cd: 'Todos',
-    transp: 'Todas',
-    status: 'Todos',
-    tipo: 'Todos'
-  });
+  const formatDate = (d: Date) => {
+    const year = d.getFullYear();
+    const month = String(d.getMonth() + 1).padStart(2, '0');
+    const day = String(d.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
+  };
+
+  const getDefaultMonthFilter = () => {
+    const today = new Date();
+    const dStart = new Date(today.getFullYear(), today.getMonth(), 1);
+    return {
+      dateRef: 'Ref: Data de Abertura',
+      periodo: 'Mês Atual',
+      dataInicio: formatDate(dStart),
+      dataFim: formatDate(today),
+      cd: 'Todos',
+      transp: 'Todas',
+      status: 'Todos',
+      tipo: 'Todos'
+    };
+  };
+
+  const [filterSelections, setFilterSelections] = useState(getDefaultMonthFilter);
+  const [activeFilters, setActiveFilters] = useState(getDefaultMonthFilter);
 
   const handlePeriodoChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
     const p = e.target.value;
