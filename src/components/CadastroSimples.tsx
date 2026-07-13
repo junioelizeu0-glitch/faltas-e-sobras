@@ -28,7 +28,7 @@ type Props = {
   nomeLabel?: string;
 };
 
-export default function CadastroSimples({ titulo, descricao, listFn, upsertFn, deleteFn, extraFields = [] }: Props) {
+export default function CadastroSimples({ titulo, descricao, listFn, upsertFn, deleteFn, extraFields = [], nomeLabel = "Nome" }: Props) {
   const list = useServerFn(listFn as any);
   const up = useServerFn(upsertFn as any);
   const del = useServerFn(deleteFn as any);
