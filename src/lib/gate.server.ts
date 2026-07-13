@@ -1,4 +1,4 @@
-import { useSession } from "@tanstack/react-start/server";
+
 import { createHash, timingSafeEqual } from "node:crypto";
 
 export type GateSession = { unlocked?: boolean };
