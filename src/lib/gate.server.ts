@@ -1,4 +1,4 @@
-import { useSession } from "@tanstack/react-start/server";
+
 import { createHash, timingSafeEqual } from "node:crypto";
 
 export type GateSession = { unlocked?: boolean };
@@ -24,8 +24,12 @@ export function safeEq(a: string, b: string) {
 }
 
 export async function getGateSession() {
+  const mod = "@tanstack/react-start/server";
+  const { useSession } = (await import(/* @vite-ignore */ mod)) as typeof import("@tanstack/react-start/server");
   return useSession<GateSession>(sessionConfig());
 }
+
+
 
 export async function requireUnlockedSession() {
   const session = await getGateSession();
