@@ -399,13 +399,11 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
             )}
             {tab === "referencias" && (
               <ReferenciasTab refs={refs} setRef={setRef} addRef={addRef} rmRef={rmRef} buscar={buscarProduto}
-                onSalvarParcial={() => submit("Referências salvas com sucesso.", { partial: true })}
-                onSalvarFull={() => submit()} primaryLabel={primaryLabel} salvando={submitting} />
+                onSalvarParcial={() => submit("Referências salvas com sucesso.", { partial: true })} salvando={submitting} />
             )}
             {tab === "etapas" && (
               <EtapasTab etapas={etapas} setEt={setEt} addEtapa={addEtapa} rmEtapa={rmEtapa} tarefas={tarefas}
-                onSalvarParcial={() => submit("Etapas salvas com sucesso.", { partial: true })}
-                onSalvarFull={() => submit()} primaryLabel={primaryLabel} salvando={submitting} />
+                onSalvarParcial={() => submit("Etapas salvas com sucesso.", { partial: true })} salvando={submitting} />
             )}
           </div>
 
@@ -616,7 +614,7 @@ function ItemEditModal({ title, onClose, onAdd, children }: { title: string; onC
   );
 }
 
-function ReferenciasTab({ refs, setRef, addRef, rmRef, buscar, onSalvarParcial, onSalvarFull, primaryLabel, salvando }: any) {
+function ReferenciasTab({ refs, setRef, addRef, rmRef, buscar, onSalvarParcial, salvando }: any) {
   const [editIdx, setEditIdx] = useState<number | null>(null);
   return (
     <div className="space-y-3">
@@ -628,9 +626,6 @@ function ReferenciasTab({ refs, setRef, addRef, rmRef, buscar, onSalvarParcial, 
           </button>
           <button type="button" onClick={onSalvarParcial} disabled={salvando} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-md disabled:opacity-50">
             {salvando ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <Save className="w-3.5 h-3.5"/>}Salvar referências
-          </button>
-          <button type="button" onClick={onSalvarFull} disabled={salvando} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50">
-            {salvando ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <Save className="w-3.5 h-3.5"/>}{primaryLabel}
           </button>
         </div>
       </div>
@@ -672,7 +667,7 @@ function ReferenciasTab({ refs, setRef, addRef, rmRef, buscar, onSalvarParcial, 
   );
 }
 
-function EtapasTab({ etapas, setEt, addEtapa, rmEtapa, tarefas, onSalvarParcial, onSalvarFull, primaryLabel, salvando }: any) {
+function EtapasTab({ etapas, setEt, addEtapa, rmEtapa, tarefas, onSalvarParcial, salvando }: any) {
   const [editIdx, setEditIdx] = useState<number | null>(null);
   return (
     <div className="space-y-3">
@@ -684,9 +679,6 @@ function EtapasTab({ etapas, setEt, addEtapa, rmEtapa, tarefas, onSalvarParcial,
           </button>
           <button type="button" onClick={onSalvarParcial} disabled={salvando} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-md disabled:opacity-50">
             {salvando ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <Save className="w-3.5 h-3.5"/>}Salvar etapas
-          </button>
-          <button type="button" onClick={onSalvarFull} disabled={salvando} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50">
-            {salvando ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <Save className="w-3.5 h-3.5"/>}{primaryLabel}
           </button>
         </div>
       </div>
