@@ -764,7 +764,7 @@ const AbaOperacao = ({ data, onOpenModal }: any) => {
                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b' }} domain={[0, getDynamicCeiling(idadeBacklog, 'qtd', 10)]} />
                <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ fontSize: '12px', borderRadius: '8px' }} />
                <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} iconType="circle" />
-               <Bar dataKey="qtd" name="Chamados" fill="#8b5cf6" radius={[4, 4, 0, 0]} maxBarSize={40} label={{ position: 'top', fontSize: 10, fill: '#64748b' }} style={{ cursor: 'pointer' }} />
+               <Bar dataKey="qtd" name="Chamados" fill="#8b5cf6" radius={[4, 4, 0, 0]} maxBarSize={40} label={{ position: 'top', fontSize: 10, fill: '#64748b' }} style={{ cursor: 'pointer' }} onClick={(d:any) => { const n = d?.name || d?.payload?.name; if (n) onOpenModal(`IDADE BACKLOG - ${n}`); }} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
