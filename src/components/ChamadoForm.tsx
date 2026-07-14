@@ -274,6 +274,10 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
       if (!form["Dt Emissão"]) faltando.push("Data Emissão");
       if (faltando.length) return `Etapa "Importação NF" exige: ${faltando.join(", ")}.`;
     }
+    const sit = (form["Situação "] || "").toLowerCase();
+    if ((/chamado recusado/.test(sit) || /finaliz/.test(sit)) && !form["Dt Finalização"]) {
+      return `Preencha a Data de Finalização (obrigatória quando a situação é "${form["Situação "]}").`;
+    }
     return null;
   };
 
