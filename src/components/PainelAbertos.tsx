@@ -1,11 +1,12 @@
-import { useMemo, useState } from "react";
-import { AlertTriangle, Clock, CheckCircle2, Search, FileText, Loader2 } from "lucide-react";
-import { parseDataBR, getBusinessDays, getTarefaAtual, isSemRetorno } from "@/lib/data-processing";
+import { useEffect, useMemo, useState } from "react";
+import { AlertTriangle, Clock, CheckCircle2, Search, FileText, Loader2, X } from "lucide-react";
+import { parseDataBR, getBusinessDays, isSemRetorno } from "@/lib/data-processing";
+import ChamadoForm from "./ChamadoForm";
 
 type Props = {
   rawData: any[] | undefined;
   isLoading?: boolean;
-  onOpenChamado?: (id: string) => void;
+  onChanged?: () => void;
 };
 
 const SLA_LIMITE = 60; // dias úteis
@@ -30,16 +31,29 @@ function isFinalizado(r: any) {
   return false;
 }
 
-export default function PainelAbertos({ rawData, isLoading, onOpenChamado }: Props) {
+function siglaCD(v: any): string {
+  const s = String(v ?? "").toUpperCase();
+  const m = s.match(/\b(ES|PB)\b/);
+  if (m) return m[1];
+  if (s.includes("ES")) return "ES";
+  if (s.includes("PB")) return "PB";
+  return "";
+}
+
+export default function PainelAbertos({ rawData, isLoading, onChanged }: Props) {
   const [query, setQuery] = useState("");
-  const [cdFilter, setCdFilter] = useState<string>("Todos");
+  const [cdFilter, setCdFilter] = useState<"Todos" | "ES" | "PB">("Todos");
   const [alertaFilter, setAlertaFilter] = useState<"todos" | "vencido" | "atencao" | "prazo">("todos");
+  const [statusFilter, setStatusFilter] = useState<string>("Todos");
+  const [tarefaFilter, setTarefaFilter] = useState<string>("Todas");
+  const [lojaFilter, setLojaFilter] = useState<string>("Todas");
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const rows = useMemo(() => {
     const hoje = new Date();
     hoje.setHours(23, 59, 59, 999);
     const inicioAno = new Date(hoje.getFullYear(), 0, 1, 0, 0, 0, 0);
-    const list = (rawData || [])
+    return (rawData || [])
       .filter((r) => {
         if (isFinalizado(r)) return false;
         const dtAb = parseDataBR(r["Dt Abertura"]);
@@ -56,23 +70,42 @@ export default function PainelAbertos({ rawData, isLoading, onOpenChamado }: Pro
           id: r.id || r._id || r.Chamado,
           chamado: r.Chamado,
           loja: r.Loja,
-          cd: r.CD || "",
+          cd: siglaCD(r.CD),
           tipo: r.Tipo || "",
-          tarefa: getTarefaAtual(r) || r["Situação "] || r["Situação"] || "—",
+          tarefa: String(r["Situação "] || r["Situação"] || r.situacao || "—").trim() || "—",
           status: r["Status Chamado"] || "",
           dtAbertura: r["Dt Abertura"],
           dias,
           alerta,
         };
-      });
-    return list.sort((a, b) => b.dias - a.dias);
+      })
+      .sort((a, b) => b.dias - a.dias);
   }, [rawData]);
+
+  const statusOpts = useMemo(() => {
+    const s = new Set<string>();
+    rows.forEach((r) => { if (r.status) s.add(String(r.status)); });
+    return ["Todos", ...Array.from(s).sort()];
+  }, [rows]);
+  const tarefaOpts = useMemo(() => {
+    const s = new Set<string>();
+    rows.forEach((r) => { if (r.tarefa && r.tarefa !== "—") s.add(r.tarefa); });
+    return ["Todas", ...Array.from(s).sort()];
+  }, [rows]);
+  const lojaOpts = useMemo(() => {
+    const s = new Set<string>();
+    rows.forEach((r) => { if (r.loja) s.add(String(r.loja)); });
+    return ["Todas", ...Array.from(s).sort((a, b) => a.localeCompare(b, "pt-BR", { numeric: true }))];
+  }, [rows]);
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return rows.filter((r) => {
-      if (cdFilter !== "Todos" && String(r.cd) !== cdFilter) return false;
+      if (cdFilter !== "Todos" && r.cd !== cdFilter) return false;
       if (alertaFilter !== "todos" && r.alerta !== alertaFilter) return false;
+      if (statusFilter !== "Todos" && String(r.status) !== statusFilter) return false;
+      if (tarefaFilter !== "Todas" && r.tarefa !== tarefaFilter) return false;
+      if (lojaFilter !== "Todas" && String(r.loja) !== lojaFilter) return false;
       if (!q) return true;
       return (
         String(r.chamado).toLowerCase().includes(q) ||
@@ -82,7 +115,7 @@ export default function PainelAbertos({ rawData, isLoading, onOpenChamado }: Pro
         String(r.tipo).toLowerCase().includes(q)
       );
     });
-  }, [rows, query, cdFilter, alertaFilter]);
+  }, [rows, query, cdFilter, alertaFilter, statusFilter, tarefaFilter, lojaFilter]);
 
   const counts = useMemo(() => {
     const c = { total: rows.length, vencido: 0, atencao: 0, prazo: 0 };
@@ -90,16 +123,11 @@ export default function PainelAbertos({ rawData, isLoading, onOpenChamado }: Pro
     return c;
   }, [rows]);
 
-  const cds = useMemo(() => {
-    const s = new Set<string>();
-    rows.forEach((r) => { if (r.cd) s.add(String(r.cd)); });
-    return ["Todos", ...Array.from(s).sort()];
-  }, [rows]);
-
   const [page, setPage] = useState(1);
   const pageSize = 30;
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const pageRows = filtered.slice((page - 1) * pageSize, page * pageSize);
+  useEffect(() => { setPage(1); }, [query, cdFilter, alertaFilter, statusFilter, tarefaFilter, lojaFilter]);
 
   return (
     <div className="flex-1 overflow-auto bg-slate-50 p-4 md:p-6">
@@ -120,54 +148,73 @@ export default function PainelAbertos({ rawData, isLoading, onOpenChamado }: Pro
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-        <div className="flex flex-wrap items-center gap-2 p-3 border-b border-slate-100">
+        <div className="flex flex-wrap items-end gap-2 p-3 border-b border-slate-100">
           <div className="relative flex-1 min-w-[220px]">
-            <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-1/2 -translate-y-1/2" />
-            <input value={query} onChange={(e) => { setQuery(e.target.value); setPage(1); }} placeholder="Buscar chamado, loja, tarefa, status..."
+            <label className="block text-[11px] font-medium text-slate-500 mb-1 uppercase tracking-wide">Buscar</label>
+            <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-[34px] -translate-y-1/2" />
+            <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Chamado, loja, tarefa, status..."
               className="w-full pl-8 pr-3 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
           </div>
-          <select value={cdFilter} onChange={(e) => { setCdFilter(e.target.value); setPage(1); }} className="px-3 py-2 text-sm border border-slate-300 rounded-md">
-            {cds.map((c) => <option key={c} value={c}>{c === "Todos" ? "Todos os CDs" : `CD ${c}`}</option>)}
-          </select>
-          {alertaFilter !== "todos" && (
-            <button onClick={() => setAlertaFilter("todos")} className="text-xs px-2 py-1 rounded-md border border-slate-300 text-slate-600 hover:bg-slate-50">Limpar alerta</button>
-          )}
-          <span className="ml-auto text-xs text-slate-500">{filtered.length} de {rows.length} chamados</span>
+          <div className="flex flex-col w-[110px]">
+            <label className="text-[11px] font-medium text-slate-500 mb-1 uppercase tracking-wide">CD</label>
+            <select value={cdFilter} onChange={(e) => setCdFilter(e.target.value as any)} className="px-2 py-2 text-sm border border-slate-300 rounded-md bg-white">
+              <option value="Todos">Todos</option>
+              <option value="ES">ES</option>
+              <option value="PB">PB</option>
+            </select>
+          </div>
+          <div className="flex flex-col w-[180px]">
+            <label className="text-[11px] font-medium text-slate-500 mb-1 uppercase tracking-wide">Status</label>
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-2 py-2 text-sm border border-slate-300 rounded-md bg-white">
+              {statusOpts.map((s) => <option key={s} value={s}>{s}</option>)}
+            </select>
+          </div>
+          <div className="flex flex-col w-[220px]">
+            <label className="text-[11px] font-medium text-slate-500 mb-1 uppercase tracking-wide">Tarefa atual</label>
+            <select value={tarefaFilter} onChange={(e) => setTarefaFilter(e.target.value)} className="px-2 py-2 text-sm border border-slate-300 rounded-md bg-white">
+              {tarefaOpts.map((t) => <option key={t} value={t}>{t}</option>)}
+            </select>
+          </div>
+          <div className="flex flex-col w-[140px]">
+            <label className="text-[11px] font-medium text-slate-500 mb-1 uppercase tracking-wide">Loja</label>
+            <select value={lojaFilter} onChange={(e) => setLojaFilter(e.target.value)} className="px-2 py-2 text-sm border border-slate-300 rounded-md bg-white">
+              {lojaOpts.map((l) => <option key={l} value={l}>{l}</option>)}
+            </select>
+          </div>
+          <span className="ml-auto text-xs text-slate-500 pb-1">{filtered.length} de {rows.length} chamados</span>
         </div>
 
         <div className="overflow-auto">
-          <table className="w-full text-sm">
+          <table className="w-full text-sm table-auto">
             <thead className="bg-slate-50 text-slate-600 text-xs uppercase tracking-wide">
               <tr>
-                <th className="text-left px-3 py-2 font-semibold">Alerta</th>
-                <th className="text-left px-3 py-2 font-semibold">Chamado</th>
-                <th className="text-left px-3 py-2 font-semibold">Loja</th>
-                <th className="text-left px-3 py-2 font-semibold">CD</th>
-                <th className="text-left px-3 py-2 font-semibold">Tipo</th>
-                <th className="text-left px-3 py-2 font-semibold">Tarefa Atual</th>
-                <th className="text-left px-3 py-2 font-semibold">Status</th>
-                <th className="text-left px-3 py-2 font-semibold">Dt Abertura</th>
-                <th className="text-right px-3 py-2 font-semibold">Dias úteis</th>
+                <th className="text-left px-2 py-2 font-semibold w-[110px]">Alerta</th>
+                <th className="text-left px-2 py-2 font-semibold w-[100px]">Chamado</th>
+                <th className="text-left px-2 py-2 font-semibold w-[80px]">Loja</th>
+                <th className="text-left px-2 py-2 font-semibold w-[60px]">CD</th>
+                <th className="text-left px-2 py-2 font-semibold">Tarefa Atual</th>
+                <th className="text-left px-2 py-2 font-semibold w-[170px]">Status</th>
+                <th className="text-left px-2 py-2 font-semibold w-[110px]">Dt Abertura</th>
+                <th className="text-right px-2 py-2 font-semibold w-[80px]">Dias úteis</th>
               </tr>
             </thead>
             <tbody>
               {isLoading && (
-                <tr><td colSpan={9} className="text-center py-10 text-slate-500"><Loader2 className="w-5 h-5 animate-spin inline-block mr-2" />Carregando...</td></tr>
+                <tr><td colSpan={8} className="text-center py-10 text-slate-500"><Loader2 className="w-5 h-5 animate-spin inline-block mr-2" />Carregando...</td></tr>
               )}
               {!isLoading && pageRows.length === 0 && (
-                <tr><td colSpan={9} className="text-center py-10 text-slate-400">Nenhum chamado em aberto encontrado.</td></tr>
+                <tr><td colSpan={8} className="text-center py-10 text-slate-400">Nenhum chamado em aberto encontrado.</td></tr>
               )}
               {!isLoading && pageRows.map((r, i) => (
-                <tr key={`${r.chamado}-${i}`} className="border-t border-slate-100 hover:bg-slate-50 cursor-pointer" onClick={() => onOpenChamado?.(String(r.chamado))}>
-                  <td className="px-3 py-2"><AlertBadge alerta={r.alerta} /></td>
-                  <td className="px-3 py-2 font-semibold text-slate-800">{r.chamado}</td>
-                  <td className="px-3 py-2 text-slate-700">{r.loja}</td>
-                  <td className="px-3 py-2 text-slate-700">{r.cd || "—"}</td>
-                  <td className="px-3 py-2 text-slate-700">{r.tipo || "—"}</td>
-                  <td className="px-3 py-2 text-slate-700">{r.tarefa}</td>
-                  <td className="px-3 py-2 text-slate-700">{r.status || "—"}</td>
-                  <td className="px-3 py-2 text-slate-700">{fmtBR(r.dtAbertura)}</td>
-                  <td className="px-3 py-2 text-right font-mono text-slate-800">{r.dias}</td>
+                <tr key={`${r.chamado}-${i}`} className="border-t border-slate-100 hover:bg-blue-50/40 cursor-pointer" onClick={() => r.id && setEditingId(String(r.id))}>
+                  <td className="px-2 py-2"><AlertBadge alerta={r.alerta} /></td>
+                  <td className="px-2 py-2 font-semibold text-slate-800 whitespace-nowrap">{r.chamado}</td>
+                  <td className="px-2 py-2 text-slate-700 whitespace-nowrap">{r.loja}</td>
+                  <td className="px-2 py-2 text-slate-700 whitespace-nowrap">{r.cd || "—"}</td>
+                  <td className="px-2 py-2 text-slate-700">{r.tarefa}</td>
+                  <td className="px-2 py-2 text-slate-700 whitespace-nowrap">{r.status || "—"}</td>
+                  <td className="px-2 py-2 text-slate-700 whitespace-nowrap">{fmtBR(r.dtAbertura)}</td>
+                  <td className="px-2 py-2 text-right font-mono text-slate-800">{r.dias}</td>
                 </tr>
               ))}
             </tbody>
@@ -184,6 +231,25 @@ export default function PainelAbertos({ rawData, isLoading, onOpenChamado }: Pro
           </div>
         )}
       </div>
+
+      {editingId && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-2xl w-full max-w-[95vw] max-h-[92vh] overflow-auto">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 sticky top-0 bg-white z-10">
+              <h2 className="text-base font-bold text-slate-800">Editar Chamado</h2>
+              <button onClick={() => setEditingId(null)} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5"/></button>
+            </div>
+            <div className="p-4">
+              <ChamadoForm
+                mode="editar" chamadoId={editingId} compact
+                onSaved={() => { onChanged?.(); }}
+                onCancel={() => setEditingId(null)}
+                onDeleted={() => { setEditingId(null); onChanged?.(); }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
