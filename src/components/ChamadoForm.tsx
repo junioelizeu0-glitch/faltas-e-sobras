@@ -566,8 +566,8 @@ function EtapasTab({ etapas, setEt, addEtapa, rmEtapa, tarefas, onSalvar, salvan
             sla = { texto: ok ? `Dentro (${diasReal}d)` : `Atrasado (${diasReal}d)`, cor: ok ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700" };
           } else if (ini && !fim) sla = { texto: "Em aberto", cor: "bg-amber-100 text-amber-700" };
           return (
-            <div key={idx} className="grid grid-cols-12 gap-2 items-end p-3 border border-slate-200 rounded-lg bg-slate-50/50">
-              <Field label="Tarefa *" className="col-span-4">
+            <div key={idx} className="grid grid-cols-[minmax(200px,2.4fr)_90px_130px_130px_130px_auto] gap-2 items-end p-3 border border-slate-200 rounded-lg bg-slate-50/50">
+              <Field label="Tarefa *">
                 <select
                   value={e.nome_tarefa || ""}
                   onChange={(ev) => {
@@ -581,12 +581,12 @@ function EtapasTab({ etapas, setEt, addEtapa, rmEtapa, tarefas, onSalvar, salvan
                   {tarefas.map((t: any) => <option key={t.id} value={t.nome}>{t.nome}</option>)}
                 </select>
               </Field>
-              <Field label="SLA (dias)" className="col-span-1"><input type="number" min={0} value={e.dias_uteis_previsto ?? ""} onChange={(ev) => setEt(idx, { dias_uteis_previsto: ev.target.value === "" ? null : Number(ev.target.value) })} className={inputCls} /></Field>
-              <Field label="Início" className="col-span-2"><input type="date" value={e.dt_inicio} onChange={(ev) => setEt(idx, { dt_inicio: ev.target.value })} className={inputCls} /></Field>
-              <Field label="Previsto" className="col-span-2"><input value={fmtBR(dtPrev) || "—"} readOnly className={inputCls + " bg-slate-50 text-slate-500"} /></Field>
-              <Field label="Finalizado" className="col-span-2"><input type="date" value={e.dt_fim} onChange={(ev) => setEt(idx, { dt_fim: ev.target.value })} className={inputCls} /></Field>
-              <div className="col-span-1 flex items-center gap-1">
-                {sla && <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold ${sla.cor}`}>{sla.texto}</span>}
+              <Field label="SLA (dias)"><input type="number" min={0} value={e.dias_uteis_previsto ?? ""} onChange={(ev) => setEt(idx, { dias_uteis_previsto: ev.target.value === "" ? null : Number(ev.target.value) })} className={inputCls} /></Field>
+              <Field label="Início"><input type="date" value={e.dt_inicio} onChange={(ev) => setEt(idx, { dt_inicio: ev.target.value })} className={inputCls} /></Field>
+              <Field label="Previsto"><input value={fmtBR(dtPrev) || "—"} readOnly className={inputCls + " bg-slate-50 text-slate-500"} /></Field>
+              <Field label="Finalizado"><input type="date" value={e.dt_fim} onChange={(ev) => setEt(idx, { dt_fim: ev.target.value })} className={inputCls} /></Field>
+              <div className="flex items-center gap-1 pb-0.5">
+                {sla && <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold whitespace-nowrap ${sla.cor}`}>{sla.texto}</span>}
                 <button type="button" onClick={() => setEditIdx(idx)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-md" title="Editar"><Pencil className="w-4 h-4"/></button>
                 <button type="button" onClick={() => rmEtapa(idx)} className="p-2 text-red-500 hover:bg-red-50 rounded-md" title="Remover"><Trash2 className="w-4 h-4"/></button>
               </div>
