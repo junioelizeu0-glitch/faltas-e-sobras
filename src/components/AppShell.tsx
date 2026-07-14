@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ChevronDown,
   ChevronRight,
@@ -14,6 +14,8 @@ import {
   Store,
   History,
   LogOut,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { useRouter } from "@tanstack/react-router";
