@@ -421,6 +421,16 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
                   </button>
                 )}
               </div>
+              {podeMonitorar && (
+                <button
+                  type="button"
+                  onClick={() => setMonitorAsk(true)}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-md hover:bg-indigo-100"
+                  title="Registrar resultado do monitoramento"
+                >
+                  <ClipboardCheck className="w-4 h-4"/>Resultado do monitoramento
+                </button>
+              )}
               <div className="flex items-center gap-2">
                 {onCancel && <button type="button" onClick={onCancel} className="px-3 py-2 text-sm text-slate-600 hover:text-slate-900">Cancelar</button>}
                 <button
