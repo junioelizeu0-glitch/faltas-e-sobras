@@ -11,7 +11,7 @@ const EMPTY: Loja = {
   conta: "", conta_dig: "", observacao: "",
 };
 
-export default function CadastroLojas() {
+export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string } = {}) {
   const list = useServerFn(listLojas);
   const up = useServerFn(upsertLoja);
   const del = useServerFn(deleteLoja);
