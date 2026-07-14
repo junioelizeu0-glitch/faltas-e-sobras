@@ -22,6 +22,7 @@ import CadastroTarefas from '@/components/CadastroTarefas';
 import CadastroSimples from '@/components/CadastroSimples';
 import CadastroLojas from '@/components/CadastroLojas';
 import AuditLogViewer from '@/components/AuditLogViewer';
+import AIliana from '@/components/AIliana';
 import {
   listTransportadoras, upsertTransportadora, deleteTransportadora,
   listConferentes, upsertConferente, deleteConferente,
@@ -1537,6 +1538,8 @@ export default function Dashboard() {
         )}
 
         {selectedSubmenu === 'logs' && <AuditLogViewer />}
+
+        {selectedSubmenu === 'aiiliana' && <AIliana />}
 
         {selectedSubmenu === 'relatorio' && (
           <div className="flex-1 flex flex-col overflow-hidden bg-slate-50">
