@@ -1539,6 +1539,8 @@ export default function Dashboard() {
 
         {selectedSubmenu === 'logs' && <AuditLogViewer />}
 
+        {selectedSubmenu === 'aiiliana' && <AIliana />}
+
         {selectedSubmenu === 'relatorio' && (
           <div className="flex-1 flex flex-col overflow-hidden bg-slate-50">
             {/* Header Corporativo */}
