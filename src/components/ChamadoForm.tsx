@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Loader2, CheckCircle2, AlertCircle, Save, Plus, Trash2, Search, X, Pencil } from "lucide-react";
@@ -18,6 +18,7 @@ import {
 } from "@/lib/cadastros.functions";
 import { diasUteisEntre, parseISO, calcDataPrevista } from "@/lib/business-days";
 import CadastroSimples from "./CadastroSimples";
+import Combobox from "./Combobox";
 
 
 const STATUS_CHAMADO_OPCOES = ["Pendente Monitoramento", "Aprovado", "Recusado"];
