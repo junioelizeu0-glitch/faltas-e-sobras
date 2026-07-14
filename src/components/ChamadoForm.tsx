@@ -335,43 +335,63 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   const aplicarResultadoMonitoramento = async (aprovado: boolean) => {
     setMonitorAsk(false);
     const hoje = hojeISO();
-    // Encerra a etapa de monitoramento em aberto, se houver
-    const etapasAtualizadas = etapas.map((e) => {
-      if (!e.dt_fim && /monitoramento/i.test(e.nome_tarefa || "")) {
-        return { ...e, dt_fim: hoje };
-      }
-      return e;
-    });
+    const novaTarefaNome = aprovado ? "Falta Aprovada" : "Falta Recusada";
+    const novoStatus = aprovado ? "Aprovado" : "Recusado";
 
-    let novaTarefaNome = "";
-    let novaSituacao = "";
-    let novoStatus = "";
-    if (aprovado) {
-      novaTarefaNome = form.Tipo === "Própria" ? "Solicitar Emissão de NF" : "Solicitar NF Espelho";
-      novaSituacao = novaTarefaNome;
-      novoStatus = "Aprovado";
-    } else {
-      novaTarefaNome = "Finalizar Recusa Chamado";
-      novaSituacao = "Chamado Recusado";
-      novoStatus = "Recusado";
-    }
-    const t = tarefas.find((x) => x.nome === novaTarefaNome);
-    const novaEtapa: Etapa = {
-      tarefa_id: t?.id || null,
-      nome_tarefa: novaTarefaNome,
-      dias_uteis_previsto: t?.dias_uteis ?? 1,
-      dt_inicio: hoje,
-      dt_fim: "",
-    };
-    setEtapas([...etapasAtualizadas, novaEtapa]);
-    // Atualiza situação e status (prevStatusRef evita o auto-fill sobrescrever)
-    prevStatusRef.current = novoStatus;
-    setForm((p) => ({ ...p, "Status Chamado": novoStatus, "Situação ": novaSituacao }));
-    toast.success(
-      aprovado
-        ? `Falta aprovada. Nova tarefa: ${novaTarefaNome}. Lembre-se de salvar as alterações.`
-        : `Falta recusada. Nova tarefa: ${novaTarefaNome}. Lembre-se de salvar as alterações.`
+    // Encerra etapa de monitoramento em aberto e adiciona a nova
+    const etapasAtualizadas = etapas.map((e) =>
+      !e.dt_fim && /monitoramento/i.test(e.nome_tarefa || "") ? { ...e, dt_fim: hoje } : e
     );
+    const t = tarefas.find((x) => x.nome.toLowerCase() === novaTarefaNome.toLowerCase());
+    const novasEtapas: Etapa[] = [
+      ...etapasAtualizadas,
+      { tarefa_id: t?.id || null, nome_tarefa: novaTarefaNome, dias_uteis_previsto: t?.dias_uteis ?? 1, dt_inicio: hoje, dt_fim: "" },
+    ];
+
+    // Atualiza estado (para UI) e envia diretamente ao banco com os novos valores
+    prevStatusRef.current = novoStatus;
+    setForm((p) => ({ ...p, "Status Chamado": novoStatus, "Situação ": novaTarefaNome }));
+    setEtapas(novasEtapas);
+
+    setSubmitting(true);
+    try {
+      const payload = {
+        chamado: {
+          Chamado: form.Chamado, Loja: form.Loja, Tipo: form.Tipo, NF: form.NF,
+          "Dt Emissão": form["Dt Emissão"], " Valor ": form._valor,
+          CD: form.CD, "Situação ": novaTarefaNome, "Dt Abertura": form["Dt Abertura"],
+          "Dt Finalização": form["Dt Finalização"], "Dt Pagamento": form["Dt Pagamento"],
+          "SLA por chamado (60dias)": slaCalc, "Status Pagamento": statusPagamento,
+          "Status Chamado": novoStatus, Motivo: form.Motivo,
+          Transportadora: form.Transportadora, Conferente: form.Conferente,
+          Periodo: primeiroDiaMesISO(form["Dt Abertura"]),
+        },
+        referencias: refs.map((r) => ({
+          referencia: r.referencia, cor: r.cor, descricao: r.descricao,
+          fornecedor: r.fornecedor, tamanho: r.tamanho, quantidade: r.quantidade,
+        })),
+        etapas: novasEtapas.map((e, i) => ({
+          tarefa_id: e.tarefa_id, nome_tarefa: e.nome_tarefa,
+          dias_uteis_previsto: e.dias_uteis_previsto, dt_inicio: e.dt_inicio || null,
+          dt_fim: e.dt_fim || null, ordem: i + 1,
+        })),
+      };
+      if (mode === "editar" && chamadoId) {
+        await updateFn({ data: { id: chamadoId, ...payload } });
+      } else {
+        const res: any = await createFn({ data: payload });
+        if (res?.id) { setChamadoId(res.id); setMode("editar"); }
+      }
+      toast.success(aprovado ? "Falta aprovada — chamado atualizado." : "Falta recusada — chamado atualizado.");
+      onSaved?.();
+      onCancel?.();
+    } catch (e: any) {
+      const msg = e?.message || "Erro ao salvar resultado";
+      setFeedback({ type: "err", msg });
+      toast.error(msg);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
 
