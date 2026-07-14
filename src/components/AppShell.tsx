@@ -37,16 +37,21 @@ export default function AppShell({
   const [menuAberto, setMenuAberto] = useState(false);
   const [openFaltas, setOpenFaltas] = useState(false);
   const [openCadastros, setOpenCadastros] = useState(false);
-  const [theme, setTheme] = useState<"light" | "dark">("light");
-  useEffect(() => {
-    const t = (typeof window !== "undefined" && (localStorage.getItem("theme") as "light" | "dark")) || "light";
-    setTheme(t === "dark" ? "dark" : "light");
-  }, []);
+  const [theme, setTheme] = useState<"light" | "dark">(() => {
+    if (typeof document !== "undefined") {
+      const attr = document.documentElement.getAttribute("data-theme");
+      if (attr === "dark" || attr === "light") return attr;
+    }
+    return "light";
+  });
   const toggleTheme = () => {
     const next = theme === "dark" ? "light" : "dark";
-    setTheme(next);
+    // 1) Aplica no DOM de forma síncrona (troca visual imediata via CSS vars)
     document.documentElement.setAttribute("data-theme", next);
+    // 2) Persiste
     try { localStorage.setItem("theme", next); } catch {}
+    // 3) Atualiza state apenas para re-renderizar o ícone do botão
+    setTheme(next);
   };
   const lock = useServerFn(lockSite);
   const router = useRouter();
