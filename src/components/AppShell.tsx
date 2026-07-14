@@ -16,6 +16,7 @@ import {
   LogOut,
   Sun,
   Moon,
+  Sparkles,
 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { useRouter } from "@tanstack/react-router";
