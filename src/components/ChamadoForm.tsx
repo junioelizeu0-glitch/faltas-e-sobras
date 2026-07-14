@@ -25,7 +25,8 @@ import Combobox from "./Combobox";
 
 const STATUS_CHAMADO_OPCOES = ["Pendente Monitoramento", "Aprovado", "Recusado"];
 const SITUACAO_OPCOES = [
-  "Aguardando monitoramento", "Aguardando NF Espelho", "Validação NF Espelho",
+  "Aguardando monitoramento", "Falta Aprovada", "Falta Recusada",
+  "Aguardando NF Espelho", "Validação NF Espelho",
   "Aguardando NFD", "Emitir NFD", "Importação NF", "Dados Bancários",
   "Enviada Solicitação Provisionamento", "Pendente Provisionamento Financeiro",
   "Pagamento Provisionado", "Chamado Recusado", "Sem retorno (Finalizado)", "Finalizado",
