@@ -37,8 +37,15 @@ export default function PainelAbertos({ rawData, isLoading, onOpenChamado }: Pro
 
   const rows = useMemo(() => {
     const hoje = new Date();
+    hoje.setHours(23, 59, 59, 999);
+    const inicioAno = new Date(hoje.getFullYear(), 0, 1, 0, 0, 0, 0);
     const list = (rawData || [])
-      .filter((r) => !isFinalizado(r))
+      .filter((r) => {
+        if (isFinalizado(r)) return false;
+        const dtAb = parseDataBR(r["Dt Abertura"]);
+        if (!dtAb) return false;
+        return dtAb >= inicioAno && dtAb <= hoje;
+      })
       .map((r) => {
         const dtAb = parseDataBR(r["Dt Abertura"]);
         const dias = dtAb ? getBusinessDays(dtAb, hoje) : 0;
@@ -100,7 +107,9 @@ export default function PainelAbertos({ rawData, isLoading, onOpenChamado }: Pro
         <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
           <FileText className="w-5 h-5 text-blue-600" /> Chamados em Aberto
         </h1>
-        <p className="text-sm text-slate-500 mt-0.5">Painel operacional — apenas chamados não finalizados. Alerta baseado em SLA de {SLA_LIMITE} dias úteis desde a abertura.</p>
+        <p className="text-sm text-slate-500 mt-0.5">
+          Painel operacional — chamados não finalizados abertos desde 01/01/{new Date().getFullYear()} até hoje. Alerta baseado em SLA de {SLA_LIMITE} dias úteis.
+        </p>
       </header>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
