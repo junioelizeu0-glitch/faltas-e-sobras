@@ -473,30 +473,27 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
           Responsáveis {precisaTranspConf && <span className="ml-2 text-[10px] text-blue-600 normal-case">(obrigatório para {statusChamado})</span>}
         </h2>
         <div className="flex flex-wrap gap-3">
-          <label className="flex flex-col gap-1" style={{ minWidth: "240px", flex: "1 1 240px" }}>
+          <div className="flex flex-col gap-1" style={{ minWidth: "240px", flex: "1 1 240px" }}>
             <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
               Transportadora {precisaTranspConf ? "*" : ""}
               <ManageBtn onClick={() => onManage("transp")} title="Cadastrar transportadoras" />
             </span>
-            <input list="transp-list-form" value={form.Transportadora} onChange={(e) => setField("Transportadora", e.target.value.toUpperCase().slice(0, 60))} className={inputCls} />
-            <datalist id="transp-list-form">{transp.map((t: string) => <option key={t} value={t} />)}</datalist>
-          </label>
-          <label className="flex flex-col gap-1" style={{ minWidth: "240px", flex: "1 1 240px" }}>
+            <Combobox value={form.Transportadora} onChange={(v) => setField("Transportadora", v)} options={transp} uppercase />
+          </div>
+          <div className="flex flex-col gap-1" style={{ minWidth: "240px", flex: "1 1 240px" }}>
             <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
               Conferente {precisaTranspConf ? "*" : ""}
               <ManageBtn onClick={() => onManage("conf")} title="Cadastrar conferentes" />
             </span>
-            <input list="conf-list-form" value={form.Conferente} onChange={(e) => setField("Conferente", e.target.value.toUpperCase().slice(0, 60))} className={inputCls} />
-            <datalist id="conf-list-form">{confs.map((c: string) => <option key={c} value={c} />)}</datalist>
-          </label>
-          <label className="flex flex-col gap-1" style={{ minWidth: "320px", flex: "2 1 320px" }}>
+            <Combobox value={form.Conferente} onChange={(v) => setField("Conferente", v)} options={confs} uppercase />
+          </div>
+          <div className="flex flex-col gap-1" style={{ minWidth: "320px", flex: "2 1 320px" }}>
             <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
               Motivo {precisaMotivo ? "*" : ""}
               <ManageBtn onClick={() => onManage("motivo")} title="Cadastrar motivos" />
             </span>
-            <input list="mot-list-form" value={form.Motivo} onChange={(e) => setField("Motivo", e.target.value.slice(0, 200))} className={inputCls} />
-            <datalist id="mot-list-form">{motivos.map((m: string) => <option key={m} value={m} />)}</datalist>
-          </label>
+            <Combobox value={form.Motivo} onChange={(v) => setField("Motivo", v)} options={motivos} />
+          </div>
         </div>
       </section>
     </div>
