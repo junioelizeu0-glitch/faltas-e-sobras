@@ -399,13 +399,11 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
             )}
             {tab === "referencias" && (
               <ReferenciasTab refs={refs} setRef={setRef} addRef={addRef} rmRef={rmRef} buscar={buscarProduto}
-                onSalvarParcial={() => submit("Referências salvas com sucesso.", { partial: true })}
-                onSalvarFull={() => submit()} primaryLabel={primaryLabel} salvando={submitting} />
+                onSalvarParcial={() => submit("Referências salvas com sucesso.", { partial: true })} salvando={submitting} />
             )}
             {tab === "etapas" && (
               <EtapasTab etapas={etapas} setEt={setEt} addEtapa={addEtapa} rmEtapa={rmEtapa} tarefas={tarefas}
-                onSalvarParcial={() => submit("Etapas salvas com sucesso.", { partial: true })}
-                onSalvarFull={() => submit()} primaryLabel={primaryLabel} salvando={submitting} />
+                onSalvarParcial={() => submit("Etapas salvas com sucesso.", { partial: true })} salvando={submitting} />
             )}
           </div>
 
