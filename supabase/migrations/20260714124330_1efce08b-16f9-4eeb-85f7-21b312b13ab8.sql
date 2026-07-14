@@ -1,0 +1,1 @@
+GRANT SELECT ON public.audit_log TO anon, authenticated; GRANT ALL ON public.audit_log TO service_role; GRANT USAGE, SELECT ON SEQUENCE public.audit_log_id_seq TO anon, authenticated, service_role;
