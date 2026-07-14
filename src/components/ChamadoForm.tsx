@@ -85,6 +85,9 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   const [feedback, setFeedback] = useState<{ type: "ok" | "err"; msg: string } | null>(null);
   const [loading, setLoading] = useState(mode === "editar");
   const [manage, setManage] = useState<null | "transp" | "conf" | "motivo">(null);
+  const [lojaOpen, setLojaOpen] = useState(false);
+  const [lojaInfo, setLojaInfo] = useState<Loja | null>(null);
+  const getLojaFn = useServerFn(getLojaByNumero);
 
   const [form, setForm] = useState<Record<string, string>>({
     Chamado: "", Loja: "", Tipo: "", NF: "",
