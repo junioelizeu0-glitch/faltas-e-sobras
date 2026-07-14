@@ -163,6 +163,20 @@ export default function AppShell({
                 )}
               </div>
 
+              {/* Sistema */}
+              <div>
+                <div className="w-full px-3 py-1 text-xs font-bold uppercase tracking-wider text-slate-400">Sistema</div>
+                <div className="mt-2 space-y-1">
+                  <button
+                    onClick={() => { setSelectedSubmenu("logs"); setMenuAberto(false); }}
+                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${selectedSubmenu === "logs" ? "bg-blue-50 text-blue-600" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"} cursor-pointer`}
+                  >
+                    <History className="w-4 h-4 shrink-0" />
+                    <span>Log de Alterações</span>
+                  </button>
+                </div>
+              </div>
+
             </div>
           </div>
         ) : (
