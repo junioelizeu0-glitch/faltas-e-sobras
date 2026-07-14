@@ -84,13 +84,14 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   const [manage, setManage] = useState<null | "transp" | "conf" | "motivo">(null);
 
   const [form, setForm] = useState<Record<string, string>>({
-    Chamado: "", Loja: "", Tipo: "Franquia", NF: "",
-    "Dt Emissão": "", CD: "ES", "Situação ": "Aguardando monitoramento",
+    Chamado: "", Loja: "", Tipo: "", NF: "",
+    "Dt Emissão": "", CD: "", "Situação ": "",
     "Dt Abertura": hojeISO(), "Dt Finalização": "", "Dt Pagamento": "",
-    "Status Chamado": "Pendente Monitoramento",
+    "Status Chamado": "",
     Motivo: "", Transportadora: "", Conferente: "",
     _valor: "",
   });
+
   const [refs, setRefs] = useState<Referencia[]>([]);
   const [etapas, setEtapas] = useState<Etapa[]>([]);
 
@@ -148,12 +149,8 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     })();
   }, [chamadoId, mode]);
 
-  // Inicial (novo) — se veio initialChamado, seed
-  useEffect(() => {
-    if (mode !== "novo" || !initialChamado) return;
-    const maxCh = Math.max(0, ...([initialChamado].filter(Boolean).map((r: any) => Number(r.Chamado) || 0)));
-    if (maxCh) setForm((p) => ({ ...p, Chamado: String(maxCh + 1) }));
-  }, [mode, initialChamado]);
+  // Inicial (novo) — não pré-preenche número do chamado (deixa em branco)
+
 
   const statusChamado = form["Status Chamado"];
   const precisaTranspConf = statusChamado === "Aprovado" || statusChamado === "Recusado";
@@ -197,12 +194,21 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   const validate = (): string | null => {
     if (!form.Chamado) return "Número do chamado é obrigatório";
     if (!form.Loja) return "Loja é obrigatória";
+    if (!form.Tipo) return "Tipo é obrigatório";
+    if (!form.CD) return "CD é obrigatório";
+    if (!form["Status Chamado"]) return "Status do chamado é obrigatório";
+    if (!form["Situação "]) return "Situação (tarefa atual) é obrigatória";
     if (!form["Dt Abertura"]) return "Data de abertura é obrigatória";
+    const refsOk = (refs || []).some((r) => (r.referencia || "").trim() !== "");
+    if (!refsOk) return "Inclua ao menos uma Referência (aba Referências)";
+    const etapasOk = (etapas || []).some((e) => (e.nome_tarefa || "").trim() !== "");
+    if (!etapasOk) return "Inclua ao menos uma Etapa (aba Etapas)";
     if (precisaTranspConf && (!form.Transportadora || !form.Conferente))
       return "Transportadora e Conferente obrigatórios para Aprovado/Recusado";
     if (precisaMotivo && !form.Motivo) return "Motivo obrigatório para Aprovado";
     return null;
   };
+
 
   const submit = async (successMsg?: string) => {
     setFeedback(null);
@@ -397,8 +403,9 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
         <div className="flex flex-wrap gap-3">
           <Field label="Chamado *" style={{ width: "120px" }}><input type="number" value={form.Chamado} onChange={(e) => setField("Chamado", e.target.value.slice(0, 8))} className={inputCls} required /></Field>
           <Field label="Loja *" style={{ width: "90px" }}><input type="number" value={form.Loja} onChange={(e) => setField("Loja", e.target.value.slice(0, 5))} className={inputCls} required /></Field>
-          <Field label="Tipo" style={{ width: "130px" }}><select value={form.Tipo} onChange={(e) => setField("Tipo", e.target.value)} className={inputCls}>{TIPO_OPCOES.map((o) => <option key={o}>{o}</option>)}</select></Field>
-          <Field label="CD" style={{ width: "90px" }}><select value={form.CD} onChange={(e) => setField("CD", e.target.value)} className={inputCls}>{CD_OPCOES.map((o) => <option key={o}>{o}</option>)}</select></Field>
+          <Field label="Tipo *" style={{ width: "130px" }}><select value={form.Tipo} onChange={(e) => setField("Tipo", e.target.value)} className={inputCls} required><option value="">— Selecionar —</option>{TIPO_OPCOES.map((o) => <option key={o}>{o}</option>)}</select></Field>
+          <Field label="CD *" style={{ width: "90px" }}><select value={form.CD} onChange={(e) => setField("CD", e.target.value)} className={inputCls} required><option value="">—</option>{CD_OPCOES.map((o) => <option key={o}>{o}</option>)}</select></Field>
+
           <Field label="NF" style={{ width: "140px" }}><input type="number" value={form.NF} onChange={(e) => setField("NF", e.target.value.slice(0, 10))} className={inputCls} /></Field>
           <Field label="Data Emissão" style={{ width: "160px" }}><input type="date" value={form["Dt Emissão"]} onChange={(e) => setField("Dt Emissão", e.target.value)} className={inputCls} /></Field>
           <Field label="Valor" style={{ width: "160px" }}><input type="number" step="0.01" value={form._valor} onChange={(e) => setField("_valor", e.target.value.slice(0, 14))} className={inputCls} /></Field>
@@ -411,12 +418,13 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
           <Field label="Data Finalização" style={{ width: "160px" }}><input type="date" value={form["Dt Finalização"]} onChange={(e) => setField("Dt Finalização", e.target.value)} className={inputCls} /></Field>
           <Field label="Data Pagamento" style={{ width: "160px" }}><input type="date" value={form["Dt Pagamento"]} onChange={(e) => setField("Dt Pagamento", e.target.value)} className={inputCls} /></Field>
           <Field label="Status Pagamento (auto)" style={{ width: "170px" }}><input value={statusPagamento} readOnly className={inputCls + " bg-slate-50 text-slate-500"} /></Field>
-          <Field label="Situação (tarefa atual)" style={{ minWidth: "260px", flex: "1 1 260px" }}>
-            <select value={form["Situação "]} onChange={(e) => setField("Situação ", e.target.value)} className={inputCls}>{SITUACAO_OPCOES.map((o) => <option key={o}>{o}</option>)}</select>
+          <Field label="Situação (tarefa atual) *" style={{ minWidth: "260px", flex: "1 1 260px" }}>
+            <select value={form["Situação "]} onChange={(e) => setField("Situação ", e.target.value)} className={inputCls} required><option value="">— Selecionar —</option>{SITUACAO_OPCOES.map((o) => <option key={o}>{o}</option>)}</select>
           </Field>
-          <Field label="Status Chamado" style={{ width: "210px" }}>
-            <select value={form["Status Chamado"]} onChange={(e) => setField("Status Chamado", e.target.value)} className={inputCls}>{STATUS_CHAMADO_OPCOES.map((o) => <option key={o}>{o}</option>)}</select>
+          <Field label="Status Chamado *" style={{ width: "210px" }}>
+            <select value={form["Status Chamado"]} onChange={(e) => setField("Status Chamado", e.target.value)} className={inputCls} required><option value="">— Selecionar —</option>{STATUS_CHAMADO_OPCOES.map((o) => <option key={o}>{o}</option>)}</select>
           </Field>
+
           <Field label="SLA (auto, dias úteis)" style={{ width: "160px" }}><input value={sla || "—"} readOnly className={inputCls + " bg-slate-50 text-slate-500"} /></Field>
         </div>
       </section>
