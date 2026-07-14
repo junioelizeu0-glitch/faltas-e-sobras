@@ -40,7 +40,7 @@ export default function CadastroTarefas() {
   return (
     <div className="flex-1 overflow-auto bg-slate-50 p-4">
       <div className="w-full">
-        <header className="mb-4 flex items-center justify-between">
+        <header className="sticky top-0 z-10 -mx-4 -mt-4 px-4 pt-4 pb-3 mb-4 bg-slate-50/95 backdrop-blur border-b border-slate-200 flex items-center justify-between">
           <div>
             <h1 className="text-xl font-bold text-slate-800">Cadastro de Tarefas (Etapas)</h1>
             <p className="text-sm text-slate-500 mt-1">Define nome, SLA em dias úteis e a qual tipo de chamado se aplica.</p>
