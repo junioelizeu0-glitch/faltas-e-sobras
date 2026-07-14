@@ -1508,7 +1508,7 @@ export default function Dashboard() {
     <>
     <AppShell selectedSubmenu={selectedSubmenu} setSelectedSubmenu={setSelectedSubmenu}>
         {selectedSubmenu === null && (
-          <PainelAbertos rawData={rawData} isLoading={isLoading} onOpenChamado={() => setSelectedSubmenu('consulta')} />
+          <PainelAbertos rawData={rawData} isLoading={isLoading} onChanged={() => refetch()} />
         )}
 
 
