@@ -497,7 +497,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
 
       {manage && (
         <div className="fixed inset-0 z-[70] bg-black/50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) { setManage(null); loadListas(); } }}>
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[90vh] overflow-hidden flex flex-col">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-[98vw] h-[96vh] overflow-hidden flex flex-col">
             <div className="flex items-center justify-between px-4 py-3 border-b bg-slate-50">
               <h3 className="font-semibold text-slate-800">
                 {manage === "transp" && "Cadastro de Transportadoras"}
