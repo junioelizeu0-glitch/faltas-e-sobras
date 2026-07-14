@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Clock, CheckCircle2, Search, FileText, Loader2, X } from "lucide-react";
-import { parseDataBR, getBusinessDays, isSemRetorno } from "@/lib/data-processing";
+import { parseDataBR, getBusinessDays } from "@/lib/data-processing";
 import ChamadoForm from "./ChamadoForm";
 
 type Props = {
@@ -23,12 +23,8 @@ const fmtBR = (v: any) => {
 };
 
 function isFinalizado(r: any) {
-  const st = String(r["Status Chamado"] || "").toLowerCase().trim();
-  if (["aprovado", "recusado", "cancelado", "finalizado"].includes(st)) return true;
-  const dtFin = String(r["Dt Finalização"] || "").trim();
-  if (dtFin !== "") return true;
-  if (isSemRetorno(r)) return true;
-  return false;
+  const dtFin = String(r["Dt Finalização"] || r.dt_finalizacao || "").trim();
+  return dtFin !== "";
 }
 
 function siglaCD(v: any): string {
@@ -72,7 +68,7 @@ export default function PainelAbertos({ rawData, isLoading, onChanged }: Props) 
           loja: r.Loja,
           cd: siglaCD(r.CD),
           tipo: r.Tipo || "",
-          tarefa: String(r["Situação "] || r["Situação"] || r.situacao || "—").trim() || "—",
+          tarefa: (String(r["Situação "] ?? r["Situação"] ?? r.situacao ?? "").trim()) || "—",
           status: r["Status Chamado"] || "",
           dtAbertura: r["Dt Abertura"],
           dias,
