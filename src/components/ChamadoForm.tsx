@@ -84,13 +84,14 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   const [manage, setManage] = useState<null | "transp" | "conf" | "motivo">(null);
 
   const [form, setForm] = useState<Record<string, string>>({
-    Chamado: "", Loja: "", Tipo: "Franquia", NF: "",
-    "Dt Emissão": "", CD: "ES", "Situação ": "Aguardando monitoramento",
+    Chamado: "", Loja: "", Tipo: "", NF: "",
+    "Dt Emissão": "", CD: "", "Situação ": "",
     "Dt Abertura": hojeISO(), "Dt Finalização": "", "Dt Pagamento": "",
-    "Status Chamado": "Pendente Monitoramento",
+    "Status Chamado": "",
     Motivo: "", Transportadora: "", Conferente: "",
     _valor: "",
   });
+
   const [refs, setRefs] = useState<Referencia[]>([]);
   const [etapas, setEtapas] = useState<Etapa[]>([]);
 
@@ -148,12 +149,8 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     })();
   }, [chamadoId, mode]);
 
-  // Inicial (novo) — se veio initialChamado, seed
-  useEffect(() => {
-    if (mode !== "novo" || !initialChamado) return;
-    const maxCh = Math.max(0, ...([initialChamado].filter(Boolean).map((r: any) => Number(r.Chamado) || 0)));
-    if (maxCh) setForm((p) => ({ ...p, Chamado: String(maxCh + 1) }));
-  }, [mode, initialChamado]);
+  // Inicial (novo) — não pré-preenche número do chamado (deixa em branco)
+
 
   const statusChamado = form["Status Chamado"];
   const precisaTranspConf = statusChamado === "Aprovado" || statusChamado === "Recusado";
@@ -197,12 +194,21 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   const validate = (): string | null => {
     if (!form.Chamado) return "Número do chamado é obrigatório";
     if (!form.Loja) return "Loja é obrigatória";
+    if (!form.Tipo) return "Tipo é obrigatório";
+    if (!form.CD) return "CD é obrigatório";
+    if (!form["Status Chamado"]) return "Status do chamado é obrigatório";
+    if (!form["Situação "]) return "Situação (tarefa atual) é obrigatória";
     if (!form["Dt Abertura"]) return "Data de abertura é obrigatória";
+    const refsOk = (refs || []).some((r) => (r.referencia || "").trim() !== "");
+    if (!refsOk) return "Inclua ao menos uma Referência (aba Referências)";
+    const etapasOk = (etapas || []).some((e) => (e.nome_tarefa || "").trim() !== "");
+    if (!etapasOk) return "Inclua ao menos uma Etapa (aba Etapas)";
     if (precisaTranspConf && (!form.Transportadora || !form.Conferente))
       return "Transportadora e Conferente obrigatórios para Aprovado/Recusado";
     if (precisaMotivo && !form.Motivo) return "Motivo obrigatório para Aprovado";
     return null;
   };
+
 
   const submit = async (successMsg?: string) => {
     setFeedback(null);
