@@ -65,7 +65,12 @@ export default function AppShell({
               >
                 <ChevronLeft className="w-4 h-4" />
               </button>
-              <div className="flex items-center gap-2 pr-6">
+              <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); setSelectedSubmenu(null); }}
+                className="flex items-center gap-2 pr-6 text-left hover:opacity-80 transition-opacity cursor-pointer"
+                title="Ir para tela inicial"
+              >
                 <img
                   src={LOGO_URL}
                   alt="Logo"
@@ -79,7 +84,7 @@ export default function AppShell({
                   <br />
                   Sobras
                 </span>
-              </div>
+              </button>
             </div>
 
             {/* Itens do Menu */}
