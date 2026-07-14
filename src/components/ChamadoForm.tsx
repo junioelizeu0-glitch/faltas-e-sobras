@@ -751,8 +751,8 @@ function ReferenciasTab({ refs, setRef, addRef, rmRef, buscar, onSalvarParcial, 
 function EtapasTab({ etapas, setEt, addEtapa, rmEtapa, tarefas, onSalvarParcial, salvando }: any) {
   const [editIdx, setEditIdx] = useState<number | null>(null);
   return (
-    <div className="space-y-3">
-      <div className="flex justify-between items-center">
+    <div className="space-y-3 relative">
+      <div className="flex justify-between items-center sticky top-0 z-20 bg-white/95 backdrop-blur py-2 -mx-1 px-1 border-b border-slate-100">
         <p className="text-xs text-slate-500">Etapas do fluxo. Data prevista e SLA são calculados automaticamente em dias úteis.</p>
         <div className="flex items-center gap-2">
           <button type="button" onClick={addEtapa} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md">
