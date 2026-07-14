@@ -249,10 +249,10 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   };
 
 
-  const submit = async (successMsg?: string) => {
+  const submit = async (successMsg?: string, opts?: { partial?: boolean }) => {
     setFeedback(null);
-    const err = validate();
-    if (err) { setFeedback({ type: "err", msg: err }); return; }
+    const err = validate(!!opts?.partial);
+    if (err) { setFeedback({ type: "err", msg: err }); toast.error(err); return; }
     setSubmitting(true);
     const payload = {
       chamado: {
@@ -276,17 +276,14 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
       })),
     };
     try {
-      if (mode === "editar" && chamadoId) {
-        await updateFn({ data: { id: chamadoId, ...payload } });
+      const isEdit = mode === "editar" && chamadoId;
+      if (isEdit) {
+        await updateFn({ data: { id: chamadoId!, ...payload } });
       } else {
         const res: any = await createFn({ data: payload });
-        // Após criar, transiciona para modo edição para que próximas ações (add referência/etapa) atualizem o mesmo registro
-        if (res?.id) {
-          setChamadoId(res.id);
-          setMode("editar");
-        }
+        if (res?.id) { setChamadoId(res.id); setMode("editar"); }
       }
-      const msg = successMsg || (mode === "editar" ? "Chamado atualizado com sucesso." : "Chamado incluído com sucesso.");
+      const msg = successMsg || (isEdit ? "Alterações salvas com sucesso." : "Chamado incluído com sucesso.");
       setFeedback({ type: "ok", msg });
       toast.success(msg);
       onSaved?.();
@@ -296,6 +293,8 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
       toast.error(msg);
     } finally { setSubmitting(false); }
   };
+
+  const primaryLabel = mode === "editar" ? "Salvar alterações" : "Incluir chamado";
 
   if (loading) return <div className="flex items-center justify-center p-10 text-slate-500"><Loader2 className="w-5 h-5 animate-spin mr-2"/>Carregando...</div>;
 
