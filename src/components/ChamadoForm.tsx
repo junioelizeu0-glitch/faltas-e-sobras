@@ -682,9 +682,6 @@ function EtapasTab({ etapas, setEt, addEtapa, rmEtapa, tarefas, onSalvarParcial,
           <button type="button" onClick={onSalvarParcial} disabled={salvando} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-md disabled:opacity-50">
             {salvando ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <Save className="w-3.5 h-3.5"/>}Salvar etapas
           </button>
-          <button type="button" onClick={onSalvarFull} disabled={salvando} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50">
-            {salvando ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <Save className="w-3.5 h-3.5"/>}{primaryLabel}
-          </button>
         </div>
       </div>
       {etapas.length === 0 && <div className="text-center py-8 text-slate-400 text-sm border border-dashed rounded-lg">Nenhuma etapa ainda.</div>}
