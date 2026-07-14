@@ -473,6 +473,31 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
           </div>
         </div>
       )}
+
+      {monitorAsk && (
+        <div className="fixed inset-0 z-[80] bg-black/50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) setMonitorAsk(false); }}>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
+            <div className="flex items-center justify-between px-4 py-3 border-b">
+              <h3 className="font-semibold text-slate-800 flex items-center gap-2"><ClipboardCheck className="w-4 h-4 text-indigo-600"/>Resultado do monitoramento</h3>
+              <button onClick={() => setMonitorAsk(false)} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5"/></button>
+            </div>
+            <div className="p-5">
+              <p className="text-sm text-slate-700 mb-1">Falta aprovada?</p>
+              <p className="text-xs text-slate-500">
+                {form.Tipo === "Própria"
+                  ? "Loja Própria — ao aprovar será criada a tarefa \"Solicitar Emissão de NF\"."
+                  : "Loja Franquia — ao aprovar será criada a tarefa \"Solicitar NF Espelho\"."}
+                {" "}Ao recusar, será criada a tarefa "Finalizar Recusa Chamado".
+              </p>
+            </div>
+            <div className="flex items-center justify-end gap-2 px-4 py-3 border-t bg-slate-50">
+              <button onClick={() => setMonitorAsk(false)} className="px-3 py-2 text-sm text-slate-600 hover:text-slate-900">Cancelar</button>
+              <button onClick={() => aplicarResultadoMonitoramento(false)} className="px-3 py-2 text-sm font-semibold text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100">Não</button>
+              <button onClick={() => aplicarResultadoMonitoramento(true)} className="px-3 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-md">Sim</button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
