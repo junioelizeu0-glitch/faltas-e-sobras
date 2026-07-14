@@ -583,54 +583,52 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
     <div className="space-y-5">
       <section>
         <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Identificação</h2>
-        <div className="flex flex-wrap gap-3">
-          <Field label="Chamado *" style={{ width: "120px" }}><input type="number" value={form.Chamado} onChange={(e) => setField("Chamado", e.target.value.slice(0, 8))} className={inputCls} required /></Field>
-          <Field label="Loja *" style={{ width: "90px" }}><input type="number" value={form.Loja} onChange={(e) => setField("Loja", e.target.value.slice(0, 5))} className={inputCls} required /></Field>
-          <Field label="Tipo *" style={{ width: "130px" }}><select value={form.Tipo} onChange={(e) => setField("Tipo", e.target.value)} className={inputCls} required><option value="">— Selecionar —</option>{TIPO_OPCOES.map((o) => <option key={o}>{o}</option>)}</select></Field>
-          <Field label="CD *" style={{ width: "90px" }}><select value={form.CD} onChange={(e) => setField("CD", e.target.value)} className={inputCls} required><option value="">—</option>{CD_OPCOES.map((o) => <option key={o}>{o}</option>)}</select></Field>
-
-          <Field label="NF" style={{ width: "140px" }}><input type="number" value={form.NF} onChange={(e) => setField("NF", e.target.value.slice(0, 10))} className={inputCls} /></Field>
-          <Field label="Data Emissão" style={{ width: "160px" }}><input type="date" value={form["Dt Emissão"]} onChange={(e) => setField("Dt Emissão", e.target.value)} className={inputCls} /></Field>
-          <Field label="Valor" style={{ width: "160px" }}><input type="number" step="0.01" value={form._valor} onChange={(e) => setField("_valor", e.target.value.slice(0, 14))} className={inputCls} /></Field>
+        <div className="grid gap-3 grid-cols-2 sm:grid-cols-4 lg:grid-cols-7">
+          <Field label="Chamado *"><input type="number" value={form.Chamado} onChange={(e) => setField("Chamado", e.target.value.slice(0, 8))} className={inputCls} required /></Field>
+          <Field label="Loja *"><input type="number" value={form.Loja} onChange={(e) => setField("Loja", e.target.value.slice(0, 5))} className={inputCls} required /></Field>
+          <Field label="Tipo *"><select value={form.Tipo} onChange={(e) => setField("Tipo", e.target.value)} className={inputCls} required><option value="">— Selecionar —</option>{TIPO_OPCOES.map((o) => <option key={o}>{o}</option>)}</select></Field>
+          <Field label="CD *"><select value={form.CD} onChange={(e) => setField("CD", e.target.value)} className={inputCls} required><option value="">—</option>{CD_OPCOES.map((o) => <option key={o}>{o}</option>)}</select></Field>
+          <Field label="NF"><input type="number" value={form.NF} onChange={(e) => setField("NF", e.target.value.slice(0, 10))} className={inputCls} /></Field>
+          <Field label="Data Emissão"><input type="date" value={form["Dt Emissão"]} onChange={(e) => setField("Dt Emissão", e.target.value)} className={inputCls} /></Field>
+          <Field label="Valor"><input type="number" step="0.01" value={form._valor} onChange={(e) => setField("_valor", e.target.value.slice(0, 14))} className={inputCls} /></Field>
         </div>
       </section>
       <section>
         <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Status e Datas</h2>
-        <div className="flex flex-wrap gap-3">
-          <Field label="Data Abertura *" style={{ width: "160px" }}><input type="date" value={form["Dt Abertura"]} onChange={(e) => setField("Dt Abertura", e.target.value)} className={inputCls} required /></Field>
-          <Field label="Data Finalização" style={{ width: "160px" }}><input type="date" value={form["Dt Finalização"]} onChange={(e) => setField("Dt Finalização", e.target.value)} className={inputCls} /></Field>
-          <Field label="Data Pagamento" style={{ width: "160px" }}><input type="date" value={form["Dt Pagamento"]} onChange={(e) => setField("Dt Pagamento", e.target.value)} className={inputCls} /></Field>
-          <Field label="Status Pagamento (auto)" style={{ width: "170px" }}><input value={statusPagamento} readOnly className={inputCls + " bg-slate-50 text-slate-500"} /></Field>
-          <Field label="Situação (tarefa atual) *" style={{ minWidth: "260px", flex: "1 1 260px" }}>
+        <div className="grid gap-3 grid-cols-2 sm:grid-cols-4 lg:grid-cols-7">
+          <Field label="Data Abertura *"><input type="date" value={form["Dt Abertura"]} onChange={(e) => setField("Dt Abertura", e.target.value)} className={inputCls} required /></Field>
+          <Field label="Data Finalização"><input type="date" value={form["Dt Finalização"]} onChange={(e) => setField("Dt Finalização", e.target.value)} className={inputCls} /></Field>
+          <Field label="Data Pagamento"><input type="date" value={form["Dt Pagamento"]} onChange={(e) => setField("Dt Pagamento", e.target.value)} className={inputCls} /></Field>
+          <Field label="Status Pagamento (auto)"><input value={statusPagamento} readOnly className={inputCls + " bg-slate-50 text-slate-500"} /></Field>
+          <Field label="Situação (tarefa atual) *" className="col-span-2">
             <select value={form["Situação "]} onChange={(e) => setField("Situação ", e.target.value)} className={inputCls} required><option value="">— Selecionar —</option>{SITUACAO_OPCOES.map((o) => <option key={o}>{o}</option>)}</select>
           </Field>
-          <Field label="Status Chamado *" style={{ width: "210px" }}>
+          <Field label="Status Chamado *">
             <select value={form["Status Chamado"]} onChange={(e) => setField("Status Chamado", e.target.value)} className={inputCls} required><option value="">— Selecionar —</option>{STATUS_CHAMADO_OPCOES.map((o) => <option key={o}>{o}</option>)}</select>
           </Field>
-
-          <Field label="SLA (auto, dias úteis)" style={{ width: "160px" }}><input value={sla || "—"} readOnly className={inputCls + " bg-slate-50 text-slate-500"} /></Field>
+          <Field label="SLA (auto, dias úteis)"><input value={sla || "—"} readOnly className={inputCls + " bg-slate-50 text-slate-500"} /></Field>
         </div>
       </section>
       <section>
         <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
           Responsáveis {precisaTranspConf && <span className="ml-2 text-[10px] text-blue-600 normal-case">(obrigatório para {statusChamado})</span>}
         </h2>
-        <div className="flex flex-wrap gap-3">
-          <div className="flex flex-col gap-1" style={{ minWidth: "240px", flex: "1 1 240px" }}>
+        <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+          <div className="flex flex-col gap-1">
             <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
               Transportadora {precisaTranspConf ? "*" : ""}
               <ManageBtn onClick={() => onManage("transp")} title="Cadastrar transportadoras" />
             </span>
             <Combobox value={form.Transportadora} onChange={(v) => setField("Transportadora", v)} options={transp} uppercase />
           </div>
-          <div className="flex flex-col gap-1" style={{ minWidth: "240px", flex: "1 1 240px" }}>
+          <div className="flex flex-col gap-1">
             <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
               Conferente {precisaTranspConf ? "*" : ""}
               <ManageBtn onClick={() => onManage("conf")} title="Cadastrar conferentes" />
             </span>
             <Combobox value={form.Conferente} onChange={(v) => setField("Conferente", v)} options={confs} uppercase />
           </div>
-          <div className="flex flex-col gap-1" style={{ minWidth: "320px", flex: "2 1 320px" }}>
+          <div className="flex flex-col gap-1 lg:col-span-2">
             <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
               Motivo {precisaMotivo ? "*" : ""}
               <ManageBtn onClick={() => onManage("motivo")} title="Cadastrar motivos" />
