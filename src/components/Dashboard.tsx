@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { useDashboardData, isValidField, getTarefaAtual, isSemRetorno, parseDataBR, getBusinessDays } from '@/lib/data-processing';
 import NovoChamadoForm from '@/components/NovoChamadoForm';
+import PainelAbertos from '@/components/PainelAbertos';
 import ConsultaChamados from '@/components/ConsultaChamados';
 import CadastroProdutos from '@/components/CadastroProdutos';
 import CadastroTarefas from '@/components/CadastroTarefas';
@@ -1507,8 +1508,9 @@ export default function Dashboard() {
     <>
     <AppShell selectedSubmenu={selectedSubmenu} setSelectedSubmenu={setSelectedSubmenu}>
         {selectedSubmenu === null && (
-          <div className="flex-1 bg-slate-100"></div>
+          <PainelAbertos rawData={rawData} isLoading={isLoading} onOpenChamado={() => setSelectedSubmenu('consulta')} />
         )}
+
 
         {selectedSubmenu === 'novo' && (
           <NovoChamadoForm rawData={rawData} onCreated={() => refetch()} />
