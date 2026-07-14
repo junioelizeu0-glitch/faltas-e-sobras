@@ -667,7 +667,7 @@ function ReferenciasTab({ refs, setRef, addRef, rmRef, buscar, onSalvarParcial, 
   );
 }
 
-function EtapasTab({ etapas, setEt, addEtapa, rmEtapa, tarefas, onSalvarParcial, onSalvarFull, primaryLabel, salvando }: any) {
+function EtapasTab({ etapas, setEt, addEtapa, rmEtapa, tarefas, onSalvarParcial, salvando }: any) {
   const [editIdx, setEditIdx] = useState<number | null>(null);
   return (
     <div className="space-y-3">
