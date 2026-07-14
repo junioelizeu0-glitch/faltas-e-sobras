@@ -17,7 +17,7 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
   const del = useServerFn(deleteLoja);
   const [rows, setRows] = useState<Loja[]>([]);
   const [loading, setLoading] = useState(true);
-  const [busca, setBusca] = useState("");
+  const [busca, setBusca] = useState(buscaInicial || "");
   const [editing, setEditing] = useState<Loja | null>(null);
   const [viewing, setViewing] = useState<Loja | null>(null);
   const [err, setErr] = useState<string | null>(null);
