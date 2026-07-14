@@ -614,7 +614,7 @@ function ItemEditModal({ title, onClose, onAdd, children }: { title: string; onC
   );
 }
 
-function ReferenciasTab({ refs, setRef, addRef, rmRef, buscar, onSalvarParcial, onSalvarFull, primaryLabel, salvando }: any) {
+function ReferenciasTab({ refs, setRef, addRef, rmRef, buscar, onSalvarParcial, salvando }: any) {
   const [editIdx, setEditIdx] = useState<number | null>(null);
   return (
     <div className="space-y-3">
