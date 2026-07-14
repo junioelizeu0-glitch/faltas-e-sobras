@@ -25,7 +25,8 @@ import Combobox from "./Combobox";
 
 const STATUS_CHAMADO_OPCOES = ["Pendente Monitoramento", "Aprovado", "Recusado"];
 const SITUACAO_OPCOES = [
-  "Aguardando monitoramento", "Aguardando NF Espelho", "Validação NF Espelho",
+  "Aguardando monitoramento", "Falta Aprovada", "Falta Recusada",
+  "Aguardando NF Espelho", "Validação NF Espelho",
   "Aguardando NFD", "Emitir NFD", "Importação NF", "Dados Bancários",
   "Enviada Solicitação Provisionamento", "Pendente Provisionamento Financeiro",
   "Pagamento Provisionado", "Chamado Recusado", "Sem retorno (Finalizado)", "Finalizado",
@@ -334,43 +335,63 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   const aplicarResultadoMonitoramento = async (aprovado: boolean) => {
     setMonitorAsk(false);
     const hoje = hojeISO();
-    // Encerra a etapa de monitoramento em aberto, se houver
-    const etapasAtualizadas = etapas.map((e) => {
-      if (!e.dt_fim && /monitoramento/i.test(e.nome_tarefa || "")) {
-        return { ...e, dt_fim: hoje };
-      }
-      return e;
-    });
+    const novaTarefaNome = aprovado ? "Falta Aprovada" : "Falta Recusada";
+    const novoStatus = aprovado ? "Aprovado" : "Recusado";
 
-    let novaTarefaNome = "";
-    let novaSituacao = "";
-    let novoStatus = "";
-    if (aprovado) {
-      novaTarefaNome = form.Tipo === "Própria" ? "Solicitar Emissão de NF" : "Solicitar NF Espelho";
-      novaSituacao = novaTarefaNome;
-      novoStatus = "Aprovado";
-    } else {
-      novaTarefaNome = "Finalizar Recusa Chamado";
-      novaSituacao = "Chamado Recusado";
-      novoStatus = "Recusado";
-    }
-    const t = tarefas.find((x) => x.nome === novaTarefaNome);
-    const novaEtapa: Etapa = {
-      tarefa_id: t?.id || null,
-      nome_tarefa: novaTarefaNome,
-      dias_uteis_previsto: t?.dias_uteis ?? 1,
-      dt_inicio: hoje,
-      dt_fim: "",
-    };
-    setEtapas([...etapasAtualizadas, novaEtapa]);
-    // Atualiza situação e status (prevStatusRef evita o auto-fill sobrescrever)
-    prevStatusRef.current = novoStatus;
-    setForm((p) => ({ ...p, "Status Chamado": novoStatus, "Situação ": novaSituacao }));
-    toast.success(
-      aprovado
-        ? `Falta aprovada. Nova tarefa: ${novaTarefaNome}. Lembre-se de salvar as alterações.`
-        : `Falta recusada. Nova tarefa: ${novaTarefaNome}. Lembre-se de salvar as alterações.`
+    // Encerra etapa de monitoramento em aberto e adiciona a nova
+    const etapasAtualizadas = etapas.map((e) =>
+      !e.dt_fim && /monitoramento/i.test(e.nome_tarefa || "") ? { ...e, dt_fim: hoje } : e
     );
+    const t = tarefas.find((x) => x.nome.toLowerCase() === novaTarefaNome.toLowerCase());
+    const novasEtapas: Etapa[] = [
+      ...etapasAtualizadas,
+      { tarefa_id: t?.id || null, nome_tarefa: novaTarefaNome, dias_uteis_previsto: t?.dias_uteis ?? 1, dt_inicio: hoje, dt_fim: "" },
+    ];
+
+    // Atualiza estado (para UI) e envia diretamente ao banco com os novos valores
+    prevStatusRef.current = novoStatus;
+    setForm((p) => ({ ...p, "Status Chamado": novoStatus, "Situação ": novaTarefaNome }));
+    setEtapas(novasEtapas);
+
+    setSubmitting(true);
+    try {
+      const payload = {
+        chamado: {
+          Chamado: form.Chamado, Loja: form.Loja, Tipo: form.Tipo, NF: form.NF,
+          "Dt Emissão": form["Dt Emissão"], " Valor ": form._valor,
+          CD: form.CD, "Situação ": novaTarefaNome, "Dt Abertura": form["Dt Abertura"],
+          "Dt Finalização": form["Dt Finalização"], "Dt Pagamento": form["Dt Pagamento"],
+          "SLA por chamado (60dias)": slaCalc, "Status Pagamento": statusPagamento,
+          "Status Chamado": novoStatus, Motivo: form.Motivo,
+          Transportadora: form.Transportadora, Conferente: form.Conferente,
+          Periodo: primeiroDiaMesISO(form["Dt Abertura"]),
+        },
+        referencias: refs.map((r) => ({
+          referencia: r.referencia, cor: r.cor, descricao: r.descricao,
+          fornecedor: r.fornecedor, tamanho: r.tamanho, quantidade: r.quantidade,
+        })),
+        etapas: novasEtapas.map((e, i) => ({
+          tarefa_id: e.tarefa_id, nome_tarefa: e.nome_tarefa,
+          dias_uteis_previsto: e.dias_uteis_previsto, dt_inicio: e.dt_inicio || null,
+          dt_fim: e.dt_fim || null, ordem: i + 1,
+        })),
+      };
+      if (mode === "editar" && chamadoId) {
+        await updateFn({ data: { id: chamadoId, ...payload } });
+      } else {
+        const res: any = await createFn({ data: payload });
+        if (res?.id) { setChamadoId(res.id); setMode("editar"); }
+      }
+      toast.success(aprovado ? "Falta aprovada — chamado atualizado." : "Falta recusada — chamado atualizado.");
+      onSaved?.();
+      onCancel?.();
+    } catch (e: any) {
+      const msg = e?.message || "Erro ao salvar resultado";
+      setFeedback({ type: "err", msg });
+      toast.error(msg);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
 
@@ -518,24 +539,15 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
 
       {monitorAsk && (
         <div className="fixed inset-0 z-[80] bg-black/50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) setMonitorAsk(false); }}>
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
-            <div className="flex items-center justify-between px-4 py-3 border-b">
-              <h3 className="font-semibold text-slate-800 flex items-center gap-2"><ClipboardCheck className="w-4 h-4 text-indigo-600"/>Resultado do monitoramento</h3>
-              <button onClick={() => setMonitorAsk(false)} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5"/></button>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm">
+            <div className="px-6 py-8 text-center">
+              <ClipboardCheck className="w-8 h-8 text-indigo-600 mx-auto mb-3"/>
+              <h3 className="text-lg font-semibold text-slate-800">Falta aprovada?</h3>
             </div>
-            <div className="p-5">
-              <p className="text-sm text-slate-700 mb-1">Falta aprovada?</p>
-              <p className="text-xs text-slate-500">
-                {form.Tipo === "Própria"
-                  ? "Loja Própria — ao aprovar será criada a tarefa \"Solicitar Emissão de NF\"."
-                  : "Loja Franquia — ao aprovar será criada a tarefa \"Solicitar NF Espelho\"."}
-                {" "}Ao recusar, será criada a tarefa "Finalizar Recusa Chamado".
-              </p>
-            </div>
-            <div className="flex items-center justify-end gap-2 px-4 py-3 border-t bg-slate-50">
-              <button onClick={() => setMonitorAsk(false)} className="px-3 py-2 text-sm text-slate-600 hover:text-slate-900">Cancelar</button>
-              <button onClick={() => aplicarResultadoMonitoramento(false)} className="px-3 py-2 text-sm font-semibold text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100">Não</button>
-              <button onClick={() => aplicarResultadoMonitoramento(true)} className="px-3 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-md">Sim</button>
+            <div className="flex items-center justify-center gap-2 px-4 py-3 border-t bg-slate-50">
+              <button onClick={() => setMonitorAsk(false)} className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900">Cancelar</button>
+              <button onClick={() => aplicarResultadoMonitoramento(false)} className="px-4 py-2 text-sm font-semibold text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100">Não</button>
+              <button onClick={() => aplicarResultadoMonitoramento(true)} className="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-md">Sim</button>
             </div>
           </div>
         </div>
