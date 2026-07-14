@@ -487,14 +487,36 @@ const AbaVisaoExecutiva = ({ data, onOpenModal }: any) => (
           </div>
         </div>
         <ResponsiveContainer width="100%" height={320}>
-          <BarChart layout="vertical" data={data.charts?.slaComparativoData || data.kpis?.slaComparativoData || []} margin={{ top: 0, right: 50, left: 10, bottom: 0 }}>
+          <BarChart layout="vertical" data={data.charts?.slaComparativoData || data.kpis?.slaComparativoData || []} margin={{ top: 0, right: 110, left: 10, bottom: 0 }}
+            onClick={(e: any) => {
+              if (!e || !e.activeLabel) return;
+              if (e.activeLabel === 'SLA do Chamado') onOpenModal('SLA DO CHAMADO');
+              else if (e.activeLabel === 'SLA de Pagamento') onOpenModal('SLA DE PAGAMENTO');
+            }}
+          >
             <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
             <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b' }} />
-            <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#475569', fontWeight: 'bold' }} width={110} />
+            <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#475569', fontWeight: 'bold' }} width={110} style={{ cursor: 'pointer' }} />
             <Tooltip cursor={{ fill: '#f1f5f9' }} />
-            <Bar dataKey="No Prazo" stackId="a" fill="#10b981" barSize={30} />
-            <Bar dataKey="Fora do Prazo" stackId="a" fill="#f43f5e" barSize={30} radius={[0, 4, 4, 0]}>
-              <LabelList dataKey="Total" position="right" fill="#64748b" fontSize={11} formatter={(val: any) => `Total: ${val}`} />
+            <Bar dataKey="No Prazo" stackId="a" fill="#10b981" barSize={30} style={{ cursor: 'pointer' }}>
+              <LabelList dataKey="No Prazo" position="center" fill="#ffffff" fontSize={11} fontWeight="bold" formatter={(val: any, entry: any) => {
+                const row: any = (data.charts?.slaComparativoData || data.kpis?.slaComparativoData || []).find((r: any) => r['No Prazo'] === val);
+                const total = row?.Total || 0;
+                return total > 0 ? `${Math.round((val / total) * 100)}%` : '';
+              }} />
+            </Bar>
+            <Bar dataKey="Fora do Prazo" stackId="a" fill="#f43f5e" barSize={30} radius={[0, 4, 4, 0]} style={{ cursor: 'pointer' }}>
+              <LabelList dataKey="Fora do Prazo" position="center" fill="#ffffff" fontSize={11} fontWeight="bold" formatter={(val: any) => {
+                const row: any = (data.charts?.slaComparativoData || data.kpis?.slaComparativoData || []).find((r: any) => r['Fora do Prazo'] === val);
+                const total = row?.Total || 0;
+                return total > 0 ? `${Math.round((val / total) * 100)}%` : '';
+              }} />
+              <LabelList dataKey="Total" position="right" fill="#0f172a" fontSize={11} fontWeight="bold" formatter={(val: any, entry: any) => {
+                const row: any = (data.charts?.slaComparativoData || data.kpis?.slaComparativoData || []).find((r: any) => r.Total === val);
+                const dentro = row?.['No Prazo'] || 0;
+                const pct = val > 0 ? Math.round((dentro / val) * 100) : 0;
+                return `Total: ${val} • ${pct}%`;
+              }} />
             </Bar>
           </BarChart>
         </ResponsiveContainer>
