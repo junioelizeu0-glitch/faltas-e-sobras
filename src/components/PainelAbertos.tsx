@@ -68,7 +68,7 @@ export default function PainelAbertos({ rawData, isLoading, onChanged }: Props) 
           loja: r.Loja,
           cd: siglaCD(r.CD),
           tipo: r.Tipo || "",
-          tarefa: String(r["Situação "] || r["Situação"] || r.situacao || "—").trim() || "—",
+          tarefa: (String(r["Situação "] ?? r["Situação"] ?? r.situacao ?? "").trim()) || "—",
           status: r["Status Chamado"] || "",
           dtAbertura: r["Dt Abertura"],
           dias,
