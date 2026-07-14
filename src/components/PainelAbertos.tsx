@@ -37,8 +37,15 @@ export default function PainelAbertos({ rawData, isLoading, onOpenChamado }: Pro
 
   const rows = useMemo(() => {
     const hoje = new Date();
+    hoje.setHours(23, 59, 59, 999);
+    const inicioAno = new Date(hoje.getFullYear(), 0, 1, 0, 0, 0, 0);
     const list = (rawData || [])
-      .filter((r) => !isFinalizado(r))
+      .filter((r) => {
+        if (isFinalizado(r)) return false;
+        const dtAb = parseDataBR(r["Dt Abertura"]);
+        if (!dtAb) return false;
+        return dtAb >= inicioAno && dtAb <= hoje;
+      })
       .map((r) => {
         const dtAb = parseDataBR(r["Dt Abertura"]);
         const dias = dtAb ? getBusinessDays(dtAb, hoje) : 0;
