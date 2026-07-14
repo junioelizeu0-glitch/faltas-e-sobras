@@ -104,8 +104,10 @@ html, body {
   color: var(--text-primary);
 }
 
-*, *::before, *::after {
-  transition: background-color .15s ease, color .15s ease, border-color .15s ease, fill .15s ease, stroke .15s ease;
+/* Transições apenas em elementos que realmente mudam de cor visível */
+html, body, .card, table, th, td, button, input, select, textarea, .badge,
+[role="dialog"], [role="menu"], [role="listbox"], [role="tab"], [role="tabpanel"] {
+  transition: background-color .1s ease, color .1s ease, border-color .1s ease;
 }
 
 @layer base {
