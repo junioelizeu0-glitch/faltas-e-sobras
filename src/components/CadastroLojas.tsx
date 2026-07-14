@@ -198,7 +198,7 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
       {/* Modal de edição/criação */}
       {editing && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[92vh] overflow-auto">
             <div className="flex items-center justify-between px-4 py-3 border-b">
               <h3 className="font-semibold">{editing.id ? "Editar" : "Nova"} loja</h3>
               <button onClick={() => setEditing(null)}><X className="w-5 h-5 text-slate-400"/></button>
