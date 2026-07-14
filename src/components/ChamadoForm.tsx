@@ -421,7 +421,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
         )}
 
         <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
-          <div className="flex border-b border-slate-200">
+          <div className="sticky top-0 z-20 flex border-b border-slate-200 bg-white/95 backdrop-blur rounded-t-xl">
             {[
               { k: "cadastro", label: "Cadastro" },
               { k: "referencias", label: `Referências (${refs.length})` },

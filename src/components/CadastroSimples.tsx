@@ -82,7 +82,7 @@ export default function CadastroSimples({ titulo, descricao, listFn, upsertFn, d
   return (
     <div className="flex-1 overflow-auto bg-slate-50 p-4">
       <div className="w-full">
-        <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
+        <header className="sticky top-0 z-10 -mx-4 -mt-4 px-4 pt-4 pb-3 mb-4 bg-slate-50/95 backdrop-blur border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
           <div>
             <h1 className="text-xl font-bold text-slate-800">{titulo}</h1>
             {descricao && <p className="text-sm text-slate-500 mt-1">{descricao}</p>}
