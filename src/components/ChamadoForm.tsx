@@ -189,6 +189,21 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   }, [form["Status Chamado"]]);
 
 
+  // Busca dados bancários da loja quando o número muda (ou depois de fechar o modal de cadastro)
+  useEffect(() => {
+    const numero = String(form.Loja || "").trim();
+    if (!numero) { setLojaInfo(null); return; }
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      try {
+        const r = await getLojaFn({ data: { numero } });
+        if (!cancelled) setLojaInfo((r as Loja | null) || null);
+      } catch { if (!cancelled) setLojaInfo(null); }
+    }, 300);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [form.Loja, lojaOpen]);
+
+
 
   const statusChamado = form["Status Chamado"];
   const precisaTranspConf = statusChamado === "Aprovado" || statusChamado === "Recusado";
