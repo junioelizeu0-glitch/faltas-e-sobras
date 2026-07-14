@@ -16,8 +16,10 @@ import {
   upsertConferente, deleteConferente,
   upsertMotivo, deleteMotivo,
 } from "@/lib/cadastros.functions";
+import { getLojaByNumero, type Loja } from "@/lib/lojas.functions";
 import { diasUteisEntre, parseISO, calcDataPrevista } from "@/lib/business-days";
 import CadastroSimples from "./CadastroSimples";
+import CadastroLojas from "./CadastroLojas";
 import Combobox from "./Combobox";
 
 
@@ -83,6 +85,9 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   const [feedback, setFeedback] = useState<{ type: "ok" | "err"; msg: string } | null>(null);
   const [loading, setLoading] = useState(mode === "editar");
   const [manage, setManage] = useState<null | "transp" | "conf" | "motivo">(null);
+  const [lojaOpen, setLojaOpen] = useState(false);
+  const [lojaInfo, setLojaInfo] = useState<Loja | null>(null);
+  const getLojaFn = useServerFn(getLojaByNumero);
 
   const [form, setForm] = useState<Record<string, string>>({
     Chamado: "", Loja: "", Tipo: "", NF: "",
@@ -182,6 +187,21 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
       setForm((p) => ({ ...p, "Situação ": nova }));
     }
   }, [form["Status Chamado"]]);
+
+
+  // Busca dados bancários da loja quando o número muda (ou depois de fechar o modal de cadastro)
+  useEffect(() => {
+    const numero = String(form.Loja || "").trim();
+    if (!numero) { setLojaInfo(null); return; }
+    let cancelled = false;
+    const t = setTimeout(async () => {
+      try {
+        const r = await getLojaFn({ data: { numero } });
+        if (!cancelled) setLojaInfo((r as Loja | null) || null);
+      } catch { if (!cancelled) setLojaInfo(null); }
+    }, 300);
+    return () => { cancelled = true; clearTimeout(t); };
+  }, [form.Loja, lojaOpen]);
 
 
 
@@ -395,6 +415,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
               <CadastroTab form={form} setField={setField} statusPagamento={statusPagamento} sla={slaCalc}
                 transp={transp} confs={confs} motivos={motivos} precisaTranspConf={precisaTranspConf} precisaMotivo={precisaMotivo}
                 statusChamado={statusChamado} onManage={setManage}
+                lojaInfo={lojaInfo} onEditLoja={() => setLojaOpen(true)}
               />
             )}
             {tab === "referencias" && (
@@ -480,6 +501,21 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
         </div>
       )}
 
+      {lojaOpen && (
+        <div className="fixed inset-0 z-[70] bg-black/50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) setLojaOpen(false); }}>
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[92vh] overflow-hidden flex flex-col">
+            <div className="flex items-center justify-between px-4 py-3 border-b bg-slate-50">
+              <h3 className="font-semibold text-slate-800">Cadastro de Lojas</h3>
+              <button onClick={() => setLojaOpen(false)} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5"/></button>
+            </div>
+            <div className="flex-1 overflow-auto">
+              <CadastroLojas buscaInicial={form.Loja || ""} />
+            </div>
+          </div>
+        </div>
+      )}
+
+
       {monitorAsk && (
         <div className="fixed inset-0 z-[80] bg-black/50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) setMonitorAsk(false); }}>
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
@@ -520,7 +556,7 @@ function Field({ label, children, className = "", style }: { label: string; chil
 }
 
 
-function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, motivos, precisaTranspConf, precisaMotivo, statusChamado, onManage }: any) {
+function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, motivos, precisaTranspConf, precisaMotivo, statusChamado, onManage, lojaInfo, onEditLoja }: any) {
   const ManageBtn = ({ onClick, title }: { onClick: () => void; title: string }) => (
     <button type="button" onClick={onClick} title={title}
       className="inline-flex items-center justify-center p-0.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded">
@@ -586,6 +622,39 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
             <Combobox value={form.Motivo} onChange={(v) => setField("Motivo", v)} options={motivos} />
           </div>
         </div>
+      </section>
+      <section>
+        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-2">
+          Dados Bancários da Loja
+          <span className="text-[10px] font-normal text-slate-400 normal-case">(somente leitura)</span>
+          <button type="button" onClick={onEditLoja} title="Abrir cadastro de lojas para alterar"
+            className="inline-flex items-center justify-center p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded">
+            <Pencil className="w-3.5 h-3.5"/>
+          </button>
+        </h2>
+        {!form.Loja ? (
+          <div className="text-xs text-slate-400 border border-dashed border-slate-200 rounded-md p-3">Informe o número da loja para exibir os dados bancários.</div>
+        ) : !lojaInfo ? (
+          <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-3 flex items-center justify-between gap-2">
+            <span>Loja <b>{form.Loja}</b> não cadastrada. Clique no lápis acima para cadastrar.</span>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              ["Razão Social", lojaInfo.razao_social],
+              ["CNPJ", lojaInfo.cnpj],
+              ["Tipo", lojaInfo.tipo],
+              ["Banco", lojaInfo.banco],
+              ["Agência", lojaInfo.agencia ? `${lojaInfo.agencia}${lojaInfo.agencia_dig ? "-" + lojaInfo.agencia_dig : ""}` : null],
+              ["Conta", lojaInfo.conta ? `${lojaInfo.conta}${lojaInfo.conta_dig ? "-" + lojaInfo.conta_dig : ""}` : null],
+            ].map(([label, val]) => (
+              <div key={label as string}>
+                <div className="text-[10px] font-semibold text-slate-500 uppercase">{label}</div>
+                <div className="mt-1 rounded-md bg-slate-50 border border-slate-200 px-2.5 py-1.5 text-sm text-slate-700 min-h-[34px]">{val || "—"}</div>
+              </div>
+            ))}
+          </div>
+        )}
       </section>
     </div>
   );
