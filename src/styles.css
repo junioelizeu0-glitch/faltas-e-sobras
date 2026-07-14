@@ -142,3 +142,31 @@
     color: var(--color-foreground);
   }
 }
+
+/* --------------------------------------------------------------
+ * Softer, easier-on-the-eyes surface palette.
+ * Overrides Tailwind's pure whites and cool slates with a warm
+ * off-white / neutral stone tone so the UI feels calmer without
+ * introducing color.
+ * ------------------------------------------------------------ */
+@layer utilities {
+  .bg-white { background-color: #fbfaf7 !important; }
+  .bg-slate-50 { background-color: #f5f4f0 !important; }
+  .bg-slate-100 { background-color: #eeece7 !important; }
+  .bg-slate-200 { background-color: #e4e2dc !important; }
+
+  .border-slate-100 { border-color: #ecebe6 !important; }
+  .border-slate-200 { border-color: #e2e0da !important; }
+  .border-slate-300 { border-color: #d1cec7 !important; }
+
+  .text-slate-400 { color: #8b8a83 !important; }
+  .text-slate-500 { color: #6f6e68 !important; }
+  .text-slate-600 { color: #55544f !important; }
+  .text-slate-700 { color: #3f3e3a !important; }
+  .text-slate-800 { color: #2c2b28 !important; }
+  .text-slate-900 { color: #1f1e1c !important; }
+
+  .hover\:bg-slate-50:hover { background-color: #f0eeea !important; }
+  .hover\:bg-slate-100:hover { background-color: #e8e6e1 !important; }
+}
+
