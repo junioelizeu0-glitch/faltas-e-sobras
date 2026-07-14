@@ -12,6 +12,7 @@ import {
   FileText,
   ListChecks,
   Store,
+  History,
   LogOut,
 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
