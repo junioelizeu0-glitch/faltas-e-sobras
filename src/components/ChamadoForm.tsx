@@ -296,6 +296,56 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
 
   const primaryLabel = mode === "editar" ? "Salvar alterações" : "Incluir chamado";
 
+  // ============ Resultado do Monitoramento ============
+  const [monitorAsk, setMonitorAsk] = useState(false);
+  const podeMonitorar =
+    mode === "editar" &&
+    (form["Status Chamado"] === "Pendente Monitoramento" ||
+      /monitoramento/i.test(form["Situação "] || ""));
+
+  const aplicarResultadoMonitoramento = async (aprovado: boolean) => {
+    setMonitorAsk(false);
+    const hoje = hojeISO();
+    // Encerra a etapa de monitoramento em aberto, se houver
+    const etapasAtualizadas = etapas.map((e) => {
+      if (!e.dt_fim && /monitoramento/i.test(e.nome_tarefa || "")) {
+        return { ...e, dt_fim: hoje };
+      }
+      return e;
+    });
+
+    let novaTarefaNome = "";
+    let novaSituacao = "";
+    let novoStatus = "";
+    if (aprovado) {
+      novaTarefaNome = form.Tipo === "Própria" ? "Solicitar Emissão de NF" : "Solicitar NF Espelho";
+      novaSituacao = novaTarefaNome;
+      novoStatus = "Aprovado";
+    } else {
+      novaTarefaNome = "Finalizar Recusa Chamado";
+      novaSituacao = "Chamado Recusado";
+      novoStatus = "Recusado";
+    }
+    const t = tarefas.find((x) => x.nome === novaTarefaNome);
+    const novaEtapa: Etapa = {
+      tarefa_id: t?.id || null,
+      nome_tarefa: novaTarefaNome,
+      dias_uteis_previsto: t?.dias_uteis ?? 1,
+      dt_inicio: hoje,
+      dt_fim: "",
+    };
+    setEtapas([...etapasAtualizadas, novaEtapa]);
+    // Atualiza situação e status (prevStatusRef evita o auto-fill sobrescrever)
+    prevStatusRef.current = novoStatus;
+    setForm((p) => ({ ...p, "Status Chamado": novoStatus, "Situação ": novaSituacao }));
+    toast.success(
+      aprovado
+        ? `Falta aprovada. Nova tarefa: ${novaTarefaNome}. Lembre-se de salvar as alterações.`
+        : `Falta recusada. Nova tarefa: ${novaTarefaNome}. Lembre-se de salvar as alterações.`
+    );
+  };
+
+
   if (loading) return <div className="flex items-center justify-center p-10 text-slate-500"><Loader2 className="w-5 h-5 animate-spin mr-2"/>Carregando...</div>;
 
   return (
