@@ -73,7 +73,7 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
     setSyncing("push");
     try {
       const r: any = await pushFn({ data: undefined as any });
-      toast.success(`Banco → API: ${r.enviados} registros enviados.`);
+      toast.success(`Banco → API: ${r.enviados} enviados · ${r.inseridos} inseridos, ${r.atualizados} atualizados.`);
     } catch (e: any) { toast.error(e?.message || "Erro ao enviar para API"); }
     finally { setSyncing(null); }
   };

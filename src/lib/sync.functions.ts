@@ -131,12 +131,12 @@ export const pushToAppsScript = createServerFn({ method: "POST" }).handler(async
   }
 
   const { buildChamadoRow } = await import("@/lib/apps-script.server");
-  const rows = all.map((c) => buildChamadoRow(c));
+  const dados = all.map((c) => buildChamadoRow(c));
 
   const res = await fetch(url, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ action: "bulk_replace", sheet: "CONTROLE CHAMADOS (FALTAS)", rows }),
+    body: JSON.stringify({ action: "upsert", sheet: "CONTROLE CHAMADOS (FALTAS)", dados }),
     redirect: "follow",
   });
   const text = await res.text();
@@ -145,5 +145,9 @@ export const pushToAppsScript = createServerFn({ method: "POST" }).handler(async
   try { json = JSON.parse(text); } catch {}
   if (json && json.success === false) throw new Error(json.error || "Apps Script retornou success=false");
 
-  return { ok: true, enviados: rows.length, response: json ?? text.slice(0, 200) };
+  const resultados: any[] = Array.isArray(json?.resultados) ? json.resultados : [];
+  const inseridos = resultados.filter((r) => String(r?.status).toLowerCase() === "inserido").length;
+  const atualizados = resultados.filter((r) => String(r?.status).toLowerCase() === "atualizado").length;
+
+  return { ok: true, enviados: dados.length, inseridos, atualizados, resultados };
 });
