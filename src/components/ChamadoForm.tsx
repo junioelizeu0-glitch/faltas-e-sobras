@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
 import { Loader2, CheckCircle2, AlertCircle, Save, Plus, Trash2, Search, X, Pencil } from "lucide-react";
@@ -18,6 +18,7 @@ import {
 } from "@/lib/cadastros.functions";
 import { diasUteisEntre, parseISO, calcDataPrevista } from "@/lib/business-days";
 import CadastroSimples from "./CadastroSimples";
+import Combobox from "./Combobox";
 
 
 const STATUS_CHAMADO_OPCOES = ["Pendente Monitoramento", "Aprovado", "Recusado"];
@@ -149,12 +150,40 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     })();
   }, [chamadoId, mode]);
 
-  // Inicial (novo) — não pré-preenche número do chamado (deixa em branco)
+  // Auto-fill: quando novo chamado + Dt Abertura preenchida, sugere Situação/Status para o primeiro registro.
+  useEffect(() => {
+    if (mode !== "novo") return;
+    if (!form["Dt Abertura"]) return;
+    setForm((p) => {
+      const patch: Record<string, string> = {};
+      if (!p["Situação "]) patch["Situação "] = "Aguardando monitoramento";
+      if (!p["Status Chamado"]) patch["Status Chamado"] = "Pendente Monitoramento";
+      return Object.keys(patch).length ? { ...p, ...patch } : p;
+    });
+  }, [form["Dt Abertura"], mode]);
+
+  // Auto-fill Situação quando Status Chamado muda para Aprovado/Recusado.
+  const prevStatusRef = useRef<string>(form["Status Chamado"]);
+  useEffect(() => {
+    const s = form["Status Chamado"];
+    if (s === prevStatusRef.current) return;
+    prevStatusRef.current = s;
+    if (s === "Recusado") {
+      setForm((p) => ({ ...p, "Situação ": "Chamado Recusado" }));
+    } else if (s === "Aprovado") {
+      const nova = form.Tipo === "Franquia" ? "Aguardando NF Espelho" : "Emitir NFD";
+      setForm((p) => ({ ...p, "Situação ": nova }));
+    }
+  }, [form["Status Chamado"], form.Tipo]);
 
 
   const statusChamado = form["Status Chamado"];
   const precisaTranspConf = statusChamado === "Aprovado" || statusChamado === "Recusado";
   const precisaMotivo = statusChamado === "Aprovado";
+  const precisaDadosNF = useMemo(
+    () => (etapas || []).some((e) => /importa[çc][ãa]o\s*nf/i.test(e.nome_tarefa || "")),
+    [etapas]
+  );
   const statusPagamento = form["Dt Pagamento"] ? "Pago" : "Não Pago";
   const slaCalc = calcularSLA(form["Dt Abertura"], form["Dt Finalização"]);
 
@@ -191,7 +220,8 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     setEtapas((p) => p.map((e, i) => (i === idx ? { ...e, ...patch } : e)));
 
 
-  const validate = (): string | null => {
+  // partial=true (salvar em ref/etapas isoladamente) não exige refs/etapas populadas.
+  const validate = (partial = false): string | null => {
     if (!form.Chamado) return "Número do chamado é obrigatório";
     if (!form.Loja) return "Loja é obrigatória";
     if (!form.Tipo) return "Tipo é obrigatório";
@@ -199,21 +229,30 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     if (!form["Status Chamado"]) return "Status do chamado é obrigatório";
     if (!form["Situação "]) return "Situação (tarefa atual) é obrigatória";
     if (!form["Dt Abertura"]) return "Data de abertura é obrigatória";
-    const refsOk = (refs || []).some((r) => (r.referencia || "").trim() !== "");
-    if (!refsOk) return "Inclua ao menos uma Referência (aba Referências)";
-    const etapasOk = (etapas || []).some((e) => (e.nome_tarefa || "").trim() !== "");
-    if (!etapasOk) return "Inclua ao menos uma Etapa (aba Etapas)";
+    if (!partial) {
+      const refsOk = (refs || []).some((r) => (r.referencia || "").trim() !== "");
+      if (!refsOk) return "Inclua ao menos uma Referência (aba Referências)";
+      const etapasOk = (etapas || []).some((e) => (e.nome_tarefa || "").trim() !== "");
+      if (!etapasOk) return "Inclua ao menos uma Etapa (aba Etapas)";
+    }
     if (precisaTranspConf && (!form.Transportadora || !form.Conferente))
-      return "Transportadora e Conferente obrigatórios para Aprovado/Recusado";
-    if (precisaMotivo && !form.Motivo) return "Motivo obrigatório para Aprovado";
+      return "Preencha Transportadora e Conferente antes de salvar (obrigatórios para " + statusChamado + ").";
+    if (precisaMotivo && !form.Motivo) return "Preencha o Motivo antes de salvar (obrigatório para Aprovado).";
+    if (precisaDadosNF) {
+      const faltando: string[] = [];
+      if (!form.NF) faltando.push("Nº NF");
+      if (!form._valor) faltando.push("Valor");
+      if (!form["Dt Emissão"]) faltando.push("Data Emissão");
+      if (faltando.length) return `Etapa "Importação NF" exige: ${faltando.join(", ")}.`;
+    }
     return null;
   };
 
 
-  const submit = async (successMsg?: string) => {
+  const submit = async (successMsg?: string, opts?: { partial?: boolean }) => {
     setFeedback(null);
-    const err = validate();
-    if (err) { setFeedback({ type: "err", msg: err }); return; }
+    const err = validate(!!opts?.partial);
+    if (err) { setFeedback({ type: "err", msg: err }); toast.error(err); return; }
     setSubmitting(true);
     const payload = {
       chamado: {
@@ -237,17 +276,14 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
       })),
     };
     try {
-      if (mode === "editar" && chamadoId) {
-        await updateFn({ data: { id: chamadoId, ...payload } });
+      const isEdit = mode === "editar" && chamadoId;
+      if (isEdit) {
+        await updateFn({ data: { id: chamadoId!, ...payload } });
       } else {
         const res: any = await createFn({ data: payload });
-        // Após criar, transiciona para modo edição para que próximas ações (add referência/etapa) atualizem o mesmo registro
-        if (res?.id) {
-          setChamadoId(res.id);
-          setMode("editar");
-        }
+        if (res?.id) { setChamadoId(res.id); setMode("editar"); }
       }
-      const msg = successMsg || (mode === "editar" ? "Chamado atualizado com sucesso." : "Chamado incluído com sucesso.");
+      const msg = successMsg || (isEdit ? "Alterações salvas com sucesso." : "Chamado incluído com sucesso.");
       setFeedback({ type: "ok", msg });
       toast.success(msg);
       onSaved?.();
@@ -257,6 +293,8 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
       toast.error(msg);
     } finally { setSubmitting(false); }
   };
+
+  const primaryLabel = mode === "editar" ? "Salvar alterações" : "Incluir chamado";
 
   if (loading) return <div className="flex items-center justify-center p-10 text-slate-500"><Loader2 className="w-5 h-5 animate-spin mr-2"/>Carregando...</div>;
 
@@ -303,11 +341,13 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
             )}
             {tab === "referencias" && (
               <ReferenciasTab refs={refs} setRef={setRef} addRef={addRef} rmRef={rmRef} buscar={buscarProduto}
-                onSalvar={() => submit("Referência salva com sucesso.")} salvando={submitting} />
+                onSalvarParcial={() => submit("Referências salvas com sucesso.", { partial: true })}
+                onSalvarFull={() => submit()} primaryLabel={primaryLabel} salvando={submitting} />
             )}
             {tab === "etapas" && (
               <EtapasTab etapas={etapas} setEt={setEt} addEtapa={addEtapa} rmEtapa={rmEtapa} tarefas={tarefas}
-                onSalvar={() => submit("Etapa salva com sucesso.")} salvando={submitting} />
+                onSalvarParcial={() => submit("Etapas salvas com sucesso.", { partial: true })}
+                onSalvarFull={() => submit()} primaryLabel={primaryLabel} salvando={submitting} />
             )}
           </div>
 
@@ -433,30 +473,27 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
           Responsáveis {precisaTranspConf && <span className="ml-2 text-[10px] text-blue-600 normal-case">(obrigatório para {statusChamado})</span>}
         </h2>
         <div className="flex flex-wrap gap-3">
-          <label className="flex flex-col gap-1" style={{ minWidth: "240px", flex: "1 1 240px" }}>
+          <div className="flex flex-col gap-1" style={{ minWidth: "240px", flex: "1 1 240px" }}>
             <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
               Transportadora {precisaTranspConf ? "*" : ""}
               <ManageBtn onClick={() => onManage("transp")} title="Cadastrar transportadoras" />
             </span>
-            <input list="transp-list-form" value={form.Transportadora} onChange={(e) => setField("Transportadora", e.target.value.toUpperCase().slice(0, 60))} className={inputCls} />
-            <datalist id="transp-list-form">{transp.map((t: string) => <option key={t} value={t} />)}</datalist>
-          </label>
-          <label className="flex flex-col gap-1" style={{ minWidth: "240px", flex: "1 1 240px" }}>
+            <Combobox value={form.Transportadora} onChange={(v) => setField("Transportadora", v)} options={transp} uppercase />
+          </div>
+          <div className="flex flex-col gap-1" style={{ minWidth: "240px", flex: "1 1 240px" }}>
             <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
               Conferente {precisaTranspConf ? "*" : ""}
               <ManageBtn onClick={() => onManage("conf")} title="Cadastrar conferentes" />
             </span>
-            <input list="conf-list-form" value={form.Conferente} onChange={(e) => setField("Conferente", e.target.value.toUpperCase().slice(0, 60))} className={inputCls} />
-            <datalist id="conf-list-form">{confs.map((c: string) => <option key={c} value={c} />)}</datalist>
-          </label>
-          <label className="flex flex-col gap-1" style={{ minWidth: "320px", flex: "2 1 320px" }}>
+            <Combobox value={form.Conferente} onChange={(v) => setField("Conferente", v)} options={confs} uppercase />
+          </div>
+          <div className="flex flex-col gap-1" style={{ minWidth: "320px", flex: "2 1 320px" }}>
             <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
               Motivo {precisaMotivo ? "*" : ""}
               <ManageBtn onClick={() => onManage("motivo")} title="Cadastrar motivos" />
             </span>
-            <input list="mot-list-form" value={form.Motivo} onChange={(e) => setField("Motivo", e.target.value.slice(0, 200))} className={inputCls} />
-            <datalist id="mot-list-form">{motivos.map((m: string) => <option key={m} value={m} />)}</datalist>
-          </label>
+            <Combobox value={form.Motivo} onChange={(v) => setField("Motivo", v)} options={motivos} />
+          </div>
         </div>
       </section>
     </div>
@@ -486,7 +523,7 @@ function ItemEditModal({ title, onClose, onAdd, children }: { title: string; onC
   );
 }
 
-function ReferenciasTab({ refs, setRef, addRef, rmRef, buscar, onSalvar, salvando }: any) {
+function ReferenciasTab({ refs, setRef, addRef, rmRef, buscar, onSalvarParcial, onSalvarFull, primaryLabel, salvando }: any) {
   const [editIdx, setEditIdx] = useState<number | null>(null);
   return (
     <div className="space-y-3">
@@ -496,8 +533,11 @@ function ReferenciasTab({ refs, setRef, addRef, rmRef, buscar, onSalvar, salvand
           <button type="button" onClick={addRef} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md">
             <Plus className="w-3.5 h-3.5"/>Adicionar
           </button>
-          <button type="button" onClick={onSalvar} disabled={salvando} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50">
-            {salvando ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <Save className="w-3.5 h-3.5"/>}Salvar
+          <button type="button" onClick={onSalvarParcial} disabled={salvando} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-md disabled:opacity-50">
+            {salvando ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <Save className="w-3.5 h-3.5"/>}Salvar referências
+          </button>
+          <button type="button" onClick={onSalvarFull} disabled={salvando} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50">
+            {salvando ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <Save className="w-3.5 h-3.5"/>}{primaryLabel}
           </button>
         </div>
       </div>
@@ -539,7 +579,7 @@ function ReferenciasTab({ refs, setRef, addRef, rmRef, buscar, onSalvar, salvand
   );
 }
 
-function EtapasTab({ etapas, setEt, addEtapa, rmEtapa, tarefas, onSalvar, salvando }: any) {
+function EtapasTab({ etapas, setEt, addEtapa, rmEtapa, tarefas, onSalvarParcial, onSalvarFull, primaryLabel, salvando }: any) {
   const [editIdx, setEditIdx] = useState<number | null>(null);
   return (
     <div className="space-y-3">
@@ -549,8 +589,11 @@ function EtapasTab({ etapas, setEt, addEtapa, rmEtapa, tarefas, onSalvar, salvan
           <button type="button" onClick={addEtapa} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md">
             <Plus className="w-3.5 h-3.5"/>Adicionar
           </button>
-          <button type="button" onClick={onSalvar} disabled={salvando} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50">
-            {salvando ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <Save className="w-3.5 h-3.5"/>}Salvar
+          <button type="button" onClick={onSalvarParcial} disabled={salvando} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-md disabled:opacity-50">
+            {salvando ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <Save className="w-3.5 h-3.5"/>}Salvar etapas
+          </button>
+          <button type="button" onClick={onSalvarFull} disabled={salvando} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50">
+            {salvando ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <Save className="w-3.5 h-3.5"/>}{primaryLabel}
           </button>
         </div>
       </div>

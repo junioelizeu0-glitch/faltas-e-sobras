@@ -14,6 +14,42 @@ export type Database = {
   }
   public: {
     Tables: {
+      audit_log: {
+        Row: {
+          action: string
+          chamado_num: string | null
+          created_at: string
+          diff: Json | null
+          id: number
+          new_data: Json | null
+          old_data: Json | null
+          row_id: string | null
+          table_name: string
+        }
+        Insert: {
+          action: string
+          chamado_num?: string | null
+          created_at?: string
+          diff?: Json | null
+          id?: number
+          new_data?: Json | null
+          old_data?: Json | null
+          row_id?: string | null
+          table_name: string
+        }
+        Update: {
+          action?: string
+          chamado_num?: string | null
+          created_at?: string
+          diff?: Json | null
+          id?: number
+          new_data?: Json | null
+          old_data?: Json | null
+          row_id?: string | null
+          table_name?: string
+        }
+        Relationships: []
+      }
       chamados_etapas: {
         Row: {
           chamado_id: string
