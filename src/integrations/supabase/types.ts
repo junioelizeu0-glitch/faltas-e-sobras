@@ -414,6 +414,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      aiiliana_run_sql: { Args: { sql: string }; Returns: Json }
       show_limit: { Args: never; Returns: number }
       show_trgm: { Args: { "": string }; Returns: string[] }
     }
