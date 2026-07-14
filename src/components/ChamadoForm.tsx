@@ -16,8 +16,10 @@ import {
   upsertConferente, deleteConferente,
   upsertMotivo, deleteMotivo,
 } from "@/lib/cadastros.functions";
+import { getLojaByNumero, type Loja } from "@/lib/lojas.functions";
 import { diasUteisEntre, parseISO, calcDataPrevista } from "@/lib/business-days";
 import CadastroSimples from "./CadastroSimples";
+import CadastroLojas from "./CadastroLojas";
 import Combobox from "./Combobox";
 
 
