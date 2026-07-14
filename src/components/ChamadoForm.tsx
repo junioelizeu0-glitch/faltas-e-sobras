@@ -827,6 +827,14 @@ function EtapasTab({ etapas, setEt, addEtapa, rmEtapa, tarefas, onSalvarParcial,
           </div>
         </ItemEditModal>
       )}
+      <button
+        type="button"
+        onClick={addEtapa}
+        title="Adicionar etapa"
+        className="fixed bottom-6 right-8 z-30 inline-flex items-center gap-1 px-4 py-3 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-full shadow-lg"
+      >
+        <Plus className="w-4 h-4"/>Adicionar
+      </button>
     </div>
   );
 }
