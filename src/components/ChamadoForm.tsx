@@ -150,12 +150,40 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     })();
   }, [chamadoId, mode]);
 
-  // Inicial (novo) — não pré-preenche número do chamado (deixa em branco)
+  // Auto-fill: quando novo chamado + Dt Abertura preenchida, sugere Situação/Status para o primeiro registro.
+  useEffect(() => {
+    if (mode !== "novo") return;
+    if (!form["Dt Abertura"]) return;
+    setForm((p) => {
+      const patch: Record<string, string> = {};
+      if (!p["Situação "]) patch["Situação "] = "Aguardando monitoramento";
+      if (!p["Status Chamado"]) patch["Status Chamado"] = "Pendente Monitoramento";
+      return Object.keys(patch).length ? { ...p, ...patch } : p;
+    });
+  }, [form["Dt Abertura"], mode]);
+
+  // Auto-fill Situação quando Status Chamado muda para Aprovado/Recusado.
+  const prevStatusRef = useRef<string>(form["Status Chamado"]);
+  useEffect(() => {
+    const s = form["Status Chamado"];
+    if (s === prevStatusRef.current) return;
+    prevStatusRef.current = s;
+    if (s === "Recusado") {
+      setForm((p) => ({ ...p, "Situação ": "Chamado Recusado" }));
+    } else if (s === "Aprovado") {
+      const nova = form.Tipo === "Franquia" ? "Aguardando NF Espelho" : "Emitir NFD";
+      setForm((p) => ({ ...p, "Situação ": nova }));
+    }
+  }, [form["Status Chamado"], form.Tipo]);
 
 
   const statusChamado = form["Status Chamado"];
   const precisaTranspConf = statusChamado === "Aprovado" || statusChamado === "Recusado";
   const precisaMotivo = statusChamado === "Aprovado";
+  const precisaDadosNF = useMemo(
+    () => (etapas || []).some((e) => /importa[çc][ãa]o\s*nf/i.test(e.nome_tarefa || "")),
+    [etapas]
+  );
   const statusPagamento = form["Dt Pagamento"] ? "Pago" : "Não Pago";
   const slaCalc = calcularSLA(form["Dt Abertura"], form["Dt Finalização"]);
 
@@ -192,7 +220,8 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     setEtapas((p) => p.map((e, i) => (i === idx ? { ...e, ...patch } : e)));
 
 
-  const validate = (): string | null => {
+  // partial=true (salvar em ref/etapas isoladamente) não exige refs/etapas populadas.
+  const validate = (partial = false): string | null => {
     if (!form.Chamado) return "Número do chamado é obrigatório";
     if (!form.Loja) return "Loja é obrigatória";
     if (!form.Tipo) return "Tipo é obrigatório";
@@ -200,13 +229,22 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     if (!form["Status Chamado"]) return "Status do chamado é obrigatório";
     if (!form["Situação "]) return "Situação (tarefa atual) é obrigatória";
     if (!form["Dt Abertura"]) return "Data de abertura é obrigatória";
-    const refsOk = (refs || []).some((r) => (r.referencia || "").trim() !== "");
-    if (!refsOk) return "Inclua ao menos uma Referência (aba Referências)";
-    const etapasOk = (etapas || []).some((e) => (e.nome_tarefa || "").trim() !== "");
-    if (!etapasOk) return "Inclua ao menos uma Etapa (aba Etapas)";
+    if (!partial) {
+      const refsOk = (refs || []).some((r) => (r.referencia || "").trim() !== "");
+      if (!refsOk) return "Inclua ao menos uma Referência (aba Referências)";
+      const etapasOk = (etapas || []).some((e) => (e.nome_tarefa || "").trim() !== "");
+      if (!etapasOk) return "Inclua ao menos uma Etapa (aba Etapas)";
+    }
     if (precisaTranspConf && (!form.Transportadora || !form.Conferente))
-      return "Transportadora e Conferente obrigatórios para Aprovado/Recusado";
-    if (precisaMotivo && !form.Motivo) return "Motivo obrigatório para Aprovado";
+      return "Preencha Transportadora e Conferente antes de salvar (obrigatórios para " + statusChamado + ").";
+    if (precisaMotivo && !form.Motivo) return "Preencha o Motivo antes de salvar (obrigatório para Aprovado).";
+    if (precisaDadosNF) {
+      const faltando: string[] = [];
+      if (!form.NF) faltando.push("Nº NF");
+      if (!form._valor) faltando.push("Valor");
+      if (!form["Dt Emissão"]) faltando.push("Data Emissão");
+      if (faltando.length) return `Etapa "Importação NF" exige: ${faltando.join(", ")}.`;
+    }
     return null;
   };
 
