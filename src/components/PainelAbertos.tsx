@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from "react";
 import { AlertTriangle, Clock, CheckCircle2, Search, FileText, Loader2, X } from "lucide-react";
-import { parseDataBR, getBusinessDays, isSemRetorno } from "@/lib/data-processing";
+import { parseDataBR, getBusinessDays } from "@/lib/data-processing";
 import ChamadoForm from "./ChamadoForm";
 
 type Props = {
