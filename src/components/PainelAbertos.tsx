@@ -23,12 +23,8 @@ const fmtBR = (v: any) => {
 };
 
 function isFinalizado(r: any) {
-  const st = String(r["Status Chamado"] || "").toLowerCase().trim();
-  if (["aprovado", "recusado", "cancelado", "finalizado"].includes(st)) return true;
-  const dtFin = String(r["Dt Finalização"] || "").trim();
-  if (dtFin !== "") return true;
-  if (isSemRetorno(r)) return true;
-  return false;
+  const dtFin = String(r["Dt Finalização"] || r.dt_finalizacao || "").trim();
+  return dtFin !== "";
 }
 
 function siglaCD(v: any): string {
