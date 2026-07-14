@@ -25,7 +25,7 @@ import Combobox from "./Combobox";
 
 const STATUS_CHAMADO_OPCOES = ["Pendente Monitoramento", "Aprovado", "Recusado"];
 const SITUACAO_OPCOES = [
-  "Aguardando monitoramento", "Falta Aprovada", "Falta Recusada",
+  "Aguardando monitoramento", "Chamado Aprovado", "Finalizar Chamado",
   "Aguardando NF Espelho", "Validação NF Espelho",
   "Aguardando NFD", "Emitir NFD", "Importação NF", "Dados Bancários",
   "Enviada Solicitação Provisionamento", "Pendente Provisionamento Financeiro",
@@ -335,7 +335,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   const aplicarResultadoMonitoramento = async (aprovado: boolean) => {
     setMonitorAsk(false);
     const hoje = hojeISO();
-    const novaTarefaNome = aprovado ? "Falta Aprovada" : "Falta Recusada";
+    const novaTarefaNome = aprovado ? "Chamado Aprovado" : "Finalizar Chamado";
     const novoStatus = aprovado ? "Aprovado" : "Recusado";
 
     // Encerra etapa de monitoramento em aberto e adiciona a nova
