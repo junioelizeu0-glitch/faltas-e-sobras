@@ -111,6 +111,8 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   };
   useEffect(() => { loadListas(); }, []);
 
+  const prevStatusRef = useRef<string>("");
+
   useEffect(() => {
     if (mode !== "editar" || !chamadoId) return;
     (async () => {
@@ -118,6 +120,9 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
       try {
         const res: any = await getFn({ data: { id: chamadoId } });
         const c = res.chamado || {};
+        // Sincroniza a ref ANTES do setForm para evitar que o auto-fill de status
+        // sobrescreva a Situação carregada do banco.
+        prevStatusRef.current = c.status_chamado || "";
         setForm({
           Chamado: String(c.chamado ?? ""),
           Loja: String(c.loja ?? ""),
@@ -162,19 +167,22 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     });
   }, [form["Dt Abertura"], mode]);
 
-  // Auto-fill Situação quando Status Chamado muda para Aprovado/Recusado.
-  const prevStatusRef = useRef<string>(form["Status Chamado"]);
+  // Auto-fill Situação SOMENTE quando o usuário alterar Status Chamado (transição real),
+  // não na hidratação inicial nem quando só o Tipo muda.
   useEffect(() => {
     const s = form["Status Chamado"];
     if (s === prevStatusRef.current) return;
+    const anterior = prevStatusRef.current;
     prevStatusRef.current = s;
+    if (!anterior) return; // primeira definição (hidratação) — não altera Situação
     if (s === "Recusado") {
       setForm((p) => ({ ...p, "Situação ": "Chamado Recusado" }));
     } else if (s === "Aprovado") {
       const nova = form.Tipo === "Franquia" ? "Aguardando NF Espelho" : "Emitir NFD";
       setForm((p) => ({ ...p, "Situação ": nova }));
     }
-  }, [form["Status Chamado"], form.Tipo]);
+  }, [form["Status Chamado"]]);
+
 
 
   const statusChamado = form["Status Chamado"];
