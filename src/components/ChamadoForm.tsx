@@ -524,7 +524,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
 
       {lojaOpen && (
         <div className="fixed inset-0 z-[70] bg-black/50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) setLojaOpen(false); }}>
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[92vh] overflow-hidden flex flex-col">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-[98vw] h-[96vh] overflow-hidden flex flex-col">
             <div className="flex items-center justify-between px-4 py-3 border-b bg-slate-50">
               <h3 className="font-semibold text-slate-800">Cadastro de Lojas</h3>
               <button onClick={() => setLojaOpen(false)} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5"/></button>
