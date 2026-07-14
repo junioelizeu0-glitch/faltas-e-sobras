@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   ChevronDown,
   ChevronRight,
@@ -14,6 +14,8 @@ import {
   Store,
   History,
   LogOut,
+  Sun,
+  Moon,
 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { useRouter } from "@tanstack/react-router";
@@ -35,6 +37,17 @@ export default function AppShell({
   const [menuAberto, setMenuAberto] = useState(false);
   const [openFaltas, setOpenFaltas] = useState(false);
   const [openCadastros, setOpenCadastros] = useState(false);
+  const [theme, setTheme] = useState<"light" | "dark">("light");
+  useEffect(() => {
+    const t = (typeof window !== "undefined" && (localStorage.getItem("theme") as "light" | "dark")) || "light";
+    setTheme(t === "dark" ? "dark" : "light");
+  }, []);
+  const toggleTheme = () => {
+    const next = theme === "dark" ? "light" : "dark";
+    setTheme(next);
+    document.documentElement.setAttribute("data-theme", next);
+    try { localStorage.setItem("theme", next); } catch {}
+  };
   const lock = useServerFn(lockSite);
   const router = useRouter();
   async function handleLogout() {
@@ -198,7 +211,15 @@ export default function AppShell({
 
       {/* Área de Conteúdo à Direita */}
       <div className="flex-1 flex flex-col min-w-0 h-screen bg-slate-50 overflow-hidden relative">
-        <div className="flex justify-end px-4 py-2 border-b border-slate-200 bg-white">
+        <div className="flex justify-end items-center gap-3 px-4 py-2 border-b border-slate-200 bg-white">
+          <button
+            onClick={toggleTheme}
+            className="inline-flex items-center gap-1.5 text-xs text-slate-600 hover:text-slate-900"
+            title={theme === "dark" ? "Trocar para tema claro" : "Trocar para tema escuro"}
+          >
+            {theme === "dark" ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
+            {theme === "dark" ? "Claro" : "Escuro"}
+          </button>
           <button
             onClick={handleLogout}
             className="inline-flex items-center gap-1.5 text-xs text-slate-600 hover:text-slate-900"
