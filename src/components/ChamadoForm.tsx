@@ -335,7 +335,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   const aplicarResultadoMonitoramento = async (aprovado: boolean) => {
     setMonitorAsk(false);
     const hoje = hojeISO();
-    const novaTarefaNome = aprovado ? "Falta Aprovada" : "Falta Recusada";
+    const novaTarefaNome = aprovado ? "Chamado Aprovado" : "Finalizar Chamado";
     const novoStatus = aprovado ? "Aprovado" : "Recusado";
 
     // Encerra etapa de monitoramento em aberto e adiciona a nova
