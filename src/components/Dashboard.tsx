@@ -1535,6 +1535,8 @@ export default function Dashboard() {
           <CadastroSimples titulo="Motivos" nomeLabel="Motivo" listFn={listMotivos} upsertFn={upsertMotivo} deleteFn={deleteMotivo} />
         )}
 
+        {selectedSubmenu === 'logs' && <AuditLogViewer />}
+
         {selectedSubmenu === 'relatorio' && (
           <div className="flex-1 flex flex-col overflow-hidden bg-slate-50">
             {/* Header Corporativo */}
