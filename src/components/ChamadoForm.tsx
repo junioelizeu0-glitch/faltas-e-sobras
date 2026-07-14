@@ -777,7 +777,7 @@ function EtapasTab({ etapas, setEt, addEtapa, rmEtapa, tarefas, onSalvarParcial,
             sla = { texto: ok ? `Dentro (${diasReal}d)` : `Atrasado (${diasReal}d)`, cor: ok ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700" };
           } else if (ini && !fim) sla = { texto: "Em aberto", cor: "bg-amber-100 text-amber-700" };
           return (
-            <div key={idx} className="grid grid-cols-[minmax(200px,2.4fr)_90px_130px_130px_130px_auto] gap-2 items-end p-3 border border-slate-200 rounded-lg bg-slate-50/50">
+            <div key={idx} className="etapa-row grid grid-cols-[minmax(200px,2.4fr)_90px_130px_130px_130px_auto] gap-2 items-end p-3 border border-slate-200 rounded-lg">
               <Field label="Tarefa *">
                 <select
                   value={e.nome_tarefa || ""}
