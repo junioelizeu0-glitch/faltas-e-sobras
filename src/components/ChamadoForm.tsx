@@ -623,6 +623,39 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
           </div>
         </div>
       </section>
+      <section>
+        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-2">
+          Dados Bancários da Loja
+          <span className="text-[10px] font-normal text-slate-400 normal-case">(somente leitura)</span>
+          <button type="button" onClick={onEditLoja} title="Abrir cadastro de lojas para alterar"
+            className="inline-flex items-center justify-center p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded">
+            <Pencil className="w-3.5 h-3.5"/>
+          </button>
+        </h2>
+        {!form.Loja ? (
+          <div className="text-xs text-slate-400 border border-dashed border-slate-200 rounded-md p-3">Informe o número da loja para exibir os dados bancários.</div>
+        ) : !lojaInfo ? (
+          <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-3 flex items-center justify-between gap-2">
+            <span>Loja <b>{form.Loja}</b> não cadastrada. Clique no lápis acima para cadastrar.</span>
+          </div>
+        ) : (
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+            {[
+              ["Razão Social", lojaInfo.razao_social],
+              ["CNPJ", lojaInfo.cnpj],
+              ["Tipo", lojaInfo.tipo],
+              ["Banco", lojaInfo.banco],
+              ["Agência", lojaInfo.agencia ? `${lojaInfo.agencia}${lojaInfo.agencia_dig ? "-" + lojaInfo.agencia_dig : ""}` : null],
+              ["Conta", lojaInfo.conta ? `${lojaInfo.conta}${lojaInfo.conta_dig ? "-" + lojaInfo.conta_dig : ""}` : null],
+            ].map(([label, val]) => (
+              <div key={label as string}>
+                <div className="text-[10px] font-semibold text-slate-500 uppercase">{label}</div>
+                <div className="mt-1 rounded-md bg-slate-50 border border-slate-200 px-2.5 py-1.5 text-sm text-slate-700 min-h-[34px]">{val || "—"}</div>
+              </div>
+            ))}
+          </div>
+        )}
+      </section>
     </div>
   );
 }
