@@ -556,7 +556,7 @@ function Field({ label, children, className = "", style }: { label: string; chil
 }
 
 
-function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, motivos, precisaTranspConf, precisaMotivo, statusChamado, onManage }: any) {
+function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, motivos, precisaTranspConf, precisaMotivo, statusChamado, onManage, lojaInfo, onEditLoja }: any) {
   const ManageBtn = ({ onClick, title }: { onClick: () => void; title: string }) => (
     <button type="button" onClick={onClick} title={title}
       className="inline-flex items-center justify-center p-0.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded">
