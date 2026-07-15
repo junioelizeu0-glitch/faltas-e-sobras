@@ -6,13 +6,99 @@ import { listAuditLog } from "@/lib/audit.functions";
 const TABLES = ["", "chamados_faltas", "chamados_etapas", "chamados_referencias", "lojas", "transportadoras", "conferentes", "motivos", "tarefas_catalogo"];
 const ACTIONS = ["", "INSERT", "UPDATE", "DELETE"];
 
-const fmtDate = (iso: string) => {
-  const d = new Date(iso);
-  return d.toLocaleString("pt-BR");
+const TABLE_LABELS: Record<string, string> = {
+  chamados_faltas: "Chamado",
+  chamados_etapas: "Etapa do chamado",
+  chamados_referencias: "Referência do chamado",
+  lojas: "Loja",
+  transportadoras: "Transportadora",
+  conferentes: "Conferente",
+  motivos: "Motivo",
+  tarefas_catalogo: "Tarefa (catálogo)",
+  produtos: "Produto",
 };
+
+const FIELD_LABELS: Record<string, string> = {
+  situacao: "Situação (tarefa atual)",
+  status_chamado: "Status do chamado",
+  status_pagamento: "Status de pagamento",
+  dt_abertura: "Data de abertura",
+  dt_finalizacao: "Data de finalização",
+  dt_emissao: "Data de emissão",
+  dt_pagamento: "Data de pagamento",
+  transportadora: "Transportadora",
+  conferente: "Conferente",
+  motivo: "Motivo",
+  cd: "CD",
+  loja: "Loja",
+  nf: "NF",
+  valor: "Valor",
+  tipo: "Tipo",
+  periodo: "Período",
+  sla_status: "SLA",
+  nome_tarefa: "Tarefa",
+  dt_inicio: "Início",
+  dt_fim: "Fim",
+  ordem: "Ordem",
+  dias_uteis_previsto: "Dias úteis previstos",
+  dias_uteis_real: "Dias úteis reais",
+  referencia: "Referência",
+  descricao: "Descrição",
+  quantidade: "Quantidade",
+  cor: "Cor",
+  tamanho: "Tamanho",
+  fornecedor: "Fornecedor",
+  razao_social: "Razão Social",
+  cnpj: "CNPJ",
+  numero: "Número",
+  banco: "Banco",
+  agencia: "Agência",
+  conta: "Conta",
+};
+
+// campos ignorados no resumo
+const IGNORE = new Set(["id", "created_at", "updated_at", "chamado_id", "tarefa_id", "row_id"]);
+
+const labelField = (k: string) => FIELD_LABELS[k] || k.replace(/_/g, " ");
+const labelTable = (t: string) => TABLE_LABELS[t] || t;
+
+const fmtValue = (v: any): string => {
+  if (v === null || v === undefined || v === "") return "—";
+  if (typeof v === "string" && /^\d{4}-\d{2}-\d{2}/.test(v)) {
+    const d = new Date(v);
+    if (!isNaN(d.getTime())) return d.toLocaleDateString("pt-BR");
+  }
+  if (typeof v === "object") return JSON.stringify(v);
+  return String(v);
+};
+
+const fmtDate = (iso: string) => new Date(iso).toLocaleString("pt-BR");
 
 const badgeCls = (a: string) =>
   a === "INSERT" ? "bg-green-100 text-green-700" : a === "UPDATE" ? "bg-blue-100 text-blue-700" : "bg-red-100 text-red-700";
+
+const actionLabel = (a: string) => (a === "INSERT" ? "Incluído" : a === "UPDATE" ? "Alterado" : "Excluído");
+
+function summarize(r: any): string {
+  if (r.action === "INSERT") {
+    const nd = r.new_data || {};
+    if (r.table_name === "chamados_etapas") return `Nova etapa: ${nd.nome_tarefa || "—"}`;
+    if (r.table_name === "chamados_referencias") return `Nova referência: ${nd.referencia || nd.descricao || "—"}`;
+    if (r.table_name === "chamados_faltas") return `Chamado ${nd.chamado || ""} criado`;
+    return `${labelTable(r.table_name)} criado(a)`;
+  }
+  if (r.action === "DELETE") {
+    const od = r.old_data || {};
+    if (r.table_name === "chamados_etapas") return `Etapa removida: ${od.nome_tarefa || "—"}`;
+    if (r.table_name === "chamados_referencias") return `Referência removida: ${od.referencia || od.descricao || "—"}`;
+    return `${labelTable(r.table_name)} excluído(a)`;
+  }
+  // UPDATE
+  const diff = r.diff || {};
+  const keys = Object.keys(diff).filter((k) => !IGNORE.has(k));
+  if (keys.length === 0) return "Sem alterações relevantes";
+  return keys.map((k) => `${labelField(k)}: ${fmtValue(diff[k].old)} → ${fmtValue(diff[k].new)}`).join(" • ");
+}
 
 export default function AuditLogViewer() {
   const listFn = useServerFn(listAuditLog);
@@ -44,12 +130,12 @@ export default function AuditLogViewer() {
       <div className="bg-white p-3 rounded-lg border border-slate-200 mb-3 flex flex-wrap gap-2 items-end">
         <label className="flex flex-col text-xs font-semibold text-slate-600">Tabela
           <select value={table} onChange={(e) => setTable(e.target.value)} className="mt-1 text-sm border border-slate-300 rounded-md px-2 py-1.5">
-            {TABLES.map((t) => <option key={t} value={t}>{t || "Todas"}</option>)}
+            {TABLES.map((t) => <option key={t} value={t}>{t ? labelTable(t) : "Todas"}</option>)}
           </select>
         </label>
         <label className="flex flex-col text-xs font-semibold text-slate-600">Ação
           <select value={action} onChange={(e) => setAction(e.target.value)} className="mt-1 text-sm border border-slate-300 rounded-md px-2 py-1.5">
-            {ACTIONS.map((t) => <option key={t} value={t}>{t || "Todas"}</option>)}
+            {ACTIONS.map((t) => <option key={t} value={t}>{t ? actionLabel(t) : "Todas"}</option>)}
           </select>
         </label>
         <label className="flex flex-col text-xs font-semibold text-slate-600">Nº Chamado
@@ -69,46 +155,51 @@ export default function AuditLogViewer() {
           <table className="w-full text-xs">
             <thead className="bg-slate-50 text-slate-600 uppercase text-[10px]">
               <tr>
-                <th className="px-3 py-2 text-left">Data</th>
-                <th className="px-3 py-2 text-left">Tabela</th>
-                <th className="px-3 py-2 text-left">Ação</th>
-                <th className="px-3 py-2 text-left">Chamado</th>
+                <th className="px-3 py-2 text-left w-40">Data</th>
+                <th className="px-3 py-2 text-left w-40">Tabela</th>
+                <th className="px-3 py-2 text-left w-24">Ação</th>
+                <th className="px-3 py-2 text-left w-28">Chamado</th>
                 <th className="px-3 py-2 text-left">Alterações</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
               {rows.map((r) => {
                 const isExp = expanded[r.id];
-                const diffKeys = r.diff ? Object.keys(r.diff) : [];
-                const preview = r.action === "UPDATE"
-                  ? diffKeys.slice(0, 3).map((k) => `${k}`).join(", ") + (diffKeys.length > 3 ? ` +${diffKeys.length - 3}` : "")
-                  : r.action === "INSERT" ? "Criado" : "Excluído";
+                const summary = summarize(r);
                 return (
                   <>
                     <tr key={r.id} className="hover:bg-slate-50 cursor-pointer" onClick={() => setExpanded((p) => ({ ...p, [r.id]: !p[r.id] }))}>
                       <td className="px-3 py-2 whitespace-nowrap text-slate-700">{fmtDate(r.created_at)}</td>
-                      <td className="px-3 py-2 text-slate-600">{r.table_name}</td>
-                      <td className="px-3 py-2"><span className={`px-1.5 py-0.5 rounded font-semibold ${badgeCls(r.action)}`}>{r.action}</span></td>
-                      <td className="px-3 py-2 text-slate-700">{r.chamado_num || "—"}</td>
-                      <td className="px-3 py-2 text-slate-600">{preview}</td>
+                      <td className="px-3 py-2 text-slate-600">{labelTable(r.table_name)}</td>
+                      <td className="px-3 py-2"><span className={`px-1.5 py-0.5 rounded font-semibold ${badgeCls(r.action)}`}>{actionLabel(r.action)}</span></td>
+                      <td className="px-3 py-2 text-slate-700 font-medium">{r.chamado_num || "—"}</td>
+                      <td className="px-3 py-2 text-slate-600">{summary}</td>
                     </tr>
                     {isExp && (
                       <tr key={`${r.id}-x`} className="bg-slate-50">
                         <td colSpan={5} className="px-3 py-3">
                           {r.action === "UPDATE" && r.diff ? (
                             <div className="space-y-1">
-                              {Object.entries(r.diff).map(([k, v]: any) => (
-                                <div key={k} className="text-xs">
-                                  <span className="font-semibold text-slate-700">{k}:</span>{" "}
-                                  <span className="line-through text-red-500">{JSON.stringify(v.old)}</span>{" → "}
-                                  <span className="text-green-700">{JSON.stringify(v.new)}</span>
+                              {Object.entries(r.diff).filter(([k]) => !IGNORE.has(k)).map(([k, v]: any) => (
+                                <div key={k} className="text-xs flex flex-wrap gap-1 items-center">
+                                  <span className="font-semibold text-slate-700">{labelField(k)}:</span>
+                                  <span className="line-through text-red-500">{fmtValue(v.old)}</span>
+                                  <span className="text-slate-400">→</span>
+                                  <span className="text-green-700 font-medium">{fmtValue(v.new)}</span>
                                 </div>
                               ))}
                             </div>
                           ) : (
-                            <pre className="text-[11px] bg-white border border-slate-200 rounded p-2 overflow-auto max-h-64">
-                              {JSON.stringify(r.new_data || r.old_data, null, 2)}
-                            </pre>
+                            <div className="space-y-1">
+                              {Object.entries((r.new_data || r.old_data) || {})
+                                .filter(([k]) => !IGNORE.has(k))
+                                .map(([k, v]: any) => (
+                                  <div key={k} className="text-xs">
+                                    <span className="font-semibold text-slate-700">{labelField(k)}:</span>{" "}
+                                    <span className="text-slate-600">{fmtValue(v)}</span>
+                                  </div>
+                                ))}
+                            </div>
                           )}
                         </td>
                       </tr>
