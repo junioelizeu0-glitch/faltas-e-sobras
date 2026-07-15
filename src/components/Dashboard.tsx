@@ -544,7 +544,17 @@ const AbaVisaoExecutiva = ({ data, onOpenModal }: any) => (
             <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b' }} />
             <Tooltip content={<AgingTooltip />} cursor={{ fill: '#f8fafc' }} />
             <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} iconType="circle" />
-            <Bar dataKey="qtd" name="Qtd Chamados" fill="#d97706" radius={[4, 4, 0, 0]} maxBarSize={40} label={{ position: 'top', fontSize: 10, fill: '#64748b' }} style={{ cursor: 'pointer' }} />
+            <Bar dataKey="qtd" name="Qtd Chamados" radius={[4, 4, 0, 0]} maxBarSize={40} label={{ position: 'top', fontSize: 10, fill: '#64748b' }} style={{ cursor: 'pointer' }}>
+              {(data.charts?.agingData || []).map((entry: any, index: number) => {
+                const n = String(entry.name || '');
+                const color = n.includes('0 a 30') ? '#16a34a'
+                  : n.includes('31 a 60') ? '#65a30d'
+                  : n.includes('61 a 90') ? '#d97706'
+                  : n.includes('91 a 180') ? '#ea580c'
+                  : '#dc2626';
+                return <Cell key={`aging-${index}`} fill={color} />;
+              })}
+            </Bar>
           </BarChart>
         </ResponsiveContainer>
       </ChartCard>
