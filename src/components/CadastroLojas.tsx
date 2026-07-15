@@ -48,9 +48,9 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
         cnpj: formatCnpj(digits),
         razao_social: editing.razao_social?.trim() ? editing.razao_social : (j.razao_social || j.nome_fantasia || ""),
       });
-      toast.success("Razão social preenchida pela Receita.");
+      toast.success("Razão social preenchida");
     } catch (e: any) {
-      toast.error(e?.message || "Falha ao consultar CNPJ.");
+      toast.error(e?.message || "CNPJ não consultado");
     } finally {
       setLookupCnpj(false);
     }
@@ -79,16 +79,16 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
     setErr(null); setSaving(true);
     try {
       await up({ data: editing as any });
-      toast.success("Loja salva com sucesso.");
+      toast.success("Loja salva");
       setEditing(null); await load();
-    } catch (e: any) { setErr(e?.message || "Erro"); toast.error(e?.message || "Erro"); }
+    } catch (e: any) { setErr(e?.message || "Erro"); toast.error(e?.message || "Erro ao salvar loja"); }
     finally { setSaving(false); }
   };
 
   const remove = async (r: Loja) => {
     if (!confirm(`Remover loja "${r.numero}"?`)) return;
-    try { await del({ data: { id: r.id } }); toast.success("Removida."); await load(); }
-    catch (e: any) { toast.error(e?.message || "Erro"); }
+    try { await del({ data: { id: r.id } }); toast.success("Loja removida"); await load(); }
+    catch (e: any) { toast.error(e?.message || "Erro ao remover loja"); }
   };
 
   const field = (label: string, key: keyof Loja, opts?: { readOnly?: boolean; placeholder?: string; className?: string }) => (

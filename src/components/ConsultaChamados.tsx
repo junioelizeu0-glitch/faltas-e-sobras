@@ -68,9 +68,9 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
     setSyncing("pull");
     try {
       const r: any = await pullFn({ data: undefined as any });
-      toast.success(`API → Banco: ${r.inseridos} novos, ${r.atualizados} atualizados (de ${r.total}).`);
+      toast.success(`Planilha atualizada: ${r.inseridos} novos, ${r.atualizados} alterados`);
       onChanged?.();
-    } catch (e: any) { toast.error(e?.message || "Erro ao puxar da API"); }
+    } catch (e: any) { toast.error(e?.message || "Erro ao puxar da planilha"); }
     finally { setSyncing(null); }
   };
   const doPush = async () => {
@@ -78,8 +78,8 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
     setSyncing("push");
     try {
       const r: any = await pushFn({ data: undefined as any });
-      toast.success(`Banco → API: ${r.enviados} enviados · ${r.inseridos} inseridos, ${r.atualizados} atualizados.`);
-    } catch (e: any) { toast.error(e?.message || "Erro ao enviar para API"); }
+      toast.success(`Dados enviados: ${r.enviados} chamados`);
+    } catch (e: any) { toast.error(e?.message || "Erro ao enviar para planilha"); }
     finally { setSyncing(null); }
   };
 
