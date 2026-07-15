@@ -316,12 +316,12 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
         const res: any = await createFn({ data: payload });
         if (res?.id) { setChamadoId(res.id); setMode("editar"); }
       }
-      const msg = successMsg || (isEdit ? "Alterações salvas com sucesso." : "Chamado incluído com sucesso.");
+      const msg = successMsg || (isEdit ? "Chamado salvo" : "Chamado incluído");
       setFeedback({ type: "ok", msg });
       toast.success(msg);
       onSaved?.();
     } catch (e: any) {
-      const msg = e?.message || "Erro ao salvar";
+      const msg = e?.message || "Erro ao salvar chamado";
       setFeedback({ type: "err", msg });
       toast.error(msg);
     } finally { setSubmitting(false); }
@@ -386,7 +386,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
         const res: any = await createFn({ data: payload });
         if (res?.id) { setChamadoId(res.id); setMode("editar"); }
       }
-      toast.success(aprovado ? "Falta aprovada — chamado atualizado." : "Falta recusada — chamado atualizado.");
+      toast.success(aprovado ? "Falta aprovada" : "Falta recusada");
       onSaved?.();
       onCancel?.();
     } catch (e: any) {
@@ -463,9 +463,9 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
                       if (!confirm("Excluir este chamado? Esta ação não pode ser desfeita.")) return;
                       try {
                         await delFn({ data: { ids: [chamadoId] } });
-                        toast.success("Chamado excluído.");
+                        toast.success("Chamado excluído");
                         onDeleted?.();
-                      } catch (e: any) { toast.error(e?.message || "Erro ao excluir"); }
+                      } catch (e: any) { toast.error(e?.message || "Erro ao excluir chamado"); }
                     }}
                     className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100"
                   >

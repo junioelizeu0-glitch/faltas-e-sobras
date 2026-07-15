@@ -41,7 +41,7 @@ export default function AIliana() {
       const res = await ask({ data: { messages: next } });
       setMessages([...next, { role: "assistant", content: res.text || "(sem resposta)" }]);
     } catch (e: any) {
-      toast.error(e?.message || "Erro ao consultar IA");
+      toast.error(e?.message || "Não foi possível consultar a IA");
       setMessages(next);
     } finally {
       setLoading(false);
