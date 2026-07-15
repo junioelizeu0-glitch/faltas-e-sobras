@@ -55,6 +55,7 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
   const [filtroStatus, setFiltroStatus] = useState("Todos");
   const [filtroTarefa, setFiltroTarefa] = useState("Todas");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(0);
   const [syncing, setSyncing] = useState<"pull" | "push" | null>(null);
