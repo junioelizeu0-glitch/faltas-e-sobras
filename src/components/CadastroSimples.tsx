@@ -67,16 +67,16 @@ export default function CadastroSimples({ titulo, descricao, listFn, upsertFn, d
       const payload: any = { id: editing.id || undefined, nome: editing.nome.trim() };
       for (const f of extraFields) payload[f.key] = (editing as any)[f.key] ?? null;
       await up({ data: payload });
-      toast.success("Registro salvo com sucesso.");
+      toast.success("Registro salvo");
       setEditing(null); await load();
-    } catch (e: any) { setErr(e?.message || "Erro"); toast.error(e?.message || "Erro"); }
+    } catch (e: any) { setErr(e?.message || "Erro"); toast.error(e?.message || "Erro ao salvar"); }
     finally { setSaving(false); }
   };
 
   const remove = async (r: Row) => {
     if (!confirm(`Remover "${r.nome}"?`)) return;
-    try { await del({ data: { id: r.id } }); toast.success("Removido."); await load(); }
-    catch (e: any) { toast.error(e?.message || "Erro"); }
+    try { await del({ data: { id: r.id } }); toast.success("Registro removido"); await load(); }
+    catch (e: any) { toast.error(e?.message || "Erro ao remover"); }
   };
 
   return (
