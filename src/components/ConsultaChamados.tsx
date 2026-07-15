@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Search, X, Pencil, Trash2, DownloadCloud, UploadCloud, Loader2 } from "lucide-react";
+import { Search, X, Pencil, Trash2, DownloadCloud, UploadCloud, Loader2, Plus } from "lucide-react";
 import { parseDataBR } from "@/lib/data-processing";
 import { deleteChamado } from "@/lib/chamados.functions";
 import { pullFromAppsScript, pushToAppsScript } from "@/lib/sync.functions";
