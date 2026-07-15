@@ -44,6 +44,10 @@ function statusBadge(s: string) {
   return <span className={`inline-flex px-2 py-0.5 rounded text-[11px] font-semibold ${cor}`}>{s || "—"}</span>;
 }
 
+function tarefaAtual(r: any) {
+  return String(r.situacao || r["Situação "] || "").trim() || "—";
+}
+
 type Props = { rawData: any[] | undefined; onChanged?: () => void };
 
 export default function ConsultaChamados({ rawData, onChanged }: Props) {
@@ -81,8 +85,8 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
   const tarefas = useMemo(() => {
     const set = new Set<string>();
     (rawData || []).forEach((r: any) => {
-      const t = String(r["Situação "] || r.situacao || "").trim();
-      if (t) set.add(t);
+      const t = tarefaAtual(r);
+      if (t && t !== "—") set.add(t);
     });
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [rawData]);
@@ -92,10 +96,10 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
     return (rawData || [])
       .filter((r: any) => {
         if (filtroStatus !== "Todos" && String(r["Status Chamado"] || "") !== filtroStatus) return false;
-        const t = String(r["Situação "] || r.situacao || "").trim();
+        const t = tarefaAtual(r);
         if (filtroTarefa !== "Todas" && t !== filtroTarefa) return false;
         if (!f) return true;
-        return [r.Chamado, r.Loja, r.NF, r.CD, r.Transportadora, r.Conferente, r["Situação "]]
+        return [r.Chamado, r.Loja, r.NF, r.CD, r.Transportadora, r.Conferente, t]
           .map((v) => String(v ?? "").toLowerCase()).some((s) => s.includes(f));
       })
       .sort((a: any, b: any) => (parseDataBR(b["Dt Abertura"])?.getTime() ?? 0) - (parseDataBR(a["Dt Abertura"])?.getTime() ?? 0));
@@ -233,7 +237,7 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
                     <td className="px-3 py-2 whitespace-nowrap">{r.Loja || "—"}</td>
                     <td className="px-3 py-2 whitespace-nowrap">{r.CD || "—"}</td>
                     <td className="px-3 py-2 whitespace-nowrap">{fmtBR(r["Dt Abertura"])}</td>
-                    <td className="px-3 py-2 max-w-[240px] truncate" title={r["Situação "]}>{r["Situação "] || "—"}</td>
+                    <td className="px-3 py-2 max-w-[240px] truncate" title={tarefaAtual(r)}>{tarefaAtual(r)}</td>
                     <td className="px-3 py-2 whitespace-nowrap">{statusBadge(r["Status Chamado"])}</td>
                     <td className="px-3 py-2 whitespace-nowrap">{slaBadge(r["Dt Abertura"], r["Dt Finalização"])}</td>
                     <td className="px-3 py-2 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
