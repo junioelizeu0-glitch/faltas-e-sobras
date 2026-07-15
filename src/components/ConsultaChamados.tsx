@@ -44,6 +44,10 @@ function statusBadge(s: string) {
   return <span className={`inline-flex px-2 py-0.5 rounded text-[11px] font-semibold ${cor}`}>{s || "—"}</span>;
 }
 
+function tarefaAtual(r: any) {
+  return String(r.situacao || r["Situação "] || "").trim() || "—";
+}
+
 type Props = { rawData: any[] | undefined; onChanged?: () => void };
 
 export default function ConsultaChamados({ rawData, onChanged }: Props) {
