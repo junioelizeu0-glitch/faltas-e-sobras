@@ -128,10 +128,10 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
     if (!confirm(`Excluir ${ids.length} chamado(s)? Esta ação não pode ser desfeita.`)) return;
     try {
       const res: any = await delFn({ data: { ids } });
-      toast.success(`${res?.count ?? ids.length} chamado(s) excluído(s).`);
+      toast.success(`${res?.count ?? ids.length} chamado(s) excluído(s)`);
       setSelected(new Set());
       onChanged?.();
-    } catch (e: any) { toast.error(e?.message || "Erro ao excluir"); }
+    } catch (e: any) { toast.error(e?.message || "Erro ao excluir chamado"); }
   };
 
   const abrirEditarSelecionado = () => {
