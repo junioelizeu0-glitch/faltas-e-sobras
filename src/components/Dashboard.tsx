@@ -68,9 +68,9 @@ const agingData = [
 ];
 
 const slaData = [
-  { name: 'No Prazo', value: 78, color: '#10b981' },
-  { name: 'Em Risco', value: 12, color: '#f59e0b' },
-  { name: 'Atrasado', value: 10, color: '#f43f5e' },
+  { name: 'No Prazo', value: 78, color: '#16a34a' },
+  { name: 'Em Risco', value: 12, color: '#d97706' },
+  { name: 'Atrasado', value: 10, color: '#dc2626' },
 ];
 
 const topTranspData = [
@@ -408,7 +408,7 @@ const AbaVisaoExecutiva = ({ data, onOpenModal }: any) => (
             barGap={3}
             margin={{ top: 15, right: 105, left: 10, bottom: 5 }}
           >
-            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#cbd5e1" />
             <XAxis
               type="number"
               tickFormatter={formatShortValueNoSpace}
@@ -424,7 +424,7 @@ const AbaVisaoExecutiva = ({ data, onOpenModal }: any) => (
               tick={{ fontSize: 11, fill: '#475569', fontWeight: 500 }}
               width={55}
             />
-            <Tooltip content={<CustomEvolucaoTooltip />} cursor={{ fill: '#f1f5f9', opacity: 0.4 }} />
+            <Tooltip content={<CustomEvolucaoTooltip />} cursor={{ fill: '#cbd5e1', opacity: 0.4 }} />
             <Legend
               iconType="square"
               iconSize={10}
@@ -435,7 +435,7 @@ const AbaVisaoExecutiva = ({ data, onOpenModal }: any) => (
             <Bar
               dataKey="valAprovado"
               name="Valor Aprovado"
-              fill="#1baf7a"
+              fill="#16a34a"
               radius={[0, 4, 4, 0]}
               barSize={12}
             >
@@ -444,7 +444,7 @@ const AbaVisaoExecutiva = ({ data, onOpenModal }: any) => (
             <Bar
               dataKey="valPago"
               name="Valor Pago"
-              fill="#2a78d6"
+              fill="#2563eb"
               radius={[0, 4, 4, 0]}
               barSize={12}
             >
@@ -453,7 +453,7 @@ const AbaVisaoExecutiva = ({ data, onOpenModal }: any) => (
             <Bar
               dataKey="valPendente"
               name="Valor Pendente Pag."
-              fill="#eda100"
+              fill="#d97706"
               radius={[0, 4, 4, 0]}
               barSize={12}
             >
@@ -477,11 +477,11 @@ const AbaVisaoExecutiva = ({ data, onOpenModal }: any) => (
           </div>
           <div className="flex gap-4">
             <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded bg-[#10b981] inline-block" />
+              <span className="w-3 h-3 rounded bg-[#16a34a] inline-block" />
               <span className="font-semibold text-[#898781]">No Prazo (Qtd)</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded bg-[#f43f5e] inline-block" />
+              <span className="w-3 h-3 rounded bg-[#dc2626] inline-block" />
               <span className="font-semibold text-[#898781]">Fora do Prazo (Qtd)</span>
             </div>
           </div>
@@ -494,18 +494,18 @@ const AbaVisaoExecutiva = ({ data, onOpenModal }: any) => (
               else if (e.activeLabel === 'SLA de Pagamento') onOpenModal('SLA DE PAGAMENTO');
             }}
           >
-            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#cbd5e1" />
             <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b' }} />
             <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#475569', fontWeight: 'bold' }} width={110} style={{ cursor: 'pointer' }} />
-            <Tooltip cursor={{ fill: '#f1f5f9' }} />
-            <Bar dataKey="No Prazo" stackId="a" fill="#10b981" barSize={30} style={{ cursor: 'pointer' }}>
+            <Tooltip cursor={{ fill: '#cbd5e1' }} />
+            <Bar dataKey="No Prazo" stackId="a" fill="#16a34a" barSize={30} style={{ cursor: 'pointer' }}>
               <LabelList dataKey="No Prazo" position="center" fill="#ffffff" fontSize={11} fontWeight="bold" formatter={(val: any, entry: any) => {
                 const row: any = (data.charts?.slaComparativoData || data.kpis?.slaComparativoData || []).find((r: any) => r['No Prazo'] === val);
                 const total = row?.Total || 0;
                 return total > 0 ? `${Math.round((val / total) * 100)}%` : '';
               }} />
             </Bar>
-            <Bar dataKey="Fora do Prazo" stackId="a" fill="#f43f5e" barSize={30} radius={[0, 4, 4, 0]} style={{ cursor: 'pointer' }}>
+            <Bar dataKey="Fora do Prazo" stackId="a" fill="#dc2626" barSize={30} radius={[0, 4, 4, 0]} style={{ cursor: 'pointer' }}>
               <LabelList dataKey="Fora do Prazo" position="center" fill="#ffffff" fontSize={11} fontWeight="bold" formatter={(val: any) => {
                 const row: any = (data.charts?.slaComparativoData || data.kpis?.slaComparativoData || []).find((r: any) => r['Fora do Prazo'] === val);
                 const total = row?.Total || 0;
@@ -527,11 +527,11 @@ const AbaVisaoExecutiva = ({ data, onOpenModal }: any) => (
       <ChartCard title="Taxa de Aprovação por CD" desc="Aprovados / Abertos (%)">
         <ResponsiveContainer width="100%" height={320}>
           <BarChart layout="vertical" onClick={(e: any) => { if(e && e.activeLabel) onOpenModal(`TAXA APROVAÇÃO CD - ${e.activeLabel}`) }} data={data.charts?.taxaAprovacaoCdData?.slice(0,10) || []} margin={{ top: 0, right: 30, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#cbd5e1" />
             <XAxis type="number" hide domain={[0, 100]} />
             <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#475569' }} width={120} />
             <Tooltip cursor={{ fill: '#f8fafc' }} formatter={(val: any) => `${val}%`} contentStyle={{ fontSize: '12px', borderRadius: '8px' }} />
-            <Bar dataKey="taxaAprovacao" name="Aprovação (%)" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={20} minPointSize={2} label={{ position: 'right', fontSize: 10, fill: '#64748b', formatter: (val: any) => `${val || 0}%` }} />
+            <Bar dataKey="taxaAprovacao" name="Aprovação (%)" fill="#2563eb" radius={[0, 4, 4, 0]} barSize={20} minPointSize={2} label={{ position: 'right', fontSize: 10, fill: '#64748b', formatter: (val: any) => `${val || 0}%` }} />
           </BarChart>
         </ResponsiveContainer>
       </ChartCard>
@@ -539,12 +539,12 @@ const AbaVisaoExecutiva = ({ data, onOpenModal }: any) => (
       <ChartCard title="Aging Geral (Aprovados Pendentes)">
         <ResponsiveContainer width="100%" height={320}>
           <BarChart onClick={(e: any) => { if (e && e.activeLabel) onOpenModal(`AGING - ${e.activeLabel}`) }} data={data.charts?.agingData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#cbd5e1" />
             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b' }} dy={10} style={{ cursor: 'pointer' }} />
             <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b' }} />
             <Tooltip content={<AgingTooltip />} cursor={{ fill: '#f8fafc' }} />
             <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} iconType="circle" />
-            <Bar dataKey="qtd" name="Qtd Chamados" fill="#f59e0b" radius={[4, 4, 0, 0]} maxBarSize={40} label={{ position: 'top', fontSize: 10, fill: '#64748b' }} style={{ cursor: 'pointer' }} />
+            <Bar dataKey="qtd" name="Qtd Chamados" fill="#d97706" radius={[4, 4, 0, 0]} maxBarSize={40} label={{ position: 'top', fontSize: 10, fill: '#64748b' }} style={{ cursor: 'pointer' }} />
           </BarChart>
         </ResponsiveContainer>
       </ChartCard>
@@ -554,11 +554,11 @@ const AbaVisaoExecutiva = ({ data, onOpenModal }: any) => (
       <ChartCard title="Valores: Top Lojas" desc="Lojas com maior passivo aprovado">
         <ResponsiveContainer width="100%" height={320}>
            <BarChart layout="vertical" data={data.charts?.lojasData || []} margin={{ top: 0, right: 90, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#cbd5e1" />
             <XAxis type="number" hide />
             <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#475569' }} width={90} />
             <Tooltip cursor={{ fill: '#f8fafc' }} formatter={(val: any) => formatCurrency(val)} contentStyle={{ fontSize: '12px', borderRadius: '8px' }} />
-            <Bar dataKey="valAprovado" name="Valor Aprovado" fill="#ec4899" radius={[0, 4, 4, 0]} barSize={16} label={{ position: 'right', fontSize: 11, fill: '#64748b', formatter: (val: any) => formatCurrencyCompact(val) }} />
+            <Bar dataKey="valAprovado" name="Valor Aprovado" fill="#4f46e5" radius={[0, 4, 4, 0]} barSize={16} label={{ position: 'right', fontSize: 11, fill: '#64748b', formatter: (val: any) => formatCurrencyCompact(val) }} />
           </BarChart>
         </ResponsiveContainer>
       </ChartCard>
@@ -767,13 +767,13 @@ const AbaOperacao = ({ data, onOpenModal }: any) => {
          <ChartCard title="Backlog Operacional por Etapa">
           <ResponsiveContainer width="100%" height={320}>
             <BarChart layout="vertical" data={backlogEtapasCalc} margin={{ top: 0, right: 30, left: 10, bottom: 0 }} onClick={(e:any) => handleEtapaClick(e)}>
-              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#cbd5e1" />
               <XAxis type="number" hide />
               <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#475569' }} width={120} onClick={(val) => handleEtapaClick(val)} style={{ cursor: 'pointer' }} />
-              <Tooltip cursor={{ fill: '#f1f5f9' }} content={<CustomTooltipEtapa totalAbertos={qtdAbertos} />} />
-              <Bar dataKey="qtd" name="Chamados ativos" fill="#3b82f6" radius={[0, 4, 4, 0]} barSize={24} onClick={(data) => handleEtapaClick(data)} style={{ cursor: 'pointer' }}>
+              <Tooltip cursor={{ fill: '#cbd5e1' }} content={<CustomTooltipEtapa totalAbertos={qtdAbertos} />} />
+              <Bar dataKey="qtd" name="Chamados ativos" fill="#2563eb" radius={[0, 4, 4, 0]} barSize={24} onClick={(data) => handleEtapaClick(data)} style={{ cursor: 'pointer' }}>
                 <LabelList dataKey="qtd" position="right" fill="#64748b" fontSize={11} formatter={(val:any) => val > 0 ? val : ''} />
-                {backlogEtapasCalc.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.qtd > 50 ? '#ef4444' : entry.qtd > 30 ? '#f59e0b' : '#10b981'} className="hover:opacity-80 transition-opacity" />)}
+                {backlogEtapasCalc.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.qtd > 50 ? '#dc2626' : entry.qtd > 30 ? '#d97706' : '#16a34a'} className="hover:opacity-80 transition-opacity" />)}
               </Bar>
             </BarChart>
           </ResponsiveContainer>
@@ -782,12 +782,12 @@ const AbaOperacao = ({ data, onOpenModal }: any) => {
         <ChartCard title="Idade do Backlog">
           <ResponsiveContainer width="100%" height={320}>
             <BarChart onClick={(e: any) => { if (e && e.activeLabel) onOpenModal(`IDADE BACKLOG - ${e.activeLabel}`) }} data={idadeBacklog} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#cbd5e1" />
                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#64748b' }} dy={10} interval={0} angle={-30} textAnchor="end" height={60} style={{ cursor: 'pointer' }} />
                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b' }} domain={[0, getDynamicCeiling(idadeBacklog, 'qtd', 10)]} />
                <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ fontSize: '12px', borderRadius: '8px' }} />
                <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} iconType="circle" />
-               <Bar dataKey="qtd" name="Chamados" fill="#8b5cf6" radius={[4, 4, 0, 0]} maxBarSize={40} label={{ position: 'top', fontSize: 10, fill: '#64748b' }} style={{ cursor: 'pointer' }} onClick={(d:any) => { const n = d?.name || d?.payload?.name; if (n) onOpenModal(`IDADE BACKLOG - ${n}`); }} />
+               <Bar dataKey="qtd" name="Chamados" fill="#7c3aed" radius={[4, 4, 0, 0]} maxBarSize={40} label={{ position: 'top', fontSize: 10, fill: '#64748b' }} style={{ cursor: 'pointer' }} onClick={(d:any) => { const n = d?.name || d?.payload?.name; if (n) onOpenModal(`IDADE BACKLOG - ${n}`); }} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -818,10 +818,10 @@ const AbaFinanceiro = ({ data, onOpenModal, filters }: any) => {
   const allMonths = [
     { key: 'jan', name: 'Janeiro', color: '#0284c7' },
     { key: 'fev', name: 'Fevereiro', color: '#be123c' },
-    { key: 'mar', name: 'Março', color: '#3b82f6' },
-    { key: 'abr', name: 'Abril', color: '#8b5cf6' },
-    { key: 'mai', name: 'Maio', color: '#10b981' },
-    { key: 'jun', name: 'Junho', color: '#ec4899' },
+    { key: 'mar', name: 'Março', color: '#2563eb' },
+    { key: 'abr', name: 'Abril', color: '#7c3aed' },
+    { key: 'mai', name: 'Maio', color: '#16a34a' },
+    { key: 'jun', name: 'Junho', color: '#4f46e5' },
     { key: 'jul', name: 'Julho', color: '#06b6d4' },
     { key: 'ago', name: 'Agosto', color: '#eab308' },
     { key: 'set', name: 'Setembro', color: '#84cc16' },
@@ -856,21 +856,21 @@ const AbaFinanceiro = ({ data, onOpenModal, filters }: any) => {
           <AreaChart data={data.charts?.evolucaoMensal || evolucaoMensal} margin={{ top: 10, right: 10, left: 10, bottom: 0 }}>
             <defs>
               <linearGradient id="colorAprov" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#8b5cf6" stopOpacity={0.8}/>
-                <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0}/>
+                <stop offset="5%" stopColor="#7c3aed" stopOpacity={0.8}/>
+                <stop offset="95%" stopColor="#7c3aed" stopOpacity={0}/>
               </linearGradient>
               <linearGradient id="colorPago" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="5%" stopColor="#10b981" stopOpacity={0.8}/>
-                <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                <stop offset="5%" stopColor="#16a34a" stopOpacity={0.8}/>
+                <stop offset="95%" stopColor="#16a34a" stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#cbd5e1" />
             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} dy={10} />
             <YAxis tickFormatter={(val) => formatCurrencyCompact(val)} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} dx={-10} domain={[0, ceilingEvolucao]} />
             <Tooltip formatter={(value: any) => formatCurrency(value)} contentStyle={{ fontSize: '12px', borderRadius: '8px' }} />
             <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} iconType="circle" />
-            <Area type="monotone" dataKey="valAprovado" name="Valor Aprovado" stroke="#8b5cf6" fillOpacity={1} fill="url(#colorAprov)" />
-            <Area type="monotone" dataKey="valPago" name="Valor Pago" stroke="#10b981" fillOpacity={1} fill="url(#colorPago)" />
+            <Area type="monotone" dataKey="valAprovado" name="Valor Aprovado" stroke="#7c3aed" fillOpacity={1} fill="url(#colorAprov)" />
+            <Area type="monotone" dataKey="valPago" name="Valor Pago" stroke="#16a34a" fillOpacity={1} fill="url(#colorPago)" />
           </AreaChart>
         </ResponsiveContainer>
       </ChartCard>
@@ -879,7 +879,7 @@ const AbaFinanceiro = ({ data, onOpenModal, filters }: any) => {
          <div className="w-full h-full overflow-hidden">
          <ResponsiveContainer width="100%" height={320}>
           <BarChart data={chartDataPivot} margin={{ top: 30, right: 10, left: 20, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#cbd5e1" />
             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} dy={10} name="Mês de Abertura" />
             <YAxis tickFormatter={(val) => formatCurrencyCompact(val)} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} dx={-10} domain={[0, ceilingOrigem]} />
             <Tooltip formatter={(value: any) => formatCurrency(value)} contentStyle={{ fontSize: '12px', borderRadius: '8px' }} />
@@ -930,24 +930,24 @@ const AbaTransportadoras = ({ mode, data, onOpenModal }: { mode: 'geral', data: 
       <ChartCard title="Top 5 Transportadoras (Volume)">
         <div className="flex items-center gap-4 mb-2 text-xs justify-end w-full px-2">
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded bg-[#1baf7a] inline-block" />
+            <span className="w-3 h-3 rounded bg-[#16a34a] inline-block" />
             <span className="font-semibold text-[#898781]">Aprovados</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded bg-[#e34948] inline-block" />
+            <span className="w-3 h-3 rounded bg-[#dc2626] inline-block" />
             <span className="font-semibold text-[#898781]">Recusados</span>
           </div>
         </div>
         <ResponsiveContainer width="100%" height={320}>
           <BarChart onClick={(e: any) => { if(e && e.activeLabel) onOpenModal(`TRANSP - ${e.activeLabel}`) }} data={data.charts?.topTranspData || []} margin={{ top: 15, right: 10, left: -20, bottom: 60 }}>
-            <CartesianGrid vertical={false} stroke="#e1e0d9" />
+            <CartesianGrid vertical={false} stroke="#cbd5e1" />
             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#898781' }} dy={10} interval={0} angle={-25} textAnchor="end" height={80} />
             <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#898781' }} domain={[0, getDynamicCeilingMulti(data.charts?.topTranspData || [], ['aprovados', 'recusados'], 10)]} />
             <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ fontSize: '12px', borderRadius: '8px' }} />
-            <Bar dataKey="aprovados" name="Aprovados" fill="#1baf7a" radius={[4, 4, 0, 0]} maxBarSize={40}>
+            <Bar dataKey="aprovados" name="Aprovados" fill="#16a34a" radius={[4, 4, 0, 0]} maxBarSize={40}>
               <LabelList dataKey="aprovados" position="center" fill="#ffffff" style={{ fontWeight: 'bold', fontSize: 12, fontFamily: 'sans-serif' }} />
             </Bar>
-            <Bar dataKey="recusados" name="Recusados" fill="#e34948" radius={[4, 4, 0, 0]} maxBarSize={40}>
+            <Bar dataKey="recusados" name="Recusados" fill="#dc2626" radius={[4, 4, 0, 0]} maxBarSize={40}>
               <LabelList dataKey="recusados" position="center" fill="#ffffff" style={{ fontWeight: 'bold', fontSize: 12, fontFamily: 'sans-serif' }} />
             </Bar>
           </BarChart>
@@ -957,24 +957,24 @@ const AbaTransportadoras = ({ mode, data, onOpenModal }: { mode: 'geral', data: 
       <ChartCard title="Taxa de Aprovação x Recusa (Top 5 Transportadoras)">
          <div className="flex items-center gap-4 mb-2 text-xs justify-end w-full px-2">
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded bg-[#1baf7a] inline-block" />
+            <span className="w-3 h-3 rounded bg-[#16a34a] inline-block" />
             <span className="font-semibold text-[#898781]">Aprovados (%)</span>
           </div>
           <div className="flex items-center gap-1.5">
-            <span className="w-3 h-3 rounded bg-[#e34948] inline-block" />
+            <span className="w-3 h-3 rounded bg-[#dc2626] inline-block" />
             <span className="font-semibold text-[#898781]">Recusados (%)</span>
           </div>
         </div>
          <ResponsiveContainer width="100%" height={320}>
           <BarChart onClick={(e: any) => { if(e && e.activeLabel) onOpenModal(`TRANSP - ${e.activeLabel}`) }} data={data.charts?.topTranspData || []} margin={{ top: 15, right: 10, left: -20, bottom: 60 }}>
-             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#cbd5e1" />
              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#898781' }} dy={10} interval={0} angle={-25} textAnchor="end" height={80} />
              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b' }} tickFormatter={(val) => `${String(val).replace('.', ',')}%`} domain={[0, 100]} />
              <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ fontSize: '12px', borderRadius: '8px' }} formatter={(val) => `${String(val).replace('.', ',')}%`} />
-             <Bar dataKey="percAprovados" name="Aprovados (%)" fill="#1baf7a" radius={[4, 4, 0, 0]} maxBarSize={40}>
+             <Bar dataKey="percAprovados" name="Aprovados (%)" fill="#16a34a" radius={[4, 4, 0, 0]} maxBarSize={40}>
                  <LabelList dataKey="percAprovados" position="top" fill="#64748b" formatter={(val: any) => `${String(val).replace('.', ',')}%`} style={{ fontSize: 10 }} />
              </Bar>
-             <Bar dataKey="percRecusados" name="Recusados (%)" fill="#e34948" radius={[4, 4, 0, 0]} maxBarSize={40}>
+             <Bar dataKey="percRecusados" name="Recusados (%)" fill="#dc2626" radius={[4, 4, 0, 0]} maxBarSize={40}>
                  <LabelList dataKey="percRecusados" position="top" fill="#64748b" formatter={(val: any) => `${String(val).replace('.', ',')}%`} style={{ fontSize: 10 }} />
              </Bar>
           </BarChart>
@@ -1034,7 +1034,7 @@ const ConferenteBarChart = ({ items, limit, onOpenModal }: { items: any[]; limit
         data={sorted}
         margin={{ top: 0, right: 70, left: 0, bottom: 0 }}
       >
-        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#cbd5e1" />
         <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b' }} allowDecimals={false} />
         <YAxis
           dataKey="name"
@@ -1046,10 +1046,10 @@ const ConferenteBarChart = ({ items, limit, onOpenModal }: { items: any[]; limit
           interval={0}
         />
         <Tooltip cursor={{ fill: '#f8fafc' }} content={<ConferenteTooltip />} />
-        <Bar dataKey="aprovados" name="Aprovados" stackId="a" fill="#10b981" barSize={18} style={{ cursor: onOpenModal ? 'pointer' : 'default' }}>
+        <Bar dataKey="aprovados" name="Aprovados" stackId="a" fill="#16a34a" barSize={18} style={{ cursor: onOpenModal ? 'pointer' : 'default' }}>
           <LabelList dataKey="aprovados" position="center" fill="#ffffff" fontSize={11} style={{ fontWeight: 'bold' }} formatter={(v: any) => v > 0 ? v : ''} />
         </Bar>
-        <Bar dataKey="recusados" name="Recusados" stackId="a" fill="#f43f5e" barSize={18} radius={[0, 4, 4, 0]} style={{ cursor: onOpenModal ? 'pointer' : 'default' }}>
+        <Bar dataKey="recusados" name="Recusados" stackId="a" fill="#dc2626" barSize={18} radius={[0, 4, 4, 0]} style={{ cursor: onOpenModal ? 'pointer' : 'default' }}>
           <LabelList dataKey="recusados" position="center" fill="#ffffff" fontSize={11} style={{ fontWeight: 'bold' }} formatter={(v: any) => v > 0 ? v : ''} />
           <LabelList dataKey="pct" position="right" fill="#64748b" fontSize={11} style={{ fontWeight: 500 }} formatter={(v: any) => `${v}% aprov.`} />
         </Bar>
@@ -1069,11 +1069,11 @@ const AbaConferentes = ({ mode, data, onOpenModal }: { mode: 'geral', data: any,
         <ChartCard title="Chamados por Conferente (Geral)">
           <div className="flex items-center gap-4 mb-2 text-xs justify-end w-full px-2">
             <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded bg-[#10b981] inline-block" />
+              <span className="w-3 h-3 rounded bg-[#16a34a] inline-block" />
               <span className="font-semibold text-[#898781]">Aprovados</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded bg-[#f43f5e] inline-block" />
+              <span className="w-3 h-3 rounded bg-[#dc2626] inline-block" />
               <span className="font-semibold text-[#898781]">Recusados</span>
             </div>
           </div>
@@ -1085,11 +1085,11 @@ const AbaConferentes = ({ mode, data, onOpenModal }: { mode: 'geral', data: any,
         <ChartCard title="Chamados por Conferente (CD Espírito Santo)">
           <div className="flex items-center gap-4 mb-2 text-xs justify-end w-full px-2">
             <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded bg-[#10b981] inline-block" />
+              <span className="w-3 h-3 rounded bg-[#16a34a] inline-block" />
               <span className="font-semibold text-[#898781]">Aprovados</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded bg-[#f43f5e] inline-block" />
+              <span className="w-3 h-3 rounded bg-[#dc2626] inline-block" />
               <span className="font-semibold text-[#898781]">Recusados</span>
             </div>
           </div>
@@ -1099,11 +1099,11 @@ const AbaConferentes = ({ mode, data, onOpenModal }: { mode: 'geral', data: any,
         <ChartCard title="Chamados por Conferente (CD Paraíba)">
           <div className="flex items-center gap-4 mb-2 text-xs justify-end w-full px-2">
             <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded bg-[#10b981] inline-block" />
+              <span className="w-3 h-3 rounded bg-[#16a34a] inline-block" />
               <span className="font-semibold text-[#898781]">Aprovados</span>
             </div>
             <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded bg-[#f43f5e] inline-block" />
+              <span className="w-3 h-3 rounded bg-[#dc2626] inline-block" />
               <span className="font-semibold text-[#898781]">Recusados</span>
             </div>
           </div>
