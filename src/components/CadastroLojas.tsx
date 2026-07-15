@@ -34,20 +34,26 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
       .replace(/(\d{4})(\d)/, "$1-$2");
   };
 
-  const buscarCnpj = async () => {
+  const onlyDigits = (v: string) => String(v || "").replace(/\D/g, "");
+  const titleCase = (v: string) =>
+    String(v || "")
+      .toLowerCase()
+      .replace(/(^|\s|\/|-)([\p{L}])/gu, (_, sep, ch) => sep + ch.toUpperCase());
+
+  const buscarCnpj = async (cnpjOverride?: string) => {
     if (!editing) return;
-    const digits = String(editing.cnpj || "").replace(/\D/g, "");
+    const digits = onlyDigits(cnpjOverride ?? editing.cnpj ?? "");
     if (digits.length !== 14) { toast.error("Informe um CNPJ com 14 dígitos."); return; }
     setLookupCnpj(true);
     try {
       const resp = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${digits}`);
       if (!resp.ok) throw new Error("CNPJ não encontrado.");
       const j: any = await resp.json();
-      setEditing({
-        ...editing,
+      setEditing((prev) => prev ? ({
+        ...prev,
         cnpj: formatCnpj(digits),
-        razao_social: editing.razao_social?.trim() ? editing.razao_social : (j.razao_social || j.nome_fantasia || ""),
-      });
+        razao_social: j.razao_social || j.nome_fantasia || prev.razao_social || "",
+      }) : prev);
       toast.success("Razão social preenchida");
     } catch (e: any) {
       toast.error(e?.message || "CNPJ não consultado");
@@ -55,6 +61,7 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
       setLookupCnpj(false);
     }
   };
+
 
   const load = async () => {
     setLoading(true);
@@ -207,19 +214,41 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
               {err && <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded p-2">{err}</div>}
               <div className="flex flex-wrap items-end gap-3">
                 <div className="w-28 shrink-0">
-                  {field("Número da Loja *", "numero", { placeholder: "Ex.: 101" })}
+                  <label className="block">
+                    <span className="text-xs font-semibold text-slate-600">Número da Loja *</span>
+                    <input
+                      inputMode="numeric"
+                      value={editing?.numero ?? ""}
+                      onChange={(e) => setEditing({ ...(editing as Loja), numero: onlyDigits(e.target.value) })}
+                      placeholder="Ex.: 101"
+                      className="mt-1 w-full text-sm rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </label>
                 </div>
                 <label className="flex-1 min-w-0 block">
                   <span className="text-xs font-semibold text-slate-600">CNPJ</span>
                   <div className="mt-1 flex gap-1">
                     <input
                       value={editing?.cnpj ?? ""}
-                      onChange={(e) => setEditing({ ...(editing as Loja), cnpj: formatCnpj(e.target.value) })}
-                      onBlur={() => { if (String(editing?.cnpj || "").replace(/\D/g, "").length === 14 && !editing?.razao_social) buscarCnpj(); }}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        const digits = onlyDigits(raw);
+                        setEditing({ ...(editing as Loja), cnpj: formatCnpj(raw) });
+                        if (digits.length === 14) buscarCnpj(digits);
+                      }}
+                      onPaste={(e) => {
+                        const text = e.clipboardData.getData("text");
+                        const digits = onlyDigits(text);
+                        if (digits.length === 14) {
+                          e.preventDefault();
+                          setEditing({ ...(editing as Loja), cnpj: formatCnpj(digits) });
+                          buscarCnpj(digits);
+                        }
+                      }}
                       placeholder="00.000.000/0001-00"
                       className="flex-1 text-sm rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    <button type="button" onClick={buscarCnpj} disabled={lookupCnpj} title="Buscar dados na Receita" className="inline-flex items-center gap-1 px-2 text-sm text-white bg-emerald-600 hover:bg-emerald-700 rounded-md disabled:opacity-50">
+                    <button type="button" onClick={() => buscarCnpj()} disabled={lookupCnpj} title="Buscar dados na Receita" className="inline-flex items-center gap-1 px-2 text-sm text-white bg-emerald-600 hover:bg-emerald-700 rounded-md disabled:opacity-50">
                       {lookupCnpj ? <Loader2 className="w-4 h-4 animate-spin"/> : <Download className="w-4 h-4"/>}
                     </button>
                   </div>
@@ -241,15 +270,39 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
                       <option value="Franquia">Franquia</option>
                     </select>
                   </label>
-                  {field("Banco", "banco")}
+                  <label className="block">
+                    <span className="text-xs font-semibold text-slate-600">Banco</span>
+                    <input
+                      value={editing?.banco ?? ""}
+                      onChange={(e) => setEditing({ ...(editing as Loja), banco: titleCase(e.target.value) })}
+                      className="mt-1 w-full text-sm rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </label>
                 </div>
                 <div className="grid grid-cols-4 gap-3 mt-3">
-                  {field("Agência", "agencia")}
-                  {field("Dígito Ag.", "agencia_dig")}
+                  <label className="block">
+                    <span className="text-xs font-semibold text-slate-600">Agência</span>
+                    <input
+                      inputMode="numeric"
+                      value={editing?.agencia ?? ""}
+                      onChange={(e) => setEditing({ ...(editing as Loja), agencia: onlyDigits(e.target.value) })}
+                      className="mt-1 w-full text-sm rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </label>
+                  <label className="block">
+                    <span className="text-xs font-semibold text-slate-600">Dígito Ag.</span>
+                    <input
+                      inputMode="numeric"
+                      value={editing?.agencia_dig ?? ""}
+                      onChange={(e) => setEditing({ ...(editing as Loja), agencia_dig: onlyDigits(e.target.value).slice(0, 2) })}
+                      className="mt-1 w-full text-sm rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    />
+                  </label>
                   {field("Conta", "conta")}
                   {field("Dígito Cta.", "conta_dig")}
                 </div>
               </div>
+
               {field("Observação", "observacao")}
             </div>
             <div className="flex justify-end gap-2 px-4 py-3 border-t bg-slate-50">
