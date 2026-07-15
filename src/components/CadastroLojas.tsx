@@ -34,20 +34,26 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
       .replace(/(\d{4})(\d)/, "$1-$2");
   };
 
-  const buscarCnpj = async () => {
+  const onlyDigits = (v: string) => String(v || "").replace(/\D/g, "");
+  const titleCase = (v: string) =>
+    String(v || "")
+      .toLowerCase()
+      .replace(/(^|\s|\/|-)([\p{L}])/gu, (_, sep, ch) => sep + ch.toUpperCase());
+
+  const buscarCnpj = async (cnpjOverride?: string) => {
     if (!editing) return;
-    const digits = String(editing.cnpj || "").replace(/\D/g, "");
+    const digits = onlyDigits(cnpjOverride ?? editing.cnpj ?? "");
     if (digits.length !== 14) { toast.error("Informe um CNPJ com 14 dígitos."); return; }
     setLookupCnpj(true);
     try {
       const resp = await fetch(`https://brasilapi.com.br/api/cnpj/v1/${digits}`);
       if (!resp.ok) throw new Error("CNPJ não encontrado.");
       const j: any = await resp.json();
-      setEditing({
-        ...editing,
+      setEditing((prev) => prev ? ({
+        ...prev,
         cnpj: formatCnpj(digits),
-        razao_social: editing.razao_social?.trim() ? editing.razao_social : (j.razao_social || j.nome_fantasia || ""),
-      });
+        razao_social: j.razao_social || j.nome_fantasia || prev.razao_social || "",
+      }) : prev);
       toast.success("Razão social preenchida");
     } catch (e: any) {
       toast.error(e?.message || "CNPJ não consultado");
@@ -55,6 +61,7 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
       setLookupCnpj(false);
     }
   };
+
 
   const load = async () => {
     setLoading(true);
