@@ -96,10 +96,10 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
     return (rawData || [])
       .filter((r: any) => {
         if (filtroStatus !== "Todos" && String(r["Status Chamado"] || "") !== filtroStatus) return false;
-        const t = String(r["Situação "] || r.situacao || "").trim();
+        const t = tarefaAtual(r);
         if (filtroTarefa !== "Todas" && t !== filtroTarefa) return false;
         if (!f) return true;
-        return [r.Chamado, r.Loja, r.NF, r.CD, r.Transportadora, r.Conferente, r["Situação "]]
+        return [r.Chamado, r.Loja, r.NF, r.CD, r.Transportadora, r.Conferente, t]
           .map((v) => String(v ?? "").toLowerCase()).some((s) => s.includes(f));
       })
       .sort((a: any, b: any) => (parseDataBR(b["Dt Abertura"])?.getTime() ?? 0) - (parseDataBR(a["Dt Abertura"])?.getTime() ?? 0));
