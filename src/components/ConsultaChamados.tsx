@@ -85,8 +85,8 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
   const tarefas = useMemo(() => {
     const set = new Set<string>();
     (rawData || []).forEach((r: any) => {
-      const t = String(r["Situação "] || r.situacao || "").trim();
-      if (t) set.add(t);
+      const t = tarefaAtual(r);
+      if (t && t !== "—") set.add(t);
     });
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [rawData]);
