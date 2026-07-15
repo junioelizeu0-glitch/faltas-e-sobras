@@ -797,7 +797,16 @@ const AbaOperacao = ({ data, onOpenModal }: any) => {
                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b' }} domain={[0, getDynamicCeiling(idadeBacklog, 'qtd', 10)]} />
                <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ fontSize: '12px', borderRadius: '8px' }} />
                <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} iconType="circle" />
-               <Bar dataKey="qtd" name="Chamados" fill="#7c3aed" radius={[4, 4, 0, 0]} maxBarSize={40} label={{ position: 'top', fontSize: 10, fill: '#64748b' }} style={{ cursor: 'pointer' }} onClick={(d:any) => { const n = d?.name || d?.payload?.name; if (n) onOpenModal(`IDADE BACKLOG - ${n}`); }} />
+               <Bar dataKey="qtd" name="Chamados" radius={[4, 4, 0, 0]} maxBarSize={40} label={{ position: 'top', fontSize: 10, fill: '#64748b' }} style={{ cursor: 'pointer' }} onClick={(d:any) => { const n = d?.name || d?.payload?.name; if (n) onOpenModal(`IDADE BACKLOG - ${n}`); }}>
+                 {idadeBacklog.map((entry: any, index: number) => {
+                   const n = String(entry.name || '');
+                   const color = n.includes('0-10') ? '#16a34a'
+                     : n.includes('11-20') ? '#65a30d'
+                     : n.includes('21-30') ? '#d97706'
+                     : '#dc2626';
+                   return <Cell key={`idade-${index}`} fill={color} />;
+                 })}
+               </Bar>
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
