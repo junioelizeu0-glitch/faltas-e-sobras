@@ -408,7 +408,7 @@ const AbaVisaoExecutiva = ({ data, onOpenModal }: any) => (
             barGap={3}
             margin={{ top: 15, right: 105, left: 10, bottom: 5 }}
           >
-            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#cbd5e1" />
+            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
             <XAxis
               type="number"
               tickFormatter={formatShortValueNoSpace}
@@ -424,7 +424,7 @@ const AbaVisaoExecutiva = ({ data, onOpenModal }: any) => (
               tick={{ fontSize: 11, fill: '#475569', fontWeight: 500 }}
               width={55}
             />
-            <Tooltip content={<CustomEvolucaoTooltip />} cursor={{ fill: '#cbd5e1', opacity: 0.4 }} />
+            <Tooltip content={<CustomEvolucaoTooltip />} cursor={{ fill: "#e2e8f0", opacity: 0.4 }} />
             <Legend
               iconType="square"
               iconSize={10}
@@ -494,10 +494,10 @@ const AbaVisaoExecutiva = ({ data, onOpenModal }: any) => (
               else if (e.activeLabel === 'SLA de Pagamento') onOpenModal('SLA DE PAGAMENTO');
             }}
           >
-            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#cbd5e1" />
+            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
             <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b' }} />
             <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#475569', fontWeight: 'bold' }} width={110} style={{ cursor: 'pointer' }} />
-            <Tooltip cursor={{ fill: '#cbd5e1' }} />
+            <Tooltip cursor={{ fill: "#e2e8f0" }} />
             <Bar dataKey="No Prazo" stackId="a" fill="#16a34a" barSize={30} style={{ cursor: 'pointer' }}>
               <LabelList dataKey="No Prazo" position="center" fill="#ffffff" fontSize={11} fontWeight="bold" formatter={(val: any, entry: any) => {
                 const row: any = (data.charts?.slaComparativoData || data.kpis?.slaComparativoData || []).find((r: any) => r['No Prazo'] === val);
@@ -527,7 +527,7 @@ const AbaVisaoExecutiva = ({ data, onOpenModal }: any) => (
       <ChartCard title="Taxa de Aprovação por CD" desc="Aprovados / Abertos (%)">
         <ResponsiveContainer width="100%" height={320}>
           <BarChart layout="vertical" onClick={(e: any) => { if(e && e.activeLabel) onOpenModal(`TAXA APROVAÇÃO CD - ${e.activeLabel}`) }} data={data.charts?.taxaAprovacaoCdData?.slice(0,10) || []} margin={{ top: 0, right: 30, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#cbd5e1" />
+            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
             <XAxis type="number" hide domain={[0, 100]} />
             <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#475569' }} width={120} />
             <Tooltip cursor={{ fill: '#f8fafc' }} formatter={(val: any) => `${val}%`} contentStyle={{ fontSize: '12px', borderRadius: '8px' }} />
@@ -539,7 +539,7 @@ const AbaVisaoExecutiva = ({ data, onOpenModal }: any) => (
       <ChartCard title="Aging Geral (Aprovados Pendentes)">
         <ResponsiveContainer width="100%" height={320}>
           <BarChart onClick={(e: any) => { if (e && e.activeLabel) onOpenModal(`AGING - ${e.activeLabel}`) }} data={data.charts?.agingData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#cbd5e1" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b' }} dy={10} style={{ cursor: 'pointer' }} />
             <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b' }} />
             <Tooltip content={<AgingTooltip />} cursor={{ fill: '#f8fafc' }} />
@@ -554,7 +554,7 @@ const AbaVisaoExecutiva = ({ data, onOpenModal }: any) => (
       <ChartCard title="Valores: Top Lojas" desc="Lojas com maior passivo aprovado">
         <ResponsiveContainer width="100%" height={320}>
            <BarChart layout="vertical" data={data.charts?.lojasData || []} margin={{ top: 0, right: 90, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#cbd5e1" />
+            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
             <XAxis type="number" hide />
             <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#475569' }} width={90} />
             <Tooltip cursor={{ fill: '#f8fafc' }} formatter={(val: any) => formatCurrency(val)} contentStyle={{ fontSize: '12px', borderRadius: '8px' }} />
@@ -767,10 +767,10 @@ const AbaOperacao = ({ data, onOpenModal }: any) => {
          <ChartCard title="Backlog Operacional por Etapa">
           <ResponsiveContainer width="100%" height={320}>
             <BarChart layout="vertical" data={backlogEtapasCalc} margin={{ top: 0, right: 30, left: 10, bottom: 0 }} onClick={(e:any) => handleEtapaClick(e)}>
-              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#cbd5e1" />
+              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
               <XAxis type="number" hide />
               <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#475569' }} width={120} onClick={(val) => handleEtapaClick(val)} style={{ cursor: 'pointer' }} />
-              <Tooltip cursor={{ fill: '#cbd5e1' }} content={<CustomTooltipEtapa totalAbertos={qtdAbertos} />} />
+              <Tooltip cursor={{ fill: "#e2e8f0" }} content={<CustomTooltipEtapa totalAbertos={qtdAbertos} />} />
               <Bar dataKey="qtd" name="Chamados ativos" fill="#2563eb" radius={[0, 4, 4, 0]} barSize={24} onClick={(data) => handleEtapaClick(data)} style={{ cursor: 'pointer' }}>
                 <LabelList dataKey="qtd" position="right" fill="#64748b" fontSize={11} formatter={(val:any) => val > 0 ? val : ''} />
                 {backlogEtapasCalc.map((entry, index) => <Cell key={`cell-${index}`} fill={entry.qtd > 50 ? '#dc2626' : entry.qtd > 30 ? '#d97706' : '#16a34a'} className="hover:opacity-80 transition-opacity" />)}
@@ -782,7 +782,7 @@ const AbaOperacao = ({ data, onOpenModal }: any) => {
         <ChartCard title="Idade do Backlog">
           <ResponsiveContainer width="100%" height={320}>
             <BarChart onClick={(e: any) => { if (e && e.activeLabel) onOpenModal(`IDADE BACKLOG - ${e.activeLabel}`) }} data={idadeBacklog} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#cbd5e1" />
+               <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 9, fill: '#64748b' }} dy={10} interval={0} angle={-30} textAnchor="end" height={60} style={{ cursor: 'pointer' }} />
                <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b' }} domain={[0, getDynamicCeiling(idadeBacklog, 'qtd', 10)]} />
                <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ fontSize: '12px', borderRadius: '8px' }} />
@@ -864,7 +864,7 @@ const AbaFinanceiro = ({ data, onOpenModal, filters }: any) => {
                 <stop offset="95%" stopColor="#16a34a" stopOpacity={0}/>
               </linearGradient>
             </defs>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#cbd5e1" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} dy={10} />
             <YAxis tickFormatter={(val) => formatCurrencyCompact(val)} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} dx={-10} domain={[0, ceilingEvolucao]} />
             <Tooltip formatter={(value: any) => formatCurrency(value)} contentStyle={{ fontSize: '12px', borderRadius: '8px' }} />
@@ -879,7 +879,7 @@ const AbaFinanceiro = ({ data, onOpenModal, filters }: any) => {
          <div className="w-full h-full overflow-hidden">
          <ResponsiveContainer width="100%" height={320}>
           <BarChart data={chartDataPivot} margin={{ top: 30, right: 10, left: 20, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#cbd5e1" />
+            <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} dy={10} name="Mês de Abertura" />
             <YAxis tickFormatter={(val) => formatCurrencyCompact(val)} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} dx={-10} domain={[0, ceilingOrigem]} />
             <Tooltip formatter={(value: any) => formatCurrency(value)} contentStyle={{ fontSize: '12px', borderRadius: '8px' }} />
@@ -940,7 +940,7 @@ const AbaTransportadoras = ({ mode, data, onOpenModal }: { mode: 'geral', data: 
         </div>
         <ResponsiveContainer width="100%" height={320}>
           <BarChart onClick={(e: any) => { if(e && e.activeLabel) onOpenModal(`TRANSP - ${e.activeLabel}`) }} data={data.charts?.topTranspData || []} margin={{ top: 15, right: 10, left: -20, bottom: 60 }}>
-            <CartesianGrid vertical={false} stroke="#cbd5e1" />
+            <CartesianGrid vertical={false} stroke="#e2e8f0" />
             <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#898781' }} dy={10} interval={0} angle={-25} textAnchor="end" height={80} />
             <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#898781' }} domain={[0, getDynamicCeilingMulti(data.charts?.topTranspData || [], ['aprovados', 'recusados'], 10)]} />
             <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ fontSize: '12px', borderRadius: '8px' }} />
@@ -967,7 +967,7 @@ const AbaTransportadoras = ({ mode, data, onOpenModal }: { mode: 'geral', data: 
         </div>
          <ResponsiveContainer width="100%" height={320}>
           <BarChart onClick={(e: any) => { if(e && e.activeLabel) onOpenModal(`TRANSP - ${e.activeLabel}`) }} data={data.charts?.topTranspData || []} margin={{ top: 15, right: 10, left: -20, bottom: 60 }}>
-             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#cbd5e1" />
+             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
              <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#898781' }} dy={10} interval={0} angle={-25} textAnchor="end" height={80} />
              <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b' }} tickFormatter={(val) => `${String(val).replace('.', ',')}%`} domain={[0, 100]} />
              <Tooltip cursor={{ fill: '#f8fafc' }} contentStyle={{ fontSize: '12px', borderRadius: '8px' }} formatter={(val) => `${String(val).replace('.', ',')}%`} />
@@ -1034,7 +1034,7 @@ const ConferenteBarChart = ({ items, limit, onOpenModal }: { items: any[]; limit
         data={sorted}
         margin={{ top: 0, right: 70, left: 0, bottom: 0 }}
       >
-        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#cbd5e1" />
+        <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
         <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b' }} allowDecimals={false} />
         <YAxis
           dataKey="name"
