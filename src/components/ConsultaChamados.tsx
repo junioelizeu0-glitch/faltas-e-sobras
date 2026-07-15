@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Search, X, Pencil, Trash2, DownloadCloud, UploadCloud, Loader2 } from "lucide-react";
+import { Search, X, Pencil, Trash2, DownloadCloud, UploadCloud, Loader2, Plus } from "lucide-react";
 import { parseDataBR } from "@/lib/data-processing";
 import { deleteChamado } from "@/lib/chamados.functions";
 import { pullFromAppsScript, pushToAppsScript } from "@/lib/sync.functions";
@@ -55,6 +55,7 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
   const [filtroStatus, setFiltroStatus] = useState("Todos");
   const [filtroTarefa, setFiltroTarefa] = useState("Todas");
   const [editingId, setEditingId] = useState<string | null>(null);
+  const [creating, setCreating] = useState(false);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [page, setPage] = useState(0);
   const [syncing, setSyncing] = useState<"pull" | "push" | null>(null);
@@ -150,6 +151,14 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
             </p>
           </div>
           <div className="flex items-center gap-1">
+            <button
+              onClick={() => setCreating(true)}
+              title="Novo chamado"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded mr-2"
+            >
+              <Plus className="w-3.5 h-3.5"/>
+              Novo chamado
+            </button>
             <button
               onClick={doPull}
               disabled={syncing !== null}
@@ -268,6 +277,24 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
                 onSaved={() => { onChanged?.(); }}
                 onCancel={() => setEditingId(null)}
                 onDeleted={() => { setEditingId(null); onChanged?.(); }}
+              />
+            </div>
+          </div>
+        </div>
+      )}
+
+      {creating && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-2xl w-full max-w-[98vw] h-[96vh] overflow-auto">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 sticky top-0 bg-white z-10">
+              <h2 className="text-base font-bold text-slate-800">Novo Chamado</h2>
+              <button onClick={() => setCreating(false)} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5"/></button>
+            </div>
+            <div className="p-4">
+              <ChamadoForm
+                mode="novo" compact
+                onSaved={() => { setCreating(false); onChanged?.(); }}
+                onCancel={() => setCreating(false)}
               />
             </div>
           </div>
