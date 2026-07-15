@@ -152,6 +152,14 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
           </div>
           <div className="flex items-center gap-1">
             <button
+              onClick={() => setCreating(true)}
+              title="Novo chamado"
+              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded mr-2"
+            >
+              <Plus className="w-3.5 h-3.5"/>
+              Novo chamado
+            </button>
+            <button
               onClick={doPull}
               disabled={syncing !== null}
               title="Puxar dados atualizados da API (planilha → banco)"
