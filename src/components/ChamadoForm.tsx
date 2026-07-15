@@ -752,6 +752,19 @@ function ReferenciasTab({ refs, setRef, addRef, rmRef, buscar, onSalvarParcial, 
 
 function EtapasTab({ etapas, setEt, addEtapa, rmEtapa, tarefas, onSalvarParcial, salvando }: any) {
   const [editIdx, setEditIdx] = useState<number | null>(null);
+  const listRef = useRef<HTMLDivElement | null>(null);
+  const prevLenRef = useRef<number>(etapas.length);
+  useEffect(() => {
+    if (etapas.length > prevLenRef.current) {
+      requestAnimationFrame(() => {
+        const el = listRef.current?.lastElementChild as HTMLElement | undefined;
+        el?.scrollIntoView({ behavior: "smooth", block: "center" });
+        const firstInput = el?.querySelector("select, input") as HTMLElement | undefined;
+        firstInput?.focus?.();
+      });
+    }
+    prevLenRef.current = etapas.length;
+  }, [etapas.length]);
   return (
     <div className="space-y-3 relative">
       <div className="flex justify-between items-center sticky top-0 z-20 bg-white/95 backdrop-blur py-2 -mx-1 px-1 border-b border-slate-100">
@@ -766,7 +779,7 @@ function EtapasTab({ etapas, setEt, addEtapa, rmEtapa, tarefas, onSalvarParcial,
         </div>
       </div>
       {etapas.length === 0 && <div className="text-center py-8 text-slate-400 text-sm border border-dashed rounded-lg">Nenhuma etapa ainda.</div>}
-      <div className="space-y-2">
+      <div ref={listRef} className="space-y-2">
         {etapas.map((e: Etapa, idx: number) => {
           const dtPrev = calcDataPrevista(e.dt_inicio, e.dias_uteis_previsto);
           const ini = parseISO(e.dt_inicio); const fim = parseISO(e.dt_fim);
