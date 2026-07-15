@@ -718,7 +718,20 @@ function ReferenciasTab({ refs, setRef, addRef, rmRef, buscar, onSalvarParcial, 
           <div key={idx} className="grid grid-cols-[minmax(140px,1.6fr)_minmax(80px,1fr)_minmax(160px,1.8fr)_minmax(110px,1.2fr)_70px_80px_auto] gap-2 items-end p-3 border border-slate-200 rounded-lg bg-slate-50/50">
             <Field label="Referência">
               <div className="flex gap-1">
-                <input value={r.referencia} onChange={(e) => setRef(idx, { referencia: e.target.value })} className={inputCls} />
+                <input
+                  value={r.referencia}
+                  onChange={(e) => setRef(idx, { referencia: e.target.value })}
+                  onPaste={(e) => {
+                    const text = e.clipboardData.getData("text").trim();
+                    if (text) {
+                      e.preventDefault();
+                      setRef(idx, { referencia: text });
+                      setTimeout(() => buscar(idx), 0);
+                    }
+                  }}
+                  onBlur={() => { if ((r.referencia || "").trim() && !r.descricao) buscar(idx); }}
+                  className={inputCls}
+                />
                 <button type="button" onClick={() => buscar(idx)} title="Buscar produto" className="px-2 border border-slate-300 rounded-md hover:bg-slate-100"><Search className="w-4 h-4 text-slate-600"/></button>
               </div>
             </Field>
