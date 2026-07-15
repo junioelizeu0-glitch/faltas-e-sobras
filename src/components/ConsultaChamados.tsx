@@ -282,6 +282,24 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
           </div>
         </div>
       )}
+
+      {creating && (
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-2xl w-full max-w-[98vw] h-[96vh] overflow-auto">
+            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 sticky top-0 bg-white z-10">
+              <h2 className="text-base font-bold text-slate-800">Novo Chamado</h2>
+              <button onClick={() => setCreating(false)} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5"/></button>
+            </div>
+            <div className="p-4">
+              <ChamadoForm
+                mode="novo" compact
+                onSaved={() => { setCreating(false); onChanged?.(); }}
+                onCancel={() => setCreating(false)}
+              />
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
