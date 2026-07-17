@@ -245,6 +245,7 @@ export default function AppShell({
         </div>
         {children}
       </div>
+      <SessionGuard />
     </div>
   );
 }
