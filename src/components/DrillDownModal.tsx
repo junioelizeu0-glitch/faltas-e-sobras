@@ -378,7 +378,7 @@ export default function DrillDownModal({
                     return (
                       <td
                         key={col}
-                        className={`p-3 text-slate-600 ${isBank ? 'whitespace-nowrap min-w-[120px]' : 'truncate max-w-[150px]'}`}
+                        className={`p-3 text-slate-600 ${isBank ? 'whitespace-normal min-w-[120px] max-w-[220px] leading-snug' : 'truncate max-w-[150px]'}`}
                         title={isBank ? String(val || '') : undefined}
                       >
                         {val}
