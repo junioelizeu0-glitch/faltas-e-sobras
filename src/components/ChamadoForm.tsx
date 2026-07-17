@@ -402,8 +402,8 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   if (loading) return <div className="flex items-center justify-center p-10 text-slate-500"><Loader2 className="w-5 h-5 animate-spin mr-2"/>Carregando...</div>;
 
   return (
-    <div className={compact ? "" : "flex-1 overflow-auto bg-slate-50 p-4"}>
-      <div className={compact ? "" : "w-full"}>
+    <div className={compact ? "h-full flex flex-col" : "flex-1 overflow-auto bg-slate-50 p-4"}>
+      <div className={compact ? "h-full flex flex-col" : "w-full min-h-full"}>
         {!compact && (
           <header className="mb-4">
             <h1 className="text-xl font-bold text-slate-800">
@@ -420,7 +420,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
           </div>
         )}
 
-        <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
+        <div className={`bg-white rounded-xl border border-slate-200 shadow-sm ${compact ? "h-full flex flex-col" : "min-h-[calc(100vh-180px)]"}`}>
           <div className="sticky top-0 z-20 flex border-b border-slate-200 bg-white/95 backdrop-blur rounded-t-xl">
             {[
               { k: "cadastro", label: "Cadastro" },
