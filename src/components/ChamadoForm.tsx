@@ -435,7 +435,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
             ))}
           </div>
 
-          <div className="p-5">
+          <div className={`p-5 ${compact ? "flex-1 flex flex-col min-h-0" : ""}`}>
             {tab === "cadastro" && (
               <CadastroTab form={form} setField={setField} statusPagamento={statusPagamento} sla={slaCalc}
                 transp={transp} confs={confs} motivos={motivos} precisaTranspConf={precisaTranspConf} precisaMotivo={precisaMotivo}
