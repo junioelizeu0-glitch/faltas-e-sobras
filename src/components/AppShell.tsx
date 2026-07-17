@@ -21,6 +21,7 @@ import {
 import { useServerFn } from "@tanstack/react-start";
 import { useRouter } from "@tanstack/react-router";
 import { lockSite } from "@/lib/gate.functions";
+import SessionGuard from "@/components/SessionGuard";
 
 interface AppShellProps {
   children: React.ReactNode;
