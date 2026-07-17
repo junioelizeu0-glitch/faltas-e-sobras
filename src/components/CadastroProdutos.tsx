@@ -64,7 +64,7 @@ export default function CadastroProdutos() {
         nome_parceiro: String(r["Nome Parceiro (Parceiro Fornecedor)"] ?? r["Nome Parceiro"] ?? r["Fornecedor"] ?? r["nome_parceiro"] ?? "").trim(),
       })).filter((r) => r.referencia);
       const res: any = await bulk({ data: { rows: norm } });
-      setMsg(`${res.inserted} produtos importados/atualizados.`);
+      setMsg(`${res.inserted} novo(s) produto(s) importado(s). ${res.skipped || 0} já existente(s) ignorado(s).`);
       await load();
     } catch (e: any) { setMsg("Erro: " + (e?.message || String(e))); }
     finally { setImporting(false); if (fileRef.current) fileRef.current.value = ""; }
@@ -76,10 +76,10 @@ export default function CadastroProdutos() {
       filename: `produtos_${new Date().toISOString().slice(0, 10)}.xlsx`,
       sheetName: "Produtos",
       columns: [
-        { key: "Referência", header: "Referência" },
-        { key: "Cor", header: "Cor" },
-        { key: "Descrição", header: "Descrição" },
-        { key: "Nome Parceiro (Parceiro Fornecedor)", header: "Fornecedor" },
+        { key: "referencia", header: "Referência" },
+        { key: "cor", header: "Cor" },
+        { key: "descricao", header: "Descrição" },
+        { key: "nome_parceiro", header: "Fornecedor" },
       ],
     });
   };
