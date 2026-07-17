@@ -3,7 +3,7 @@
 
 
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart, AreaChart, Area, LabelList
 } from 'recharts';
@@ -28,6 +28,9 @@ import {
   listConferentes, upsertConferente, deleteConferente,
   listMotivos, upsertMotivo, deleteMotivo,
 } from '@/lib/cadastros.functions';
+import { listLojas } from '@/lib/lojas.functions';
+import { useServerFn } from '@tanstack/react-start';
+import { useQuery } from '@tanstack/react-query';
 
 import DrillDownModal from '@/components/DrillDownModal';
 import AppShell from '@/components/AppShell';
