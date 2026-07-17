@@ -1348,6 +1348,8 @@ export default function Dashboard() {
             : ['Chamado', 'Loja', 'CD', 'Tarefa Atual', 'Status', 'Valor', 'Dt Abertura', 'SLA'];
         }
       }
+      raw = enrichBankData(raw);
+      cols = [...cols, 'Razão Social', 'CNPJ', 'Banco', 'Agência', 'Dig Agência', 'Conta', 'Dig Conta'];
       title = `Detalhamento - Etapa: ${etapaInfo}`;
     } else if (type.startsWith('TRANSP - ')) {
       const transpInfo = type.replace('TRANSP - ', '');
