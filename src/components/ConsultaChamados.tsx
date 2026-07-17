@@ -265,13 +265,13 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
       </div>
 
       {editingId && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-2">
-          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-2xl w-full max-w-[99vw] h-[99vh] overflow-auto">
-            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 sticky top-0 bg-white z-10">
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-1">
+          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-2xl w-full max-w-[99vw] h-[99vh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-2 border-b border-slate-200 bg-white shrink-0">
               <h2 className="text-base font-bold text-slate-800">Editar Chamado</h2>
               <button onClick={() => setEditingId(null)} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5"/></button>
             </div>
-            <div className="p-4">
+            <div className="flex-1 min-h-0 p-3 overflow-hidden">
               <ChamadoForm
                 mode="editar" chamadoId={editingId} compact
                 onSaved={() => { onChanged?.(); }}
@@ -284,13 +284,13 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
       )}
 
       {creating && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-2">
-          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-2xl w-full max-w-[99vw] h-[99vh] overflow-auto">
-            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 sticky top-0 bg-white z-10">
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-1">
+          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-2xl w-full max-w-[99vw] h-[99vh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-2 border-b border-slate-200 bg-white shrink-0">
               <h2 className="text-base font-bold text-slate-800">Novo Chamado</h2>
               <button onClick={() => setCreating(false)} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5"/></button>
             </div>
-            <div className="p-4">
+            <div className="flex-1 min-h-0 p-3 overflow-hidden">
               <ChamadoForm
                 mode="novo" compact
                 onSaved={() => { setCreating(false); onChanged?.(); }}
