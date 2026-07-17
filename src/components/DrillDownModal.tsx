@@ -374,8 +374,13 @@ export default function DrillDownModal({
                     if (val === undefined || val === null || String(val).trim() === '') {
                       val = bankCols.has(col.trim().toLowerCase()) ? '' : 'Sem informação';
                     }
+                    const isBank = bankCols.has(col.trim().toLowerCase());
                     return (
-                      <td key={col} className="p-3 text-slate-600 truncate max-w-[150px]">
+                      <td
+                        key={col}
+                        className={`p-3 text-slate-600 ${isBank ? 'whitespace-nowrap min-w-[120px] max-w-[260px]' : 'truncate max-w-[150px]'}`}
+                        title={isBank ? String(val || '') : undefined}
+                      >
                         {val}
                       </td>
                     );
