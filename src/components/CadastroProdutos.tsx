@@ -64,7 +64,7 @@ export default function CadastroProdutos() {
         nome_parceiro: String(r["Nome Parceiro (Parceiro Fornecedor)"] ?? r["Nome Parceiro"] ?? r["Fornecedor"] ?? r["nome_parceiro"] ?? "").trim(),
       })).filter((r) => r.referencia);
       const res: any = await bulk({ data: { rows: norm } });
-      setMsg(`${res.inserted} produtos importados/atualizados.`);
+      setMsg(`${res.inserted} novo(s) produto(s) importado(s). ${res.skipped || 0} já existente(s) ignorado(s).`);
       await load();
     } catch (e: any) { setMsg("Erro: " + (e?.message || String(e))); }
     finally { setImporting(false); if (fileRef.current) fileRef.current.value = ""; }
