@@ -84,7 +84,7 @@ export const deleteProduto = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
-/** Bulk upsert (import de planilha). Processa em batches. */
+/** Bulk insert (import de planilha). Insere APENAS itens que ainda não existem (mesma referência+cor). */
 export const bulkUpsertProdutos = createServerFn({ method: "POST" })
   .inputValidator((data: {
     rows: Array<{ referencia: string; cor?: string; descricao?: string; nome_parceiro?: string }>;
@@ -100,16 +100,44 @@ export const bulkUpsertProdutos = createServerFn({ method: "POST" })
         nome_parceiro: r.nome_parceiro ? String(r.nome_parceiro).trim() : null,
       }))
       .filter((r) => r.referencia);
-    if (!norm.length) return { ok: true, inserted: 0 };
+    if (!norm.length) return { ok: true, inserted: 0, skipped: 0 };
+
+    // Carrega todas as chaves existentes (referencia, cor) em páginas
+    const existing = new Set<string>();
+    const step = 1000;
+    let from = 0;
+    while (true) {
+      const { data: rows, error } = await supabase
+        .from("produtos")
+        .select("referencia, cor")
+        .range(from, from + step - 1);
+      if (error) throw new Error(error.message);
+      for (const r of rows || []) existing.add(`${(r as any).referencia}||${(r as any).cor ?? ""}`);
+      if (!rows || rows.length < step) break;
+      from += step;
+    }
+
+    // Deduplicação interna + filtra o que já existe
+    const seen = new Set<string>();
+    const toInsert: typeof norm = [];
+    let skipped = 0;
+    for (const r of norm) {
+      const k = `${r.referencia}||${r.cor}`;
+      if (existing.has(k) || seen.has(k)) { skipped++; continue; }
+      seen.add(k);
+      toInsert.push(r);
+    }
+    if (!toInsert.length) return { ok: true, inserted: 0, skipped };
+
     const BATCH = 500;
     let total = 0;
-    for (let i = 0; i < norm.length; i += BATCH) {
-      const slice = norm.slice(i, i + BATCH);
-      const { error } = await supabase.from("produtos").upsert(slice, { onConflict: "referencia,cor" });
+    for (let i = 0; i < toInsert.length; i += BATCH) {
+      const slice = toInsert.slice(i, i + BATCH);
+      const { error } = await supabase.from("produtos").insert(slice);
       if (error) throw new Error(`Erro no batch ${i / BATCH + 1}: ${error.message}`);
       total += slice.length;
     }
-    return { ok: true, inserted: total };
+    return { ok: true, inserted: total, skipped };
   });
 
 /** Exportar tudo (para download em xlsx no cliente). */
