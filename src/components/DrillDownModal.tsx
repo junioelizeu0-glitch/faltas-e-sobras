@@ -361,7 +361,19 @@ export default function DrillDownModal({
                     const exactKey = Object.keys(row).find(
                       (k) => k.trim().toLowerCase() === col.trim().toLowerCase(),
                     );
-                    val = exactKey ? row[exactKey] : row[col] || "Sem informação";
+                    val = exactKey ? row[exactKey] : row[col];
+                    const bankCols = new Set([
+                      'razão social',
+                      'cnpj',
+                      'banco',
+                      'agência',
+                      'dig agência',
+                      'conta',
+                      'dig conta',
+                    ]);
+                    if (val === undefined || val === null || String(val).trim() === '') {
+                      val = bankCols.has(col.trim().toLowerCase()) ? '' : 'Sem informação';
+                    }
                     return (
                       <td key={col} className="p-3 text-slate-600 truncate max-w-[150px]">
                         {val}
