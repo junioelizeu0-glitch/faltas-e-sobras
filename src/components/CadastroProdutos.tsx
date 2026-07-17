@@ -76,10 +76,10 @@ export default function CadastroProdutos() {
       filename: `produtos_${new Date().toISOString().slice(0, 10)}.xlsx`,
       sheetName: "Produtos",
       columns: [
-        { key: "Referência", header: "Referência" },
-        { key: "Cor", header: "Cor" },
-        { key: "Descrição", header: "Descrição" },
-        { key: "Nome Parceiro (Parceiro Fornecedor)", header: "Fornecedor" },
+        { key: "referencia", header: "Referência" },
+        { key: "cor", header: "Cor" },
+        { key: "descricao", header: "Descrição" },
+        { key: "nome_parceiro", header: "Fornecedor" },
       ],
     });
   };
