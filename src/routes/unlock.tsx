@@ -25,6 +25,7 @@ function UnlockPage() {
     try {
       const { ok } = await unlock({ data: { username, password } });
       if (ok) {
+        try { sessionStorage.setItem("tab-session-active", "1"); } catch {}
         await router.invalidate();
         await router.navigate({ to: "/" });
       } else {
