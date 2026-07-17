@@ -193,3 +193,45 @@ input::placeholder, textarea::placeholder { color: var(--text-secondary); opacit
 .etapa-row:nth-child(6n+4) { border-left-color: var(--etapa-4-fg) !important; background-color: color-mix(in oklab, var(--etapa-4-bg) 40%, var(--bg-card)) !important; }
 .etapa-row:nth-child(6n+5) { border-left-color: var(--etapa-5-fg) !important; background-color: color-mix(in oklab, var(--etapa-5-bg) 40%, var(--bg-card)) !important; }
 .etapa-row:nth-child(6n)   { border-left-color: var(--etapa-6-fg) !important; background-color: color-mix(in oklab, var(--etapa-6-bg) 40%, var(--bg-card)) !important; }
+
+/* =============================================================
+ * AIliana — blocos de destaque em respostas da IA
+ * ============================================================= */
+.ai-response table {
+  border-collapse: collapse;
+  width: 100%;
+  background: var(--bg-card);
+  border: 1px solid var(--border-c);
+  border-radius: 10px;
+  overflow: hidden;
+}
+.ai-response thead { background: var(--bg-header); }
+.ai-response th, .ai-response td {
+  border-bottom: 1px solid var(--border-c);
+  padding: 6px 10px;
+  text-align: left;
+}
+.ai-response tr:last-child td { border-bottom: 0; }
+
+.ai-response pre {
+  background: var(--bg-header);
+  border: 1px solid var(--border-c);
+  border-radius: 10px;
+  padding: 10px 12px;
+  overflow-x: auto;
+}
+.ai-response code {
+  background: var(--bg-header);
+  border: 1px solid var(--border-c);
+  color: var(--text-primary);
+}
+.ai-response pre code { background: transparent; border: 0; padding: 0; }
+
+.ai-response blockquote {
+  border-left: 3px solid var(--accent);
+  background: var(--info-bg);
+  color: var(--text-primary);
+  padding: 6px 12px;
+  border-radius: 6px;
+  margin: 8px 0;
+}
