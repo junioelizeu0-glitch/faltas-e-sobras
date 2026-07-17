@@ -171,8 +171,8 @@ export default function DrillDownModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-6xl max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-3">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-[95vw] max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
         <div className="flex justify-between items-start p-5 border-b border-slate-200">
           <div>
             <div className="text-[10px] font-bold text-slate-400 mb-1 flex items-center gap-1 uppercase tracking-wider">
@@ -361,9 +361,26 @@ export default function DrillDownModal({
                     const exactKey = Object.keys(row).find(
                       (k) => k.trim().toLowerCase() === col.trim().toLowerCase(),
                     );
-                    val = exactKey ? row[exactKey] : row[col] || "Sem informação";
+                    val = exactKey ? row[exactKey] : row[col];
+                    const bankCols = new Set([
+                      'razão social',
+                      'cnpj',
+                      'banco',
+                      'agência',
+                      'dig agência',
+                      'conta',
+                      'dig conta',
+                    ]);
+                    if (val === undefined || val === null || String(val).trim() === '') {
+                      val = bankCols.has(col.trim().toLowerCase()) ? '' : 'Sem informação';
+                    }
+                    const isBank = bankCols.has(col.trim().toLowerCase());
                     return (
-                      <td key={col} className="p-3 text-slate-600 truncate max-w-[150px]">
+                      <td
+                        key={col}
+                        className={`p-3 text-slate-600 ${isBank ? 'whitespace-normal! min-w-[120px] max-w-[220px] leading-snug' : 'truncate max-w-[150px]'}`}
+                        title={isBank ? String(val || '') : undefined}
+                      >
                         {val}
                       </td>
                     );

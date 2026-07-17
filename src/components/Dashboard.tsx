@@ -3,7 +3,7 @@
 
 
 
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import {
   LineChart, Line, BarChart, Bar, PieChart, Pie, Cell, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, ComposedChart, AreaChart, Area, LabelList
 } from 'recharts';
@@ -28,6 +28,9 @@ import {
   listConferentes, upsertConferente, deleteConferente,
   listMotivos, upsertMotivo, deleteMotivo,
 } from '@/lib/cadastros.functions';
+import { listLojas } from '@/lib/lojas.functions';
+import { useServerFn } from '@tanstack/react-start';
+import { useQuery } from '@tanstack/react-query';
 
 import DrillDownModal from '@/components/DrillDownModal';
 import AppShell from '@/components/AppShell';
@@ -1204,6 +1207,35 @@ export default function Dashboard() {
   const { kpis, filterOptions, isLoading, isRefetching, error, refetch, rawData } = useDashboardData(activeFilters);
   const charts = kpis?.charts;
 
+  const fetchLojas = useServerFn(listLojas);
+  const { data: lojasData } = useQuery({
+    queryKey: ['dashboard-lojas'],
+    queryFn: () => fetchLojas(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const lojasMap = useMemo(() => {
+    const map = new Map<string, any>();
+    (lojasData || []).forEach((l: any) => {
+      if (l?.numero) map.set(String(l.numero).trim(), l);
+    });
+    return map;
+  }, [lojasData]);
+
+  const enrichBankData = (rows: any[]) => rows.map((d) => {
+    const lojaNum = String(d['Loja'] || d.loja || '').trim();
+    const loja = lojaNum ? lojasMap.get(lojaNum) : null;
+    return {
+      ...d,
+      'Razão Social': loja?.razao_social || '',
+      'CNPJ': loja?.cnpj || '',
+      'Banco': loja?.banco || '',
+      'Agência': loja?.agencia || '',
+      'Dig Agência': loja?.agencia_dig || '',
+      'Conta': loja?.conta || '',
+      'Dig Conta': loja?.conta_dig || '',
+    };
+  });
+
   const executiveSummaryRef = useRef<HTMLDivElement>(null);
   const [isExportingSummary, setIsExportingSummary] = useState(false);
 
@@ -1316,6 +1348,8 @@ export default function Dashboard() {
             : ['Chamado', 'Loja', 'CD', 'Tarefa Atual', 'Status', 'Valor', 'Dt Abertura', 'SLA'];
         }
       }
+      raw = enrichBankData(raw);
+      cols = [...cols, 'Razão Social', 'CNPJ', 'Banco', 'Agência', 'Dig Agência', 'Conta', 'Dig Conta'];
       title = `Detalhamento - Etapa: ${etapaInfo}`;
     } else if (type.startsWith('TRANSP - ')) {
       const transpInfo = type.replace('TRANSP - ', '');
