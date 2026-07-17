@@ -1207,6 +1207,35 @@ export default function Dashboard() {
   const { kpis, filterOptions, isLoading, isRefetching, error, refetch, rawData } = useDashboardData(activeFilters);
   const charts = kpis?.charts;
 
+  const fetchLojas = useServerFn(listLojas);
+  const { data: lojasData } = useQuery({
+    queryKey: ['dashboard-lojas'],
+    queryFn: () => fetchLojas(),
+    staleTime: 5 * 60 * 1000,
+  });
+  const lojasMap = useMemo(() => {
+    const map = new Map<string, any>();
+    (lojasData || []).forEach((l: any) => {
+      if (l?.numero) map.set(String(l.numero).trim(), l);
+    });
+    return map;
+  }, [lojasData]);
+
+  const enrichBankData = (rows: any[]) => rows.map((d) => {
+    const lojaNum = String(d['Loja'] || d.loja || '').trim();
+    const loja = lojaNum ? lojasMap.get(lojaNum) : null;
+    return {
+      ...d,
+      'Razão Social': loja?.razao_social || '',
+      'CNPJ': loja?.cnpj || '',
+      'Banco': loja?.banco || '',
+      'Agência': loja?.agencia || '',
+      'Dig Agência': loja?.agencia_dig || '',
+      'Conta': loja?.conta || '',
+      'Dig Conta': loja?.conta_dig || '',
+    };
+  });
+
   const executiveSummaryRef = useRef<HTMLDivElement>(null);
   const [isExportingSummary, setIsExportingSummary] = useState(false);
 
