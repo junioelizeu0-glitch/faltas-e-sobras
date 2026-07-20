@@ -683,16 +683,18 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
             <span>Loja <b>{form.Loja}</b> não cadastrada. Clique no lápis acima para cadastrar.</span>
           </div>
         ) : (
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <div className="flex flex-wrap gap-3">
             {[
-              ["Razão Social", lojaInfo.razao_social],
-              ["CNPJ", lojaInfo.cnpj],
-              ["Tipo", lojaInfo.tipo],
-              ["Banco", lojaInfo.banco],
-              ["Agência", lojaInfo.agencia ? `${lojaInfo.agencia}${lojaInfo.agencia_dig ? "-" + lojaInfo.agencia_dig : ""}` : null],
-              ["Conta", lojaInfo.conta ? `${lojaInfo.conta}${lojaInfo.conta_dig ? "-" + lojaInfo.conta_dig : ""}` : null],
-            ].map(([label, val]) => (
-              <div key={label as string}>
+              ["Razão Social", lojaInfo.razao_social, "w-[260px]"],
+              ["CNPJ", lojaInfo.cnpj, "w-[160px]"],
+              ["Tipo", lojaInfo.tipo, "w-[110px]"],
+              ["Banco", lojaInfo.banco, "w-[180px]"],
+              ["Agência", lojaInfo.agencia || null, "w-[100px]"],
+              ["Dígito Ag.", lojaInfo.agencia_dig || null, "w-[80px]"],
+              ["Conta", lojaInfo.conta || null, "w-[130px]"],
+              ["Dígito Cta.", lojaInfo.conta_dig || null, "w-[80px]"],
+            ].map(([label, val, w]) => (
+              <div key={label as string} className={w as string}>
                 <div className="text-[10px] font-semibold text-slate-500 uppercase">{label}</div>
                 <div className="mt-1 rounded-md bg-slate-50 border border-slate-200 px-2.5 py-1.5 text-sm text-slate-700 min-h-[34px]">{val || "—"}</div>
               </div>
