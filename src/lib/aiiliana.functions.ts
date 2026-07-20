@@ -53,6 +53,8 @@ Regras:
 export const askAiiliana = createServerFn({ method: "POST" })
   .inputValidator((d: unknown) => AskInput.parse(d))
   .handler(async ({ data }) => {
+    const { requireUnlockedSession } = await import("@/lib/gate.server");
+    await requireUnlockedSession();
     const key = process.env.LOVABLE_API_KEY;
     if (!key) throw new Error("Missing LOVABLE_API_KEY");
 
