@@ -493,7 +493,28 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
                 </button>
               )}
               <div className="flex items-center gap-2">
-                {onCancel && <button type="button" onClick={onCancel} className="px-3 py-2 text-sm text-slate-600 hover:text-slate-900">Cancelar</button>}
+                {(onCancel || mode === "novo") && (
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (onCancel) return onCancel();
+                      if (!confirm("Cancelar a inclusão? Os dados preenchidos serão descartados.")) return;
+                      setForm({
+                        Chamado: "", Loja: "", Tipo: "", NF: "",
+                        "Dt Emissão": "", CD: "", "Situação ": "",
+                        "Dt Abertura": hojeISO(), "Dt Finalização": "", "Dt Pagamento": "",
+                        "Status Chamado": "",
+                        Motivo: "", Transportadora: "", Conferente: "",
+                        _valor: "",
+                      });
+                      setRefs([]); setEtapas([]); setFeedback(null);
+                      toast.info("Inclusão cancelada");
+                    }}
+                    className="px-3 py-2 text-sm text-slate-600 hover:text-slate-900 border border-slate-200 rounded-md hover:bg-slate-50"
+                  >
+                    Cancelar
+                  </button>
+                )}
                 <button
                   type="button" onClick={() => submit()} disabled={submitting}
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold disabled:opacity-50 cursor-pointer"
