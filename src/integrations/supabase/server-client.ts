@@ -1,7 +1,6 @@
-// Server-side Supabase client using the publishable key.
-// Safe on Lovable Cloud (service role key is not available).
-// App-level security is enforced by the SITE_PASSWORD cookie gate before any
-// server function reaches this client.
+// Server-side Supabase client using the service role key.
+// Bypasses RLS — only imported dynamically inside server function handlers
+// after the site-gate session check (requireUnlockedSession).
 import { createClient } from "@supabase/supabase-js";
 import type { Database } from "./types";
 
@@ -11,7 +10,6 @@ function makeFetch(key: string): typeof fetch {
       typeof Request !== "undefined" && input instanceof Request ? input.headers : undefined,
     );
     if (init?.headers) new Headers(init.headers).forEach((v, k) => headers.set(k, v));
-    // sb_ keys are opaque, not JWTs — strip default Authorization bearer.
     if ((key.startsWith("sb_publishable_") || key.startsWith("sb_secret_")) &&
         headers.get("Authorization") === `Bearer ${key}`) {
       headers.delete("Authorization");
@@ -23,9 +21,9 @@ function makeFetch(key: string): typeof fetch {
 
 export function getServerSupabase() {
   const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
-  const key = process.env.SUPABASE_PUBLISHABLE_KEY ?? process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
+  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
   if (!url || !key) {
-    throw new Error("Missing SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY");
+    throw new Error("Missing SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY");
   }
   return createClient<Database>(url, key, {
     global: { fetch: makeFetch(key) },
