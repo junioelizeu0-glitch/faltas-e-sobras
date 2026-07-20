@@ -105,21 +105,21 @@ export default function CadastroSimples({ titulo, descricao, listFn, upsertFn, d
             <table className="min-w-full text-sm">
               <thead className="bg-slate-50 border-b text-xs uppercase text-slate-500">
                 <tr>
-                  <th className="text-left px-3 py-2">{nomeLabel}</th>
+                  <th className="text-left px-3 py-2 w-[260px]">{nomeLabel}</th>
                   {extraFields.map((f) => (
-                    <th key={f.key} className="text-left px-3 py-2">{f.label}</th>
+                    <th key={f.key} className="text-left px-3 py-2 w-[100px]">{f.label}</th>
                   ))}
-                  <th className="text-right px-3 py-2">Ações</th>
+                  <th className="text-right px-3 py-2 w-[100px]">Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {paginated.map((r) => (
                   <tr key={r.id} className="border-b border-slate-100 hover:bg-slate-50">
-                    <td className="px-3 py-2 font-medium text-slate-800">{r.nome}</td>
+                    <td className="px-3 py-2 font-medium text-slate-800 w-[260px] max-w-[260px] truncate" title={r.nome}>{r.nome}</td>
                     {extraFields.map((f) => (
-                      <td key={f.key} className="px-3 py-2 text-slate-600">{r[f.key] || "—"}</td>
+                      <td key={f.key} className="px-3 py-2 text-slate-600 w-[100px] max-w-[100px] truncate" title={String(r[f.key] ?? "")}>{r[f.key] || "—"}</td>
                     ))}
-                    <td className="px-3 py-2 text-right space-x-2">
+                    <td className="px-3 py-2 text-right space-x-2 w-[100px]">
                       <button onClick={() => setEditing(r)} title="Editar" className="inline-flex items-center p-1.5 text-blue-600 hover:bg-blue-50 rounded"><Pencil className="w-3.5 h-3.5"/></button>
                       <button onClick={() => remove(r)} title="Excluir" className="inline-flex items-center p-1.5 text-red-500 hover:bg-red-50 rounded ml-0.5"><Trash2 className="w-3.5 h-3.5"/></button>
                     </td>
