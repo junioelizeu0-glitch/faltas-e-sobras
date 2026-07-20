@@ -189,6 +189,15 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     }
   }, [form["Status Chamado"]]);
 
+  // Auto-preencher Situação como "Finalizado" quando Data Finalização for informada.
+  useEffect(() => {
+    if (!form["Dt Finalização"]) return;
+    const atual = (form["Situação "] || "").toLowerCase();
+    if (atual === "finalizado" || atual === "chamado recusado" || atual === "sem retorno (finalizado)") return;
+    setForm((p) => ({ ...p, "Situação ": "Finalizado" }));
+  }, [form["Dt Finalização"]]);
+
+
 
   // Busca dados bancários da loja quando o número muda (ou depois de fechar o modal de cadastro)
   useEffect(() => {
