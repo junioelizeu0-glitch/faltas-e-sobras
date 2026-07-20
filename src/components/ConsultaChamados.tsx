@@ -147,7 +147,7 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
           <div>
             <h1 className="text-xl font-bold text-slate-800">Consulta de Chamados — Faltas</h1>
             <p className="text-sm text-slate-500 mt-1">
-              {selected.size > 0 ? `${selected.size} selecionado(s) de ${linhas.length}` : `Clique em um chamado para editar. Total: ${linhas.length}`}
+              {selected.size > 0 ? `${selected.size} selecionado(s) de ${linhas.length}` : `Dê um duplo clique em um chamado para editar. Total: ${linhas.length}`}
             </p>
           </div>
           <div className="flex items-center gap-1">
@@ -238,7 +238,7 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
               </thead>
               <tbody>
                 {paginadas.map((r: any) => (
-                  <tr key={r.id || r.Chamado} onClick={() => r.id && setEditingId(r.id)} className={`border-b border-slate-100 hover:bg-blue-50/40 cursor-pointer ${selected.has(r.id) ? "bg-blue-50/60" : ""}`}>
+                  <tr key={r.id || r.Chamado} onDoubleClick={() => r.id && setEditingId(r.id)} className={`border-b border-slate-100 hover:bg-blue-50/40 cursor-pointer select-none ${selected.has(r.id) ? "bg-blue-50/60" : ""}`}>
                     <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
                       <input type="checkbox" checked={selected.has(r.id)} onChange={() => toggleOne(r.id)} className="cursor-pointer"/>
                     </td>
