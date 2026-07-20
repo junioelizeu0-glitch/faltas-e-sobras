@@ -202,7 +202,7 @@ export default function PainelAbertos({ rawData, isLoading, onChanged }: Props) 
                 <tr><td colSpan={8} className="text-center py-10 text-slate-400">Nenhum chamado em aberto encontrado.</td></tr>
               )}
               {!isLoading && pageRows.map((r, i) => (
-                <tr key={`${r.chamado}-${i}`} className="border-t border-slate-100 hover:bg-blue-50/40 cursor-pointer" onClick={() => r.id && setEditingId(String(r.id))}>
+                <tr key={`${r.chamado}-${i}`} className="border-t border-slate-100 hover:bg-blue-50/40 cursor-pointer select-none" onDoubleClick={() => r.id && setEditingId(String(r.id))}>
                   <td className="px-2 py-2"><AlertBadge alerta={r.alerta} /></td>
                   <td className="px-2 py-2 font-semibold text-slate-800 whitespace-nowrap">{r.chamado}</td>
                   <td className="px-2 py-2 text-slate-700 whitespace-nowrap">{r.loja}</td>
