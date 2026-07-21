@@ -6,6 +6,7 @@ import ChamadoForm from "./ChamadoForm";
 type Props = {
   rawData: any[] | undefined;
   isLoading?: boolean;
+  error?: string | null;
   onChanged?: () => void;
 };
 
@@ -36,7 +37,7 @@ function siglaCD(v: any): string {
   return "";
 }
 
-export default function PainelAbertos({ rawData, isLoading, onChanged }: Props) {
+export default function PainelAbertos({ rawData, isLoading, error, onChanged }: Props) {
   const [query, setQuery] = useState("");
   const [cdFilter, setCdFilter] = useState<"Todos" | "ES" | "PB">("Todos");
   const [alertaFilter, setAlertaFilter] = useState<"todos" | "vencido" | "atencao" | "prazo">("todos");
@@ -144,6 +145,11 @@ export default function PainelAbertos({ rawData, isLoading, onChanged }: Props) 
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
+        {error && (
+          <div className="m-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
+            Erro ao carregar os chamados: {error}
+          </div>
+        )}
         <div className="flex flex-wrap items-end gap-2 p-3 border-b border-slate-100">
           <div className="relative flex-1 min-w-[220px]">
             <label className="block text-[11px] font-medium text-slate-500 mb-1 uppercase tracking-wide">Buscar</label>
@@ -198,10 +204,13 @@ export default function PainelAbertos({ rawData, isLoading, onChanged }: Props) 
               {isLoading && (
                 <tr><td colSpan={8} className="text-center py-10 text-slate-500"><Loader2 className="w-5 h-5 animate-spin inline-block mr-2" />Carregando...</td></tr>
               )}
-              {!isLoading && pageRows.length === 0 && (
+              {!isLoading && error && (
+                <tr><td colSpan={8} className="text-center py-10 text-rose-500">Não foi possível carregar os dados. Tente atualizar a página.</td></tr>
+              )}
+              {!isLoading && !error && pageRows.length === 0 && (
                 <tr><td colSpan={8} className="text-center py-10 text-slate-400">Nenhum chamado em aberto encontrado.</td></tr>
               )}
-              {!isLoading && pageRows.map((r, i) => (
+              {!isLoading && !error && pageRows.map((r, i) => (
                 <tr key={`${r.chamado}-${i}`} className="border-t border-slate-100 hover:bg-blue-50/40 cursor-pointer select-none" onDoubleClick={() => r.id && setEditingId(String(r.id))}>
                   <td className="px-2 py-2"><AlertBadge alerta={r.alerta} /></td>
                   <td className="px-2 py-2 font-semibold text-slate-800 whitespace-nowrap">{r.chamado}</td>
