@@ -206,14 +206,14 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
       {editing && (
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[92vh] overflow-auto">
-            <div className="flex items-center justify-between px-4 py-3 border-b">
+            <div className="flex items-center justify-between px-6 py-4 border-b">
               <h3 className="font-semibold">{editing.id ? "Editar" : "Nova"} loja</h3>
               <button onClick={() => setEditing(null)}><X className="w-5 h-5 text-slate-400"/></button>
             </div>
-            <div className="p-4 space-y-3">
+            <div className="p-6 space-y-6">
               {err && <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded p-2">{err}</div>}
-              <div className="flex flex-wrap items-end gap-3">
-                <div className="w-28 shrink-0">
+              <div className="flex flex-wrap items-end gap-5">
+                <div className="w-32 shrink-0">
                   <label className="block">
                     <span className="text-xs font-semibold text-slate-600">Número da Loja *</span>
                     <input
@@ -221,13 +221,13 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
                       value={editing?.numero ?? ""}
                       onChange={(e) => setEditing({ ...(editing as Loja), numero: onlyDigits(e.target.value) })}
                       placeholder="Ex.: 101"
-                      className="mt-1 w-full text-sm rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="mt-1.5 w-full text-sm rounded-md border border-slate-300 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </label>
                 </div>
                 <label className="flex-1 min-w-0 block">
                   <span className="text-xs font-semibold text-slate-600">CNPJ</span>
-                  <div className="mt-1 flex gap-1">
+                  <div className="mt-1.5 flex gap-2">
                     <input
                       value={editing?.cnpj ?? ""}
                       onChange={(e) => {
@@ -246,24 +246,24 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
                         }
                       }}
                       placeholder="00.000.000/0001-00"
-                      className="flex-1 text-sm rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="flex-1 text-sm rounded-md border border-slate-300 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
-                    <button type="button" onClick={() => buscarCnpj()} disabled={lookupCnpj} title="Buscar dados na Receita" className="inline-flex items-center gap-1 px-2 text-sm text-white bg-emerald-600 hover:bg-emerald-700 rounded-md disabled:opacity-50">
+                    <button type="button" onClick={() => buscarCnpj()} disabled={lookupCnpj} title="Buscar dados na Receita" className="inline-flex items-center gap-1 px-3 text-sm text-white bg-emerald-600 hover:bg-emerald-700 rounded-md disabled:opacity-50">
                       {lookupCnpj ? <Loader2 className="w-4 h-4 animate-spin"/> : <Download className="w-4 h-4"/>}
                     </button>
                   </div>
                 </label>
               </div>
               {field("Razão Social", "razao_social")}
-              <div className="pt-2 border-t">
-                <div className="text-xs font-bold text-slate-500 uppercase mb-2">Dados Bancários</div>
-                <div className="grid grid-cols-2 gap-3">
+              <div className="pt-4 border-t">
+                <div className="text-xs font-bold text-slate-500 uppercase mb-3">Dados Bancários</div>
+                <div className="grid grid-cols-2 gap-5">
                   <label className="block">
                     <span className="text-xs font-semibold text-slate-600">Tipo *</span>
                     <select
                       value={editing?.tipo ?? ""}
                       onChange={(e) => setEditing({ ...(editing as Loja), tipo: e.target.value })}
-                      className="mt-1 w-full text-sm rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                      className="mt-1.5 w-full text-sm rounded-md border border-slate-300 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
                     >
                       <option value="">Selecione...</option>
                       <option value="Própria">Própria</option>
@@ -275,18 +275,18 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
                     <input
                       value={editing?.banco ?? ""}
                       onChange={(e) => setEditing({ ...(editing as Loja), banco: titleCase(e.target.value) })}
-                      className="mt-1 w-full text-sm rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="mt-1.5 w-full text-sm rounded-md border border-slate-300 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </label>
                 </div>
-                <div className="grid grid-cols-4 gap-3 mt-3">
+                <div className="grid grid-cols-4 gap-5 mt-5">
                   <label className="block">
                     <span className="text-xs font-semibold text-slate-600">Agência</span>
                     <input
                       inputMode="numeric"
                       value={editing?.agencia ?? ""}
                       onChange={(e) => setEditing({ ...(editing as Loja), agencia: onlyDigits(e.target.value) })}
-                      className="mt-1 w-full text-sm rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="mt-1.5 w-full text-sm rounded-md border border-slate-300 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </label>
                   <label className="block">
@@ -295,7 +295,7 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
                       inputMode="numeric"
                       value={editing?.agencia_dig ?? ""}
                       onChange={(e) => setEditing({ ...(editing as Loja), agencia_dig: onlyDigits(e.target.value).slice(0, 2) })}
-                      className="mt-1 w-full text-sm rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="mt-1.5 w-full text-sm rounded-md border border-slate-300 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
                     />
                   </label>
                   {field("Conta", "conta")}
@@ -305,15 +305,16 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
 
               {field("Observação", "observacao")}
             </div>
-            <div className="flex justify-end gap-2 px-4 py-3 border-t bg-slate-50">
-              <button onClick={() => setEditing(null)} className="px-3 py-2 text-sm text-slate-600">Cancelar</button>
-              <button onClick={save} disabled={saving} className="inline-flex items-center gap-1 px-3 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50">
+            <div className="flex justify-end gap-2 px-6 py-4 border-t bg-slate-50">
+              <button onClick={() => setEditing(null)} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-md">Cancelar</button>
+              <button onClick={save} disabled={saving} className="inline-flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50">
                 {saving ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4"/>}Salvar
               </button>
             </div>
           </div>
         </div>
       )}
+
     </div>
   );
 }
