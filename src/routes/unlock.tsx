@@ -39,7 +39,7 @@ function UnlockPage() {
   }
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-white px-6 py-12">
+    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-sky-50 via-blue-50 to-sky-100 px-6 py-12">
       <form
         onSubmit={onSubmit}
         className="w-full max-w-sm rounded-2xl border border-stone-100 bg-white p-8 shadow-sm"
