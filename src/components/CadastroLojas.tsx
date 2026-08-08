@@ -262,111 +262,177 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
               </div>
             )}
 
-            <div className="p-5 flex-1 overflow-auto">
+            <div className="p-6 flex-1 overflow-auto">
               {modalTab === "dados" ? (
-                <div className="space-y-4">
-                  {err && <div className="text-xs text-red-700 bg-red-50 border border-red-200 rounded p-2">{err}</div>}
-                  <div className="flex flex-wrap items-end gap-4">
-                    <div className="w-32 shrink-0">
+                <div className="space-y-5">
+                  {err && <div className="text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-xl p-3">{err}</div>}
+                  
+                  {/* Linha 1: Número, CNPJ, Razão Social */}
+                  <div className="grid grid-cols-12 gap-4">
+                    <div className="col-span-3">
                       <label className="block">
-                        <span className="text-xs font-semibold text-slate-600">Número da Loja *</span>
+                        <span className="text-xs font-bold text-slate-700">Número da Loja *</span>
                         <input
                           inputMode="numeric"
                           value={editing?.numero ?? ""}
                           onChange={(e) => setEditing({ ...(editing as Loja), numero: onlyDigits(e.target.value) })}
                           placeholder="Ex.: 101"
-                          className="mt-1 w-full text-xs rounded-md border border-slate-300 px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          className="mt-1.5 w-full text-xs rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-2xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                         />
                       </label>
                     </div>
-                    <label className="flex-1 min-w-0 block">
-                      <span className="text-xs font-semibold text-slate-600">CNPJ</span>
-                      <div className="mt-1 flex gap-2">
-                        <input
-                          value={editing?.cnpj ?? ""}
-                          onChange={(e) => {
-                            const raw = e.target.value;
-                            const digits = onlyDigits(raw);
-                            setEditing({ ...(editing as Loja), cnpj: formatCnpj(raw) });
-                            if (digits.length === 14) buscarCnpj(digits);
-                          }}
-                          onPaste={(e) => {
-                            const text = e.clipboardData.getData("text");
-                            const digits = onlyDigits(text);
-                            if (digits.length === 14) {
-                              e.preventDefault();
-                              setEditing({ ...(editing as Loja), cnpj: formatCnpj(digits) });
-                              buscarCnpj(digits);
-                            }
-                          }}
-                          placeholder="00.000.000/0001-00"
-                          className="flex-1 text-xs rounded-md border border-slate-300 px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        />
-                        <button type="button" onClick={() => buscarCnpj()} disabled={lookupCnpj} title="Buscar dados na Receita" className="inline-flex items-center gap-1 px-2.5 text-xs text-white bg-emerald-600 hover:bg-emerald-700 rounded-md disabled:opacity-50">
-                          {lookupCnpj ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <Download className="w-3.5 h-3.5"/>}
-                        </button>
-                      </div>
-                    </label>
-                  </div>
-                  {field("Razão Social", "razao_social")}
-                  <div className="pt-3 border-t">
-                    <div className="text-xs font-bold text-slate-500 uppercase mb-2">Dados Bancários</div>
-                    <div className="grid grid-cols-2 gap-3">
+                    <div className="col-span-4">
                       <label className="block">
-                        <span className="text-xs font-semibold text-slate-600">Tipo *</span>
-                        <select
-                          value={editing?.tipo ?? ""}
-                          onChange={(e) => setEditing({ ...(editing as Loja), tipo: e.target.value })}
-                          className="mt-1 w-full text-xs rounded-md border border-slate-300 px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 bg-white"
-                        >
-                          <option value="">Selecione...</option>
-                          <option value="Própria">Própria</option>
-                          <option value="Franquia">Franquia</option>
-                        </select>
-                      </label>
-                      <label className="block">
-                        <span className="text-xs font-semibold text-slate-600">Banco</span>
-                        <input
-                          value={editing?.banco ?? ""}
-                          onChange={(e) => setEditing({ ...(editing as Loja), banco: titleCase(e.target.value) })}
-                          className="mt-1 w-full text-xs rounded-md border border-slate-300 px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        />
+                        <span className="text-xs font-bold text-slate-700">CNPJ</span>
+                        <div className="mt-1.5 flex gap-2">
+                          <input
+                            value={editing?.cnpj ?? ""}
+                            onChange={(e) => {
+                              const raw = e.target.value;
+                              const digits = onlyDigits(raw);
+                              setEditing({ ...(editing as Loja), cnpj: formatCnpj(raw) });
+                              if (digits.length === 14) buscarCnpj(digits);
+                            }}
+                            onPaste={(e) => {
+                              const text = e.clipboardData.getData("text");
+                              const digits = onlyDigits(text);
+                              if (digits.length === 14) {
+                                e.preventDefault();
+                                setEditing({ ...(editing as Loja), cnpj: formatCnpj(digits) });
+                                buscarCnpj(digits);
+                              }
+                            }}
+                            placeholder="00.000.000/0001-00"
+                            className="w-full text-xs rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-2xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                          />
+                          <button type="button" onClick={() => buscarCnpj()} disabled={lookupCnpj} title="Buscar dados na Receita" className="inline-flex items-center justify-center px-3 text-xs font-medium text-white bg-emerald-600 hover:bg-emerald-700 rounded-xl transition-colors disabled:opacity-50 shrink-0 cursor-pointer">
+                            {lookupCnpj ? <Loader2 className="w-4 h-4 animate-spin"/> : <Download className="w-4 h-4"/>}
+                          </button>
+                        </div>
                       </label>
                     </div>
-                    <div className="grid grid-cols-4 gap-3 mt-3">
+                    <div className="col-span-5">
                       <label className="block">
-                        <span className="text-xs font-semibold text-slate-600">Agência</span>
+                        <span className="text-xs font-bold text-slate-700">Razão Social</span>
                         <input
-                          inputMode="numeric"
-                          value={editing?.agencia ?? ""}
-                          onChange={(e) => setEditing({ ...(editing as Loja), agencia: onlyDigits(e.target.value) })}
-                          className="mt-1 w-full text-xs rounded-md border border-slate-300 px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
+                          value={editing?.razao_social ?? ""}
+                          onChange={(e) => setEditing({ ...(editing as Loja), razao_social: e.target.value })}
+                          placeholder="Nome da razão social da loja"
+                          className="mt-1.5 w-full text-xs rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-2xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
                         />
                       </label>
-                      <label className="block">
-                        <span className="text-xs font-semibold text-slate-600">Dígito Ag.</span>
-                        <input
-                          inputMode="numeric"
-                          value={editing?.agencia_dig ?? ""}
-                          onChange={(e) => setEditing({ ...(editing as Loja), agencia_dig: onlyDigits(e.target.value).slice(0, 2) })}
-                          className="mt-1 w-full text-xs rounded-md border border-slate-300 px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500"
-                        />
-                      </label>
-                      {field("Conta", "conta")}
-                      {field("Dígito Cta.", "conta_dig")}
                     </div>
                   </div>
 
-                  {field("Observação", "observacao")}
+                  {/* Dados Bancários */}
+                  <div className="pt-4 border-t border-slate-100">
+                    <div className="text-xs font-bold text-slate-500 uppercase tracking-wider mb-3 flex items-center gap-2">
+                      <span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> Dados Bancários
+                    </div>
+
+                    <div className="grid grid-cols-12 gap-4">
+                      <div className="col-span-4">
+                        <label className="block">
+                          <span className="text-xs font-bold text-slate-700">Tipo *</span>
+                          <select
+                            value={editing?.tipo ?? ""}
+                            onChange={(e) => setEditing({ ...(editing as Loja), tipo: e.target.value })}
+                            className="mt-1.5 w-full text-xs rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-2xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 cursor-pointer"
+                          >
+                            <option value="">Selecione...</option>
+                            <option value="Própria">Própria</option>
+                            <option value="Franquia">Franquia</option>
+                          </select>
+                        </label>
+                      </div>
+                      <div className="col-span-8">
+                        <label className="block">
+                          <span className="text-xs font-bold text-slate-700">Banco</span>
+                          <input
+                            value={editing?.banco ?? ""}
+                            onChange={(e) => setEditing({ ...(editing as Loja), banco: titleCase(e.target.value) })}
+                            placeholder="Nome do banco (ex: Bradesco, Itaú)"
+                            className="mt-1.5 w-full text-xs rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-2xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                          />
+                        </label>
+                      </div>
+                    </div>
+
+                    {/* Proporções perfeitas: Agencia (3 cols), Dig (2 cols), Conta (5 cols), Dig (2 cols) */}
+                    <div className="grid grid-cols-12 gap-4 mt-4">
+                      <div className="col-span-3">
+                        <label className="block">
+                          <span className="text-xs font-bold text-slate-700">Agência</span>
+                          <input
+                            inputMode="numeric"
+                            value={editing?.agencia ?? ""}
+                            onChange={(e) => setEditing({ ...(editing as Loja), agencia: onlyDigits(e.target.value) })}
+                            placeholder="Ex.: 0513"
+                            className="mt-1.5 w-full text-xs rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-2xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"
+                          />
+                        </label>
+                      </div>
+                      <div className="col-span-2">
+                        <label className="block">
+                          <span className="text-xs font-bold text-slate-700">Díg. Ag.</span>
+                          <input
+                            inputMode="numeric"
+                            value={editing?.agencia_dig ?? ""}
+                            onChange={(e) => setEditing({ ...(editing as Loja), agencia_dig: onlyDigits(e.target.value).slice(0, 2) })}
+                            placeholder="Ex.: 0"
+                            className="mt-1.5 w-full text-xs rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-2xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-center font-mono"
+                          />
+                        </label>
+                      </div>
+                      <div className="col-span-5">
+                        <label className="block">
+                          <span className="text-xs font-bold text-slate-700">Conta Corrente</span>
+                          <input
+                            inputMode="numeric"
+                            value={editing?.conta ?? ""}
+                            onChange={(e) => setEditing({ ...(editing as Loja), conta: onlyDigits(e.target.value) })}
+                            placeholder="Ex.: 0435574"
+                            className="mt-1.5 w-full text-xs rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-2xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-mono"
+                          />
+                        </label>
+                      </div>
+                      <div className="col-span-2">
+                        <label className="block">
+                          <span className="text-xs font-bold text-slate-700">Díg. Cta.</span>
+                          <input
+                            inputMode="numeric"
+                            value={editing?.conta_dig ?? ""}
+                            onChange={(e) => setEditing({ ...(editing as Loja), conta_dig: onlyDigits(e.target.value).slice(0, 2) })}
+                            placeholder="Ex.: 1"
+                            className="mt-1.5 w-full text-xs rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-2xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 text-center font-mono"
+                          />
+                        </label>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Observação */}
+                  <div className="pt-2">
+                    <label className="block">
+                      <span className="text-xs font-bold text-slate-700">Observações</span>
+                      <textarea
+                        rows={2}
+                        value={editing?.observacao ?? ""}
+                        onChange={(e) => setEditing({ ...(editing as Loja), observacao: e.target.value })}
+                        placeholder="Observações bancárias ou administrativas sobre esta loja..."
+                        className="mt-1.5 w-full text-xs rounded-xl border border-slate-200 bg-white p-3 shadow-2xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 resize-none"
+                      />
+                    </label>
+                  </div>
                 </div>
               ) : (
                 <ChamadosLojaTab lojaNumero={editing.numero} />
               )}
             </div>
-            <div className="flex justify-end gap-2 px-5 py-3 border-t bg-slate-50">
-              <button onClick={() => setEditing(null)} className="px-3 py-1.5 text-xs text-slate-600 hover:bg-slate-100 rounded-md">Cancelar</button>
-              <button onClick={save} disabled={saving} className="inline-flex items-center gap-1.5 px-4 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50 cursor-pointer">
-                {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <Save className="w-3.5 h-3.5"/>}Salvar Loja
+            <div className="flex justify-end gap-3 px-6 py-3.5 border-t border-slate-100 bg-slate-50/60">
+              <button onClick={() => setEditing(null)} className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer">Cancelar</button>
+              <button onClick={save} disabled={saving} className="inline-flex items-center gap-2 px-5 py-2 text-xs font-semibold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl shadow-xs transition-all disabled:opacity-50 cursor-pointer">
+                {saving ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4"/>}Salvar Loja
               </button>
             </div>
           </div>

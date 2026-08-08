@@ -601,12 +601,12 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   );
 }
 
-const inputCls = "w-full text-xs rounded-md border border-slate-300 px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500";
+const inputCls = "w-full text-xs rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-2xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium transition-all";
 
 function Field({ label, children, className = "", style }: { label: string; children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
   return (
-    <label className={`flex flex-col gap-1 ${className}`} style={style}>
-      <span className="text-xs font-semibold text-slate-600">{label}</span>
+    <label className={`flex flex-col gap-1.5 ${className}`} style={style}>
+      <span className="text-xs font-bold text-slate-700">{label}</span>
       {children}
     </label>
   );
