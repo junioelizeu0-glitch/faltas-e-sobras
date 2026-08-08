@@ -136,9 +136,13 @@ export default function AppShell({
                         <button
                           key={item.k}
                           onClick={() => { setSelectedSubmenu(item.k); setMenuAberto(false); }}
-                          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${active ? "bg-blue-50 text-blue-600" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"} cursor-pointer`}
+                          className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                            active
+                              ? "bg-emerald-50 text-emerald-800 border-l-2 border-emerald-600 shadow-xs"
+                              : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                          } cursor-pointer`}
                         >
-                          <Icon className="w-4 h-4 shrink-0" />
+                          <Icon className={`w-4 h-4 shrink-0 ${active ? "text-emerald-700" : "text-slate-400"}`} />
                           <span>{item.label}</span>
                         </button>
                       );
@@ -173,9 +177,13 @@ export default function AppShell({
                         <button
                           key={item.k}
                           onClick={() => { setSelectedSubmenu(item.k); setMenuAberto(false); }}
-                          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${active ? "bg-blue-50 text-blue-600" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"} cursor-pointer`}
+                          className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                            active
+                              ? "bg-emerald-50 text-emerald-800 border-l-2 border-emerald-600 shadow-xs"
+                              : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                          } cursor-pointer`}
                         >
-                          <Icon className="w-4 h-4 shrink-0" />
+                          <Icon className={`w-4 h-4 shrink-0 ${active ? "text-emerald-700" : "text-slate-400"}`} />
                           <span>{item.label}</span>
                         </button>
                       );
@@ -190,16 +198,24 @@ export default function AppShell({
                 <div className="mt-2 space-y-1">
                   <button
                     onClick={() => { setSelectedSubmenu("aiiliana"); setMenuAberto(false); }}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${selectedSubmenu === "aiiliana" ? "bg-blue-50 text-blue-600" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"} cursor-pointer`}
+                    className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                      selectedSubmenu === "aiiliana"
+                        ? "bg-emerald-50 text-emerald-800 border-l-2 border-emerald-600 shadow-xs"
+                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                    } cursor-pointer`}
                   >
-                    <Sparkles className="w-4 h-4 shrink-0" />
+                    <Sparkles className={`w-4 h-4 shrink-0 ${selectedSubmenu === "aiiliana" ? "text-emerald-700" : "text-slate-400"}`} />
                     <span>AIliana (IA)</span>
                   </button>
                   <button
                     onClick={() => { setSelectedSubmenu("logs"); setMenuAberto(false); }}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${selectedSubmenu === "logs" ? "bg-blue-50 text-blue-600" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"} cursor-pointer`}
+                    className={`w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold transition-all ${
+                      selectedSubmenu === "logs"
+                        ? "bg-emerald-50 text-emerald-800 border-l-2 border-emerald-600 shadow-xs"
+                        : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                    } cursor-pointer`}
                   >
-                    <History className="w-4 h-4 shrink-0" />
+                    <History className={`w-4 h-4 shrink-0 ${selectedSubmenu === "logs" ? "text-emerald-700" : "text-slate-400"}`} />
                     <span>Log de Alterações</span>
                   </button>
                 </div>
@@ -208,7 +224,7 @@ export default function AppShell({
             </div>
           </div>
         ) : (
-          <div className="flex flex-col h-full items-center justify-center gap-1">
+          <div className="flex flex-col h-full items-center justify-between py-6">
             <img
               src={LOGO_URL}
               alt="Logo"
@@ -225,16 +241,35 @@ export default function AppShell({
       </div>
 
       {/* Área de Conteúdo à Direita */}
-      <div className="flex-1 flex flex-col min-w-0 h-screen bg-slate-50 overflow-hidden relative">
-        <div className="flex justify-end items-center gap-3 px-4 py-2 border-b border-slate-200 bg-white">
-          <button
-            onClick={toggleTheme}
-            className="inline-flex items-center gap-1.5 text-xs text-slate-600 hover:text-slate-900"
-            title={theme === "dark" ? "Trocar para tema claro" : "Trocar para tema escuro"}
-          >
-            {theme === "dark" ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
-            {theme === "dark" ? "Claro" : "Escuro"}
-          </button>
+      <div className="flex-1 flex flex-col min-w-0 h-screen bg-[#F4F6F5] overflow-hidden relative">
+        <div className="flex justify-between items-center px-6 py-3 border-b border-slate-200/80 bg-white/90 backdrop-blur-md">
+          <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
+            <span className="text-slate-900 font-semibold">Faltas e Sobras</span>
+            {selectedSubmenu && (
+              <>
+                <span>/</span>
+                <span className="capitalize text-emerald-700 font-medium">{selectedSubmenu.replace("cad_", "Cadastro ").replace("_", " ")}</span>
+              </>
+            )}
+          </div>
+          <div className="flex items-center gap-3">
+            <button
+              onClick={toggleTheme}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"
+              title={theme === "dark" ? "Trocar para tema claro" : "Trocar para tema escuro"}
+            >
+              {theme === "dark" ? <Sun className="w-3.5 h-3.5 text-amber-500" /> : <Moon className="w-3.5 h-3.5 text-slate-500" />}
+              <span>{theme === "dark" ? "Modo Claro" : "Modo Escuro"}</span>
+            </button>
+            <button
+              onClick={handleLogout}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-rose-600 hover:bg-rose-50 transition-colors cursor-pointer"
+              title="Sair do sistema"
+            >
+              <LogOut className="w-3.5 h-3.5" />
+              <span>Sair</span>
+            </button>
+          </div>
         </div>
         {children}
       </div>

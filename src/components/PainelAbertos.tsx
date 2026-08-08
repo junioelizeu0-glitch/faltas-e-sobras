@@ -127,126 +127,135 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
   useEffect(() => { setPage(1); }, [query, cdFilter, alertaFilter, statusFilter, tarefaFilter, lojaFilter]);
 
   return (
-    <div className="flex-1 overflow-auto bg-slate-50 p-4 md:p-6">
-      <header className="mb-4">
-        <h1 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-          <FileText className="w-5 h-5 text-blue-600" /> Chamados em Aberto
+    <div className="flex-1 overflow-auto bg-[#F4F6F5] p-4 md:p-6 space-y-5">
+      <header>
+        <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2.5">
+          <FileText className="w-6 h-6 text-emerald-700" /> Chamados em Aberto
         </h1>
-        <p className="text-sm text-slate-500 mt-0.5">
-          Painel operacional — chamados não finalizados abertos desde 01/01/{new Date().getFullYear()} até hoje. Alerta baseado em SLA de {SLA_LIMITE} dias úteis.
+        <p className="text-xs text-slate-500 mt-1">
+          Painel operacional — chamados não finalizados abertos desde 01/01/{new Date().getFullYear()} até hoje. SLA limite de {SLA_LIMITE} dias úteis.
         </p>
       </header>
 
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         <CardKpi label="Em Aberto" value={counts.total} icon={FileText} tone="slate" onClick={() => setAlertaFilter("todos")} active={alertaFilter === "todos"} />
         <CardKpi label="No Prazo" value={counts.prazo} icon={CheckCircle2} tone="emerald" onClick={() => setAlertaFilter("prazo")} active={alertaFilter === "prazo"} />
         <CardKpi label="Atenção (≥ 45d)" value={counts.atencao} icon={Clock} tone="amber" onClick={() => setAlertaFilter("atencao")} active={alertaFilter === "atencao"} />
         <CardKpi label="Vencidos (> 60d)" value={counts.vencido} icon={AlertTriangle} tone="rose" onClick={() => setAlertaFilter("vencido")} active={alertaFilter === "vencido"} />
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm">
+      <div className="bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_10px_rgba(0,0,0,0.03)] overflow-hidden">
         {error && (
-          <div className="m-3 rounded-lg border border-rose-200 bg-rose-50 px-3 py-2 text-sm font-medium text-rose-700">
+          <div className="m-4 rounded-xl border border-rose-200 bg-rose-50 px-4 py-3 text-xs font-semibold text-rose-700">
             Erro ao carregar os chamados: {error}
           </div>
         )}
-        <div className="flex flex-wrap items-end gap-2 p-3 border-b border-slate-100">
-          <div className="relative flex-1 min-w-[220px]">
-            <label className="block text-[11px] font-medium text-slate-500 mb-1 uppercase tracking-wide">Buscar</label>
-            <Search className="w-4 h-4 text-slate-400 absolute left-2.5 top-[34px] -translate-y-1/2" />
+        <div className="flex flex-wrap items-end gap-3 p-4 border-b border-slate-100 bg-slate-50/50">
+          <div className="relative flex-1 min-w-[240px]">
+            <label className="block text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Buscar</label>
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 top-[36px] -translate-y-1/2" />
             <input value={query} onChange={(e) => setQuery(e.target.value)} placeholder="Chamado, loja, tarefa, status..."
-              className="w-full pl-8 pr-3 py-2 text-sm border border-slate-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500" />
+              className="w-full pl-9 pr-4 py-2.5 text-xs bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-2xs transition-all" />
           </div>
           <div className="flex flex-col w-[110px]">
-            <label className="text-[11px] font-medium text-slate-500 mb-1 uppercase tracking-wide">CD</label>
-            <select value={cdFilter} onChange={(e) => setCdFilter(e.target.value as any)} className="px-2 py-2 text-sm border border-slate-300 rounded-md bg-white">
+            <label className="text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">CD</label>
+            <select value={cdFilter} onChange={(e) => setCdFilter(e.target.value as any)} className="px-3 py-2.5 text-xs bg-white border border-slate-200 rounded-xl shadow-2xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
               <option value="Todos">Todos</option>
               <option value="ES">ES</option>
               <option value="PB">PB</option>
             </select>
           </div>
           <div className="flex flex-col w-[180px]">
-            <label className="text-[11px] font-medium text-slate-500 mb-1 uppercase tracking-wide">Status</label>
-            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-2 py-2 text-sm border border-slate-300 rounded-md bg-white">
+            <label className="text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Status</label>
+            <select value={statusFilter} onChange={(e) => setStatusFilter(e.target.value)} className="px-3 py-2.5 text-xs bg-white border border-slate-200 rounded-xl shadow-2xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
               {statusOpts.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
           <div className="flex flex-col w-[220px]">
-            <label className="text-[11px] font-medium text-slate-500 mb-1 uppercase tracking-wide">Tarefa atual</label>
-            <select value={tarefaFilter} onChange={(e) => setTarefaFilter(e.target.value)} className="px-2 py-2 text-sm border border-slate-300 rounded-md bg-white">
+            <label className="text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Tarefa atual</label>
+            <select value={tarefaFilter} onChange={(e) => setTarefaFilter(e.target.value)} className="px-3 py-2.5 text-xs bg-white border border-slate-200 rounded-xl shadow-2xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
               {tarefaOpts.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
           <div className="flex flex-col w-[140px]">
-            <label className="text-[11px] font-medium text-slate-500 mb-1 uppercase tracking-wide">Loja</label>
-            <select value={lojaFilter} onChange={(e) => setLojaFilter(e.target.value)} className="px-2 py-2 text-sm border border-slate-300 rounded-md bg-white">
+            <label className="text-[11px] font-bold text-slate-500 mb-1.5 uppercase tracking-wider">Loja</label>
+            <select value={lojaFilter} onChange={(e) => setLojaFilter(e.target.value)} className="px-3 py-2.5 text-xs bg-white border border-slate-200 rounded-xl shadow-2xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500">
               {lojaOpts.map((l) => <option key={l} value={l}>{l}</option>)}
             </select>
           </div>
-          <span className="ml-auto text-xs text-slate-500 pb-1">{filtered.length} de {rows.length} chamados</span>
+          <span className="ml-auto text-xs font-medium text-slate-500 pb-1">{filtered.length} de {rows.length} chamados</span>
         </div>
 
         <div className="overflow-auto">
-          <table className="w-full text-sm table-auto">
-            <thead className="bg-slate-50 text-slate-600 text-xs uppercase tracking-wide">
+          <table className="w-full text-xs table-auto">
+            <thead className="bg-slate-50/80 text-slate-500 font-semibold uppercase tracking-wider border-b border-slate-100">
               <tr>
-                <th className="text-left px-2 py-2 font-semibold w-[110px]">Alerta</th>
-                <th className="text-left px-2 py-2 font-semibold w-[100px]">Chamado</th>
-                <th className="text-left px-2 py-2 font-semibold w-[80px]">Loja</th>
-                <th className="text-left px-2 py-2 font-semibold w-[60px]">CD</th>
-                <th className="text-left px-2 py-2 font-semibold">Tarefa Atual</th>
-                <th className="text-left px-2 py-2 font-semibold w-[170px]">Status</th>
-                <th className="text-left px-2 py-2 font-semibold w-[110px]">Dt Abertura</th>
-                <th className="text-right px-2 py-2 font-semibold w-[80px]">Dias úteis</th>
+                <th className="text-left px-4 py-3.5 w-[120px]">Alerta</th>
+                <th className="text-left px-4 py-3.5 w-[110px]">Chamado</th>
+                <th className="text-left px-4 py-3.5 w-[90px]">Loja</th>
+                <th className="text-left px-4 py-3.5 w-[70px]">CD</th>
+                <th className="text-left px-4 py-3.5">Tarefa Atual</th>
+                <th className="text-left px-4 py-3.5 w-[180px]">Status</th>
+                <th className="text-left px-4 py-3.5 w-[120px]">Dt Abertura</th>
+                <th className="text-right px-4 py-3.5 w-[90px]">Dias úteis</th>
               </tr>
             </thead>
-            <tbody>
-              {isLoading && (
-                <tr><td colSpan={8} className="text-center py-10 text-slate-500"><Loader2 className="w-5 h-5 animate-spin inline-block mr-2" />Carregando...</td></tr>
-              )}
-              {!isLoading && error && (
-                <tr><td colSpan={8} className="text-center py-10 text-rose-500">Não foi possível carregar os dados. Tente atualizar a página.</td></tr>
-              )}
-              {!isLoading && !error && pageRows.length === 0 && (
-                <tr><td colSpan={8} className="text-center py-10 text-slate-400">Nenhum chamado em aberto encontrado.</td></tr>
-              )}
-              {!isLoading && !error && pageRows.map((r, i) => (
-                <tr key={`${r.chamado}-${i}`} className="border-t border-slate-100 hover:bg-blue-50/40 cursor-pointer select-none" onDoubleClick={() => r.id && setEditingId(String(r.id))}>
-                  <td className="px-2 py-2"><AlertBadge alerta={r.alerta} /></td>
-                  <td className="px-2 py-2 font-semibold text-slate-800 whitespace-nowrap">{r.chamado}</td>
-                  <td className="px-2 py-2 text-slate-700 whitespace-nowrap">{r.loja}</td>
-                  <td className="px-2 py-2 text-slate-700 whitespace-nowrap">{r.cd || "—"}</td>
-                  <td className="px-2 py-2 text-slate-700">{r.tarefa}</td>
-                  <td className="px-2 py-2 text-slate-700 whitespace-nowrap">{r.status || "—"}</td>
-                  <td className="px-2 py-2 text-slate-700 whitespace-nowrap">{fmtBR(r.dtAbertura)}</td>
-                  <td className="px-2 py-2 text-right font-mono text-slate-800">{r.dias}</td>
+            <tbody className="divide-y divide-slate-100/80 text-slate-700">
+              {isLoading ? (
+                <tr>
+                  <td colSpan={8} className="py-12 text-center text-slate-400">
+                    <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-emerald-600" />
+                    Carregando chamados...
+                  </td>
                 </tr>
-              ))}
+              ) : pageRows.length === 0 ? (
+                <tr>
+                  <td colSpan={8} className="py-12 text-center text-slate-400">
+                    Nenhum chamado encontrado para os filtros selecionados.
+                  </td>
+                </tr>
+              ) : (
+                pageRows.map((r) => (
+                  <tr
+                    key={r.id}
+                    onClick={() => setEditingId(r.id)}
+                    className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                  >
+                    <td className="px-4 py-3"><AlertBadge alerta={r.alerta} /></td>
+                    <td className="px-4 py-3 font-semibold text-slate-900">{r.chamado}</td>
+                    <td className="px-4 py-3">{r.loja}</td>
+                    <td className="px-4 py-3 font-medium text-slate-600">{r.cd}</td>
+                    <td className="px-4 py-3 max-w-[220px] truncate" title={r.tarefa}>{r.tarefa}</td>
+                    <td className="px-4 py-3 max-w-[180px] truncate" title={r.status}>{r.status}</td>
+                    <td className="px-4 py-3 text-slate-500">{fmtBR(r.dtAbertura)}</td>
+                    <td className="px-4 py-3 text-right font-bold text-slate-800">{r.dias}</td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>
 
         {totalPages > 1 && (
-          <div className="flex items-center justify-between px-3 py-2 border-t border-slate-100 text-xs text-slate-600">
+          <div className="flex items-center justify-between px-4 py-3 border-t border-slate-100 text-xs text-slate-500 bg-slate-50/40">
             <span>Página {page} de {totalPages}</span>
-            <div className="flex gap-1">
-              <button onClick={() => setPage((p) => Math.max(1, p - 1))} disabled={page === 1} className="px-2 py-1 border border-slate-300 rounded disabled:opacity-40">Anterior</button>
-              <button onClick={() => setPage((p) => Math.min(totalPages, p + 1))} disabled={page === totalPages} className="px-2 py-1 border border-slate-300 rounded disabled:opacity-40">Próxima</button>
+            <div className="flex gap-1.5">
+              <button disabled={page === 1} onClick={() => setPage((p) => p - 1)} className="px-3 py-1.5 border border-slate-200 rounded-lg bg-white disabled:opacity-40 hover:bg-slate-50">Anterior</button>
+              <button disabled={page === totalPages} onClick={() => setPage((p) => p + 1)} className="px-3 py-1.5 border border-slate-200 rounded-lg bg-white disabled:opacity-40 hover:bg-slate-50">Próxima</button>
             </div>
           </div>
         )}
       </div>
 
       {editingId && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-2xl w-full max-w-[95vw] max-h-[92vh] overflow-auto">
-            <div className="flex items-center justify-between px-5 py-3 border-b border-slate-200 sticky top-0 bg-white z-10">
-              <h2 className="text-base font-bold text-slate-800">Editar Chamado</h2>
-              <button onClick={() => setEditingId(null)} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5"/></button>
-            </div>
-            <div className="p-4">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl max-h-[85vh] overflow-y-auto relative">
+            <button onClick={() => setEditingId(null)} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer">
+              <X className="w-5 h-5" />
+            </button>
+            <div className="p-6">
               <ChamadoForm
-                mode="editar" chamadoId={editingId} compact
+                chamadoId={editingId}
                 onSaved={() => { onChanged?.(); }}
                 onCancel={() => setEditingId(null)}
                 onDeleted={() => { setEditingId(null); onChanged?.(); }}
@@ -260,25 +269,28 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
 }
 
 function AlertBadge({ alerta }: { alerta: "vencido" | "atencao" | "prazo" }) {
-  if (alerta === "vencido") return <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-rose-100 text-rose-700"><AlertTriangle className="w-3 h-3" />Vencido</span>;
-  if (alerta === "atencao") return <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-amber-100 text-amber-700"><Clock className="w-3 h-3" />Atenção</span>;
-  return <span className="inline-flex items-center gap-1 text-[11px] font-bold px-2 py-0.5 rounded-full bg-emerald-100 text-emerald-700"><CheckCircle2 className="w-3 h-3" />No prazo</span>;
+  if (alerta === "vencido") return <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full bg-rose-50 text-rose-700 border border-rose-200/60"><span className="w-1.5 h-1.5 rounded-full bg-rose-500"></span>Vencido</span>;
+  if (alerta === "atencao") return <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full bg-amber-50 text-amber-700 border border-amber-200/60"><span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span>Atenção</span>;
+  return <span className="inline-flex items-center gap-1.5 text-xs font-bold px-2.5 py-1 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200/60"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span>No prazo</span>;
 }
 
 function CardKpi({ label, value, icon: Icon, tone, onClick, active }: any) {
-  const tones: Record<string, string> = {
-    slate: "text-slate-600 bg-slate-50 border-slate-200",
-    emerald: "text-emerald-600 bg-emerald-50 border-emerald-100",
-    amber: "text-amber-600 bg-amber-50 border-amber-100",
-    rose: "text-rose-600 bg-rose-50 border-rose-100",
+  const tones: Record<string, { bg: string; text: string }> = {
+    slate: { bg: "bg-slate-100", text: "text-slate-700" },
+    emerald: { bg: "bg-emerald-50", text: "text-emerald-700" },
+    amber: { bg: "bg-amber-50", text: "text-amber-700" },
+    rose: { bg: "bg-rose-50", text: "text-rose-700" },
   };
+  const t = tones[tone] || tones.slate;
   return (
-    <button onClick={onClick} className={`text-left bg-white p-3 rounded-xl border shadow-sm transition-all hover:border-blue-300 ${active ? "border-blue-400 ring-2 ring-blue-100" : "border-slate-200"}`}>
-      <div className="flex items-start justify-between mb-1">
-        <span className="text-[11px] font-semibold uppercase tracking-wide text-slate-500">{label}</span>
-        <div className={`w-8 h-8 rounded-lg flex items-center justify-center ${tones[tone]}`}><Icon className="w-4 h-4" /></div>
+    <button onClick={onClick} className={`text-left bg-white p-4 rounded-2xl border shadow-[0_2px_10px_rgba(0,0,0,0.03)] transition-all hover:shadow-md cursor-pointer ${active ? "border-emerald-500 ring-2 ring-emerald-500/20" : "border-slate-200/80"}`}>
+      <div className="flex items-center justify-between mb-2">
+        <span className="text-[11px] font-bold uppercase tracking-wider text-slate-500">{label}</span>
+        <div className={`w-9 h-9 rounded-xl flex items-center justify-center ${t.bg} ${t.text}`}>
+          <Icon className="w-4 h-4" />
+        </div>
       </div>
-      <div className="text-2xl font-bold text-slate-800">{value}</div>
+      <div className="text-2xl font-bold text-slate-900 tracking-tight">{value}</div>
     </button>
   );
 }
