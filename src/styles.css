@@ -9,9 +9,9 @@
  * ============================================================= */
 :root,
 [data-theme="light"] {
-  --bg-page: #F4F6F5;
+  --bg-page: #EAECEB;
   --bg-card: #FFFFFF;
-  --border-c: #E2E8F0;
+  --border-c: #CBD5E1;
   --text-primary: #0F172A;
   --text-secondary: #64748B;
   --bg-header: #F8FAFC;

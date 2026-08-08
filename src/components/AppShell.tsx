@@ -241,7 +241,7 @@ export default function AppShell({
       </div>
 
       {/* Área de Conteúdo à Direita */}
-      <div className="flex-1 flex flex-col min-w-0 h-screen bg-[#F4F6F5] overflow-hidden relative">
+      <div className="flex-1 flex flex-col min-w-0 h-screen bg-[#EAECEB] overflow-hidden relative">
         <div className="flex justify-between items-center px-6 py-3 border-b border-slate-200/80 bg-white/90 backdrop-blur-md">
           <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
             <span className="text-slate-900 font-semibold">Faltas e Sobras</span>

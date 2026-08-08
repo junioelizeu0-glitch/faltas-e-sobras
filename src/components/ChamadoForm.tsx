@@ -613,6 +613,63 @@ function Field({ label, children, className = "", style }: { label: string; chil
 }
 
 
+function StatusPagamentoBadge({ status }: { status: string }) {
+  const isPago = /pago/i.test(status) && !/não/i.test(status);
+  const isProvisionado = /provisionado/i.test(status);
+
+  if (isPago) {
+    return (
+      <span className="inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs w-full">
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+        {status}
+      </span>
+    );
+  }
+  if (isProvisionado) {
+    return (
+      <span className="inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-xl text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200/80 shadow-2xs w-full">
+        <span className="w-1.5 h-1.5 rounded-full bg-sky-500 shrink-0"></span>
+        {status}
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200 shadow-2xs w-full">
+      <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></span>
+      {status || "Não Pago"}
+    </span>
+  );
+}
+
+function SlaBadge({ sla }: { sla: string }) {
+  const isDentro = /dentro/i.test(sla);
+  const isFora = /fora/i.test(sla);
+
+  if (isDentro) {
+    return (
+      <span className="inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs w-full">
+        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
+        {sla}
+      </span>
+    );
+  }
+  if (isFora) {
+    return (
+      <span className="inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-xl text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200/80 shadow-2xs w-full">
+        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span>
+        {sla}
+      </span>
+    );
+  }
+  return (
+    <span className="inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-xl text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200/80 shadow-2xs w-full">
+      <span className="w-1.5 h-1.5 rounded-full bg-sky-500 shrink-0"></span>
+      {sla || "Em Aberto"}
+    </span>
+  );
+}
+
+
 function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, motivos, precisaTranspConf, precisaMotivo, statusChamado, onManage, lojaInfo, onEditLoja }: any) {
   const ManageBtn = ({ onClick, title }: { onClick: () => void; title: string }) => (
     <button type="button" onClick={onClick} title={title}
@@ -636,18 +693,18 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
       </section>
       <section>
         <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Status e Datas</h2>
-        <div className="flex flex-wrap gap-3">
+        <div className="flex flex-wrap gap-3 items-end">
           <Field label="Data Abertura *" className="w-[140px]"><input type="date" value={form["Dt Abertura"]} onChange={(e) => setField("Dt Abertura", e.target.value)} className={inputCls} required /></Field>
           <Field label="Data Finalização" className="w-[140px]"><input type="date" value={form["Dt Finalização"]} onChange={(e) => setField("Dt Finalização", e.target.value)} className={inputCls} /></Field>
           <Field label="Data Pagamento" className="w-[140px]"><input type="date" value={form["Dt Pagamento"]} onChange={(e) => setField("Dt Pagamento", e.target.value)} className={inputCls} /></Field>
-          <Field label="Status Pagamento (auto)" className="w-[140px]"><input value={statusPagamento} readOnly className={inputCls + " bg-slate-50 text-slate-500"} /></Field>
+          <Field label="Status Pagamento (auto)" className="w-[160px]"><StatusPagamentoBadge status={statusPagamento} /></Field>
           <Field label="Situação (tarefa atual) *" className="w-[240px]">
             <select value={form["Situação "]} onChange={(e) => setField("Situação ", e.target.value)} className={inputCls} required><option value="">— Selecionar —</option>{SITUACAO_OPCOES.map((o) => <option key={o}>{o}</option>)}</select>
           </Field>
           <Field label="Status Chamado *" className="w-[180px]">
             <select value={form["Status Chamado"]} onChange={(e) => setField("Status Chamado", e.target.value)} className={inputCls} required><option value="">— Selecionar —</option>{STATUS_CHAMADO_OPCOES.map((o) => <option key={o}>{o}</option>)}</select>
           </Field>
-          <Field label="SLA (auto, dias úteis)" className="w-[150px]"><input value={sla || "—"} readOnly className={inputCls + " bg-slate-50 text-slate-500"} /></Field>
+          <Field label="SLA (auto, dias úteis)" className="w-[160px]"><SlaBadge sla={sla || "—"} /></Field>
         </div>
       </section>
       <section>

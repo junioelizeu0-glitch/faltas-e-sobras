@@ -127,7 +127,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
   useEffect(() => { setPage(1); }, [query, cdFilter, alertaFilter, statusFilter, tarefaFilter, lojaFilter]);
 
   return (
-    <div className="flex-1 overflow-auto bg-[#F4F6F5] p-4 md:p-6 space-y-5">
+    <div className="flex-1 overflow-auto bg-[#EAECEB] p-4 md:p-6 space-y-5">
       <header>
         <h1 className="text-2xl font-bold text-slate-900 tracking-tight flex items-center gap-2.5">
           <FileText className="w-6 h-6 text-emerald-700" /> Chamados em Aberto
