@@ -58,9 +58,10 @@ export default function AppShell({
   const lock = useServerFn(lockSite);
   const router = useRouter();
   async function handleLogout() {
+    try { sessionStorage.removeItem("tab-session-active"); } catch {}
     window.localStorage.removeItem("site-gate-token");
     try { await lock(); } catch {}
-    await router.navigate({ to: "/unlock" });
+    window.location.href = "/unlock";
   }
 
   return (
@@ -233,14 +234,6 @@ export default function AppShell({
           >
             {theme === "dark" ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
             {theme === "dark" ? "Claro" : "Escuro"}
-          </button>
-          <button
-            onClick={handleLogout}
-            className="inline-flex items-center gap-1.5 text-xs text-slate-600 hover:text-slate-900"
-            title="Sair"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            Sair
           </button>
         </div>
         {children}

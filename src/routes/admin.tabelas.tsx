@@ -1,15 +1,10 @@
-import { createFileRoute, Link, redirect } from "@tanstack/react-router";
+import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { useQuery } from "@tanstack/react-query";
 import { ADMIN_TABLES, fetchTableRows } from "@/lib/admin-tables.functions";
-import { checkUnlocked } from "@/lib/gate.functions";
 
 export const Route = createFileRoute("/admin/tabelas")({
-  beforeLoad: async () => {
-    const { unlocked } = await checkUnlocked();
-    if (!unlocked) throw redirect({ to: "/unlock" });
-  },
   component: TabelasPage,
   head: () => ({ meta: [{ title: "Espelho de Tabelas — Admin" }] }),
   errorComponent: ({ error }) => (

@@ -21,9 +21,12 @@ function makeFetch(key: string): typeof fetch {
 
 export function getServerSupabase() {
   const url = process.env.SUPABASE_URL ?? process.env.VITE_SUPABASE_URL;
-  const key = process.env.SUPABASE_SERVICE_ROLE_KEY;
+  const key =
+    process.env.SUPABASE_SERVICE_ROLE_KEY ??
+    process.env.SUPABASE_PUBLISHABLE_KEY ??
+    process.env.VITE_SUPABASE_PUBLISHABLE_KEY;
   if (!url || !key) {
-    throw new Error("Missing SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY");
+    throw new Error("Missing SUPABASE_URL / SUPABASE_PUBLISHABLE_KEY");
   }
   return createClient<Database>(url, key, {
     global: { fetch: makeFetch(key) },

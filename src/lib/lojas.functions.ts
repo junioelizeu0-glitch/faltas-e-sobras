@@ -86,3 +86,20 @@ export const deleteLoja = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export const listChamadosPorLoja = createServerFn({ method: "GET" })
+  .inputValidator((d: { lojaNumero: string }) => d)
+  .handler(async ({ data }) => {
+    const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
+    const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
+    const num = String(data.lojaNumero || "").trim();
+    if (!num) return [];
+    const { data: rows, error } = await supabase
+      .from("chamados_faltas")
+      .select("id, chamado, loja, tipo, nf, dt_abertura, dt_finalizacao, dt_pagamento, situacao, status_chamado, sla_status, valor")
+      .eq("loja", num)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return rows || [];
+  });
+

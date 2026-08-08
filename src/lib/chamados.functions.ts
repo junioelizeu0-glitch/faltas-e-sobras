@@ -198,7 +198,7 @@ export const createChamadoCompleto = createServerFn({ method: "POST" })
       chamado: nullIfEmpty(c.Chamado),
       loja: nullIfEmpty(c.Loja),
       tipo: nullIfEmpty(c.Tipo),
-      nf: nullIfEmpty(c.NF),
+      nf: nullIfEmpty(c["NF Venda"] ?? c.NF),
       dt_emissao: dateOrNull(c["Dt Emissão"]),
       valor: numOrNull(c[" Valor "]),
       cd: nullIfEmpty(c.CD),
@@ -214,6 +214,11 @@ export const createChamadoCompleto = createServerFn({ method: "POST" })
       conferente: nullIfEmpty(c.Conferente),
       periodo: dateOrNull(c.Periodo),
     };
+
+    // Regra: Data de pagamento não pode ser maior que Data de finalização
+    if (chamadoRow.dt_pagamento && chamadoRow.dt_finalizacao && chamadoRow.dt_pagamento > chamadoRow.dt_finalizacao) {
+      throw new Error("A Data de Pagamento não pode ser posterior à Data de Finalização.");
+    }
 
     // Regra: número do chamado não pode duplicar
     if (chamadoRow.chamado) {
@@ -379,7 +384,7 @@ export const updateChamadoCompleto = createServerFn({ method: "POST" })
       chamado: nullIfEmpty(c.Chamado),
       loja: nullIfEmpty(c.Loja),
       tipo: nullIfEmpty(c.Tipo),
-      nf: nullIfEmpty(c.NF),
+      nf: nullIfEmpty(c["NF Venda"] ?? c.NF),
       dt_emissao: dateOrNull(c["Dt Emissão"]),
       valor: numOrNull(c[" Valor "]),
       cd: nullIfEmpty(c.CD),
@@ -395,6 +400,12 @@ export const updateChamadoCompleto = createServerFn({ method: "POST" })
       conferente: nullIfEmpty(c.Conferente),
       periodo: dateOrNull(c.Periodo),
     };
+
+    // Regra: Data de pagamento não pode ser maior que Data de finalização
+    if (row.dt_pagamento && row.dt_finalizacao && row.dt_pagamento > row.dt_finalizacao) {
+      throw new Error("A Data de Pagamento não pode ser posterior à Data de Finalização.");
+    }
+
     // Regra: número do chamado não pode duplicar (exceto o próprio)
     if (row.chamado) {
       const { data: dup } = await supabase

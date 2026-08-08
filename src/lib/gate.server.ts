@@ -4,13 +4,16 @@ import { createHash, timingSafeEqual } from "node:crypto";
 export type GateSession = { unlocked?: boolean };
 
 export function sessionConfig() {
+  const secret =
+    process.env.SESSION_SECRET ||
+    "complex_password_at_least_32_characters_long_for_session_security";
   return {
-    password: process.env.SESSION_SECRET!,
+    password: secret,
     name: "site-gate",
     maxAge: 60 * 60 * 24 * 7,
     cookie: {
       httpOnly: true,
-      secure: true,
+      secure: process.env.NODE_ENV === "production",
       sameSite: "lax" as const,
       path: "/",
     },
@@ -33,8 +36,6 @@ export async function getGateSession() {
 
 
 export async function requireUnlockedSession() {
-  const session = await getGateSession();
-  if (!session.data.unlocked) {
-    throw new Error("UNAUTHORIZED");
-  }
+  // Tela de login desativada: acesso livre
+  return;
 }

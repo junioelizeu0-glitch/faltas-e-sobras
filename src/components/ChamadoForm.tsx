@@ -199,7 +199,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
 
 
 
-  // Busca dados bancários da loja quando o número muda (ou depois de fechar o modal de cadastro)
+  // Busca dados bancários da loja e auto-preenche o Tipo (se houver, se não deixa vazio)
   useEffect(() => {
     const numero = String(form.Loja || "").trim();
     if (!numero) { setLojaInfo(null); return; }
@@ -207,7 +207,15 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     const t = setTimeout(async () => {
       try {
         const r = await getLojaFn({ data: { numero } });
-        if (!cancelled) setLojaInfo((r as Loja | null) || null);
+        if (!cancelled) {
+          const l = (r as Loja | null) || null;
+          setLojaInfo(l);
+          if (l && typeof l.tipo === "string" && l.tipo.trim()) {
+            setForm((prev) => ({ ...prev, Tipo: l.tipo!.trim() }));
+          } else {
+            setForm((prev) => ({ ...prev, Tipo: "" }));
+          }
+        }
       } catch { if (!cancelled) setLojaInfo(null); }
     }, 300);
     return () => { cancelled = true; clearTimeout(t); };
@@ -286,6 +294,9 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     const sit = (form["Situação "] || "").toLowerCase();
     if ((/chamado recusado/.test(sit) || /finaliz/.test(sit)) && !form["Dt Finalização"]) {
       return `Preencha a Data de Finalização (obrigatória quando a situação é "${form["Situação "]}").`;
+    }
+    if (form["Dt Pagamento"] && form["Dt Finalização"] && form["Dt Pagamento"] > form["Dt Finalização"]) {
+      return "A Data de Pagamento não pode ser posterior à Data de Finalização.";
     }
     return null;
   };
@@ -590,7 +601,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   );
 }
 
-const inputCls = "w-full text-sm rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500";
+const inputCls = "w-full text-xs rounded-md border border-slate-300 px-2.5 py-1.5 focus:outline-none focus:ring-1 focus:ring-blue-500 focus:border-blue-500";
 
 function Field({ label, children, className = "", style }: { label: string; children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
   return (
@@ -610,17 +621,17 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
     </button>
   );
   return (
-    <div className="space-y-5">
+    <div className="space-y-4">
       <section>
-        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Identificação</h2>
-        <div className="flex flex-wrap gap-3">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Identificação</h2>
+        <div className="flex flex-wrap gap-2.5">
           <Field label="Chamado *" className="w-[110px]"><input type="number" value={form.Chamado} onChange={(e) => setField("Chamado", e.target.value.slice(0, 8))} className={inputCls} required /></Field>
           <Field label="Loja *" className="w-[90px]"><input type="number" value={form.Loja} onChange={(e) => setField("Loja", e.target.value.slice(0, 5))} className={inputCls} required /></Field>
           <Field label="Tipo *" className="w-[130px]"><select value={form.Tipo} onChange={(e) => setField("Tipo", e.target.value)} className={inputCls} required><option value="">— Selecionar —</option>{TIPO_OPCOES.map((o) => <option key={o}>{o}</option>)}</select></Field>
           <Field label="CD *" className="w-[80px]"><select value={form.CD} onChange={(e) => setField("CD", e.target.value)} className={inputCls} required><option value="">—</option>{CD_OPCOES.map((o) => <option key={o}>{o}</option>)}</select></Field>
-          <Field label="NF" className="w-[130px]"><input type="number" value={form.NF} onChange={(e) => setField("NF", e.target.value.slice(0, 10))} className={inputCls} /></Field>
-          <Field label="Data Emissão" className="w-[140px]"><input type="date" value={form["Dt Emissão"]} onChange={(e) => setField("Dt Emissão", e.target.value)} className={inputCls} /></Field>
-          <Field label="Valor" className="w-[130px]"><input type="number" step="0.01" value={form._valor} onChange={(e) => setField("_valor", e.target.value.slice(0, 14))} className={inputCls} /></Field>
+          <Field label="NF Venda" className="w-[130px]"><input type="text" value={form.NF} onChange={(e) => setField("NF", e.target.value.slice(0, 15))} placeholder="Nº NF Venda" className={inputCls} /></Field>
+          <Field label="Data Emissão" className="w-[135px]"><input type="date" value={form["Dt Emissão"]} onChange={(e) => setField("Dt Emissão", e.target.value)} className={inputCls} /></Field>
+          <Field label="Valor" className="w-[120px]"><input type="number" step="0.01" value={form._valor} onChange={(e) => setField("_valor", e.target.value.slice(0, 14))} className={inputCls} /></Field>
         </div>
       </section>
       <section>
