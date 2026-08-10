@@ -84,7 +84,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   const [motivos, setMotivos] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "ok" | "err"; msg: string } | null>(null);
-  const [loading, setLoading] = useState(mode === "editar");
+  const [loading, setLoading] = useState(mode === "editar" && Boolean(chamadoIdProp));
   const [manage, setManage] = useState<null | "transp" | "conf" | "motivo">(null);
   const [lojaOpen, setLojaOpen] = useState(false);
   const [lojaInfo, setLojaInfo] = useState<Loja | null>(null);
@@ -120,7 +120,11 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   const prevStatusRef = useRef<string>("");
 
   useEffect(() => {
-    if (mode !== "editar" || !chamadoId) return;
+    if (mode !== "editar") return;
+    if (!chamadoId) {
+      setLoading(false);
+      return;
+    }
     (async () => {
       setLoading(true);
       try {

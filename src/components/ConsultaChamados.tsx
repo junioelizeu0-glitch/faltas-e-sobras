@@ -237,24 +237,32 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
                 </tr>
               </thead>
               <tbody>
-                {paginadas.map((r: any) => (
-                  <tr key={r.id || r.Chamado} onDoubleClick={() => r.id && setEditingId(r.id)} className={`border-b border-slate-100 hover:bg-blue-50/40 cursor-pointer select-none ${selected.has(r.id) ? "bg-blue-50/60" : ""}`}>
-                    <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
-                      <input type="checkbox" checked={selected.has(r.id)} onChange={() => toggleOne(r.id)} className="cursor-pointer"/>
-                    </td>
-                    <td className="px-3 py-2 font-semibold text-slate-800 whitespace-nowrap">{r.Chamado || "—"}</td>
-                    <td className="px-3 py-2 whitespace-nowrap">{r.Loja || "—"}</td>
-                    <td className="px-3 py-2 whitespace-nowrap">{r.CD || "—"}</td>
-                    <td className="px-3 py-2 whitespace-nowrap">{fmtBR(r["Dt Abertura"])}</td>
-                    <td className="px-3 py-2 max-w-[240px] truncate" title={tarefaAtual(r)}>{tarefaAtual(r)}</td>
-                    <td className="px-3 py-2 whitespace-nowrap">{statusBadge(r["Status Chamado"])}</td>
-                    <td className="px-3 py-2 whitespace-nowrap">{slaBadge(r["Dt Abertura"], r["Dt Finalização"])}</td>
-                    <td className="px-3 py-2 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                      <button onClick={() => setEditingId(r.id)} title="Editar" className="inline-flex items-center p-1.5 text-blue-600 hover:bg-blue-50 rounded"><Pencil className="w-3.5 h-3.5"/></button>
-                      <button onClick={() => excluirIds([r.id])} title="Excluir" className="inline-flex items-center p-1.5 text-red-500 hover:bg-red-50 rounded ml-0.5"><Trash2 className="w-3.5 h-3.5"/></button>
-                    </td>
-                  </tr>
-                ))}
+                {paginadas.map((r: any) => {
+                  const targetId = String(r.id || r._id || r.Chamado || "").trim();
+                  return (
+                    <tr
+                      key={targetId || Math.random()}
+                      onDoubleClick={() => targetId && setEditingId(targetId)}
+                      onClick={() => targetId && setEditingId(targetId)}
+                      className={`border-b border-slate-100 hover:bg-blue-50/40 cursor-pointer select-none ${selected.has(targetId) ? "bg-blue-50/60" : ""}`}
+                    >
+                      <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
+                        <input type="checkbox" checked={selected.has(targetId)} onChange={() => toggleOne(targetId)} className="cursor-pointer"/>
+                      </td>
+                      <td className="px-3 py-2 font-semibold text-slate-800 whitespace-nowrap">{r.Chamado || "—"}</td>
+                      <td className="px-3 py-2 whitespace-nowrap">{r.Loja || "—"}</td>
+                      <td className="px-3 py-2 whitespace-nowrap">{r.CD || "—"}</td>
+                      <td className="px-3 py-2 whitespace-nowrap">{fmtBR(r["Dt Abertura"])}</td>
+                      <td className="px-3 py-2 max-w-[240px] truncate" title={tarefaAtual(r)}>{tarefaAtual(r)}</td>
+                      <td className="px-3 py-2 whitespace-nowrap">{statusBadge(r["Status Chamado"])}</td>
+                      <td className="px-3 py-2 whitespace-nowrap">{slaBadge(r["Dt Abertura"], r["Dt Finalização"])}</td>
+                      <td className="px-3 py-2 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                        <button onClick={() => setEditingId(targetId)} title="Editar" className="inline-flex items-center p-1.5 text-blue-600 hover:bg-blue-50 rounded"><Pencil className="w-3.5 h-3.5"/></button>
+                        <button onClick={() => excluirIds([targetId])} title="Excluir" className="inline-flex items-center p-1.5 text-red-500 hover:bg-red-50 rounded ml-0.5"><Trash2 className="w-3.5 h-3.5"/></button>
+                      </td>
+                    </tr>
+                  );
+                })}
                 {linhas.length === 0 && <tr><td colSpan={9} className="px-4 py-8 text-center text-slate-400">Nenhum chamado encontrado.</td></tr>}
               </tbody>
             </table>
