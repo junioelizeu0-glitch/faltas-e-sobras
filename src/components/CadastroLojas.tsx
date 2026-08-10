@@ -467,46 +467,60 @@ function ChamadosLojaTab({ lojaNumero }: { lojaNumero: string }) {
     return () => { cancelled = true; };
   }, [lojaNumero]);
 
-  if (loading) return <div className="p-8 text-center text-slate-500 text-xs"><Loader2 className="inline w-4 h-4 animate-spin mr-2"/>Carregando chamados da loja {lojaNumero}...</div>;
-  if (error) return <div className="p-4 text-xs text-red-600 bg-red-50 rounded-md border border-red-200">{error}</div>;
-  if (!chamados.length) return <div className="p-8 text-center text-slate-400 text-xs">Nenhum chamado vinculado à loja {lojaNumero}.</div>;
+  const totalValor = useMemo(() => {
+    return chamados.reduce((acc, c) => acc + (Number(c.valor) || 0), 0);
+  }, [chamados]);
+
+  if (loading) return <div className="p-8 text-center text-slate-500 text-xs flex items-center justify-center gap-2"><Loader2 className="w-4 h-4 animate-spin text-emerald-600"/>Carregando chamados da loja {lojaNumero}...</div>;
+  if (error) return <div className="p-4 text-xs font-semibold text-rose-700 bg-rose-50 rounded-xl border border-rose-200/60">{error}</div>;
+  if (!chamados.length) return <div className="p-8 text-center text-slate-400 text-xs bg-slate-50/50 rounded-xl border border-dashed border-slate-200">Nenhum chamado vinculado à loja {lojaNumero}.</div>;
 
   return (
-    <div className="overflow-x-auto border border-slate-200 rounded-md">
-      <table className="min-w-full text-xs">
-        <thead className="bg-slate-50 border-b text-slate-600 font-semibold uppercase">
-          <tr>
-            <th className="px-3 py-2 text-left">Chamado</th>
-            <th className="px-3 py-2 text-left">Data Abertura</th>
-            <th className="px-3 py-2 text-left">Tipo</th>
-            <th className="px-3 py-2 text-left">NF Venda</th>
-            <th className="px-3 py-2 text-right">Valor</th>
-            <th className="px-3 py-2 text-left">Situação (Tarefa)</th>
-            <th className="px-3 py-2 text-left">Status</th>
-            <th className="px-3 py-2 text-left">SLA</th>
-            <th className="px-3 py-2 text-left">Data Pagamento</th>
-          </tr>
-        </thead>
-        <tbody className="divide-y divide-slate-100">
-          {chamados.map((c) => (
-            <tr key={c.id} className="hover:bg-slate-50">
-              <td className="px-3 py-2 font-bold text-blue-600">#{c.chamado}</td>
-              <td className="px-3 py-2 text-slate-600">{c.dt_abertura ? c.dt_abertura.slice(0, 10) : "—"}</td>
-              <td className="px-3 py-2 text-slate-700">{c.tipo || "—"}</td>
-              <td className="px-3 py-2 text-slate-700">{c.nf || "—"}</td>
-              <td className="px-3 py-2 text-right font-medium text-slate-800">{c.valor != null ? `R$ ${Number(c.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "—"}</td>
-              <td className="px-3 py-2 text-slate-700">{c.situacao || "—"}</td>
-              <td className="px-3 py-2 font-medium">{c.status_chamado || "—"}</td>
-              <td className="px-3 py-2">
-                <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold ${c.sla_status === "Dentro do SLA" ? "bg-green-100 text-green-700" : c.sla_status === "Fora do SLA" ? "bg-red-100 text-red-700" : "bg-slate-100 text-slate-600"}`}>
-                  {c.sla_status || "Em Aberto"}
-                </span>
-              </td>
-              <td className="px-3 py-2 text-slate-600">{c.dt_pagamento ? c.dt_pagamento.slice(0, 10) : "—"}</td>
+    <div className="space-y-3">
+      <div className="flex items-center justify-between p-3 bg-slate-50 rounded-xl border border-slate-200/70 text-xs">
+        <div className="flex items-center gap-4">
+          <div><span className="text-slate-500 font-medium">Total de Chamados:</span> <strong className="text-slate-900">{chamados.length}</strong></div>
+          <div><span className="text-slate-500 font-medium">Valor Acumulado:</span> <strong className="text-emerald-700">R$ {totalValor.toLocaleString("pt-BR", { minimumFractionDigits: 2 })}</strong></div>
+        </div>
+        <span className="text-[11px] text-slate-400 font-medium">Loja {lojaNumero}</span>
+      </div>
+
+      <div className="overflow-x-auto border border-slate-200/80 rounded-xl">
+        <table className="min-w-full text-xs">
+          <thead className="bg-slate-50 border-b border-slate-200/80 text-slate-500 font-semibold uppercase tracking-wider">
+            <tr>
+              <th className="px-3 py-2.5 text-left">Chamado</th>
+              <th className="px-3 py-2.5 text-left">Data Abertura</th>
+              <th className="px-3 py-2.5 text-left">Tipo</th>
+              <th className="px-3 py-2.5 text-left">NF Venda</th>
+              <th className="px-3 py-2.5 text-right">Valor</th>
+              <th className="px-3 py-2.5 text-left">Situação (Tarefa)</th>
+              <th className="px-3 py-2.5 text-left">Status</th>
+              <th className="px-3 py-2.5 text-left">SLA</th>
+              <th className="px-3 py-2.5 text-left">Data Pagamento</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-slate-100/80 text-slate-700">
+            {chamados.map((c) => (
+              <tr key={c.id} className="hover:bg-slate-50/80 transition-colors">
+                <td className="px-3 py-2 font-bold text-emerald-700">#{c.chamado}</td>
+                <td className="px-3 py-2 text-slate-600">{c.dt_abertura ? c.dt_abertura.slice(0, 10) : "—"}</td>
+                <td className="px-3 py-2 text-slate-700">{c.tipo || "—"}</td>
+                <td className="px-3 py-2 text-slate-700">{c.nf || "—"}</td>
+                <td className="px-3 py-2 text-right font-semibold text-slate-900">{c.valor != null ? `R$ ${Number(c.valor).toLocaleString("pt-BR", { minimumFractionDigits: 2 })}` : "—"}</td>
+                <td className="px-3 py-2 text-slate-700 max-w-[180px] truncate" title={c.situacao}>{c.situacao || "—"}</td>
+                <td className="px-3 py-2 font-medium">{c.status_chamado || "—"}</td>
+                <td className="px-3 py-2">
+                  <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${c.sla_status === "Dentro do SLA" ? "bg-emerald-50 text-emerald-700 border border-emerald-200/60" : c.sla_status === "Fora do SLA" ? "bg-rose-50 text-rose-700 border border-rose-200/60" : "bg-sky-50 text-sky-700 border border-sky-200/60"}`}>
+                    {c.sla_status || "Em Aberto"}
+                  </span>
+                </td>
+                <td className="px-3 py-2 text-slate-600">{c.dt_pagamento ? c.dt_pagamento.slice(0, 10) : "—"}</td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

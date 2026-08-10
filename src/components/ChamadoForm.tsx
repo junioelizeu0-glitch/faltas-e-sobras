@@ -199,7 +199,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
 
 
 
-  // Busca dados bancários da loja e auto-preenche o Tipo (se houver, se não deixa vazio)
+  // Busca dados bancários e modelo da loja (Franquia / Própria) e auto-preenche o Tipo
   useEffect(() => {
     const numero = String(form.Loja || "").trim();
     if (!numero) { setLojaInfo(null); return; }
@@ -211,9 +211,10 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
           const l = (r as Loja | null) || null;
           setLojaInfo(l);
           if (l && typeof l.tipo === "string" && l.tipo.trim()) {
-            setForm((prev) => ({ ...prev, Tipo: l.tipo!.trim() }));
-          } else {
-            setForm((prev) => ({ ...prev, Tipo: "" }));
+            let tipoVal = l.tipo.trim();
+            if (/franquia/i.test(tipoVal)) tipoVal = "Franquia";
+            else if (/pr[oó]pria/i.test(tipoVal)) tipoVal = "Própria";
+            setForm((prev) => ({ ...prev, Tipo: tipoVal }));
           }
         }
       } catch { if (!cancelled) setLojaInfo(null); }

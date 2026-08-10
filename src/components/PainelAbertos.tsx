@@ -218,8 +218,9 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
                 pageRows.map((r) => (
                   <tr
                     key={r.id}
+                    onDoubleClick={() => setEditingId(r.id)}
                     onClick={() => setEditingId(r.id)}
-                    className="hover:bg-slate-50/80 transition-colors cursor-pointer"
+                    className="hover:bg-slate-50/80 transition-colors cursor-pointer select-none"
                   >
                     <td className="px-4 py-3"><AlertBadge alerta={r.alerta} /></td>
                     <td className="px-4 py-3 font-semibold text-slate-900">{r.chamado}</td>
@@ -255,6 +256,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
             </button>
             <div className="p-6">
               <ChamadoForm
+                mode="editar"
                 chamadoId={editingId}
                 onSaved={() => { onChanged?.(); }}
                 onCancel={() => setEditingId(null)}
