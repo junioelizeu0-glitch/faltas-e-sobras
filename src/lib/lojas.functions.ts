@@ -98,7 +98,7 @@ export const listChamadosPorLoja = createServerFn({ method: "GET" })
       .from("chamados_faltas")
       .select("id, chamado, loja, tipo, nf, dt_abertura, dt_finalizacao, dt_pagamento, situacao, status_chamado, sla_status, valor")
       .eq("loja", num)
-      .order("created_at", { ascending: false });
+      .order("dt_abertura", { ascending: false });
     if (error) throw new Error(error.message);
     return rows || [];
   });
