@@ -66,16 +66,14 @@ export default function AppShell({
   const lockFn = useServerFn(lockSite);
   const router = useRouter();
 
-  const handleLock = async () => {
-    try {
-      sessionStorage.removeItem("tab-session-active");
-      window.localStorage.removeItem("site-gate-token");
-      await lockFn();
-      router.navigate({ to: "/unlock" });
-    } catch {
-      router.navigate({ to: "/unlock" });
+  async function handleLogout() {
+    try { sessionStorage.removeItem("tab-session-active"); } catch {}
+    try { window.localStorage.removeItem("site-gate-token"); } catch {}
+    try { await lockFn(); } catch {}
+    if (typeof window !== "undefined") {
+      window.location.href = "/unlock";
     }
-  };
+  }
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 font-sans flex overflow-hidden">
