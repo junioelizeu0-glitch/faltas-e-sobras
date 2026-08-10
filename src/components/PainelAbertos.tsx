@@ -249,15 +249,26 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
       </div>
 
       {editingId && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-4xl max-h-[85vh] overflow-y-auto relative">
-            <button onClick={() => setEditingId(null)} className="absolute top-4 right-4 p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer">
-              <X className="w-5 h-5" />
-            </button>
-            <div className="p-6">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4">
+          <div className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-[96vw] xl:max-w-7xl max-h-[92vh] flex flex-col overflow-hidden relative">
+            <div className="flex items-center justify-between px-6 py-3.5 border-b border-slate-100 bg-white shrink-0">
+              <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
+                <FileText className="w-4 h-4 text-emerald-700" />
+                Detalhes / Edição de Chamado
+              </h2>
+              <button
+                onClick={() => setEditingId(null)}
+                className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"
+                title="Fechar"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+            <div className="flex-1 p-6 overflow-y-auto">
               <ChamadoForm
                 mode="editar"
                 chamadoId={editingId}
+                compact
                 onSaved={() => { onChanged?.(); }}
                 onCancel={() => setEditingId(null)}
                 onDeleted={() => { setEditingId(null); onChanged?.(); }}
