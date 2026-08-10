@@ -601,12 +601,12 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   );
 }
 
-const inputCls = "w-full text-xs rounded-xl border border-slate-200 bg-white px-3 py-2 shadow-2xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium transition-all";
+const inputCls = "w-full text-xs h-[38px] rounded-xl border border-slate-200 bg-white px-3 shadow-2xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium transition-all flex items-center";
 
 function Field({ label, children, className = "", style }: { label: string; children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
   return (
     <label className={`flex flex-col gap-1.5 ${className}`} style={style}>
-      <span className="text-xs font-bold text-slate-700">{label}</span>
+      <span className="text-xs font-semibold text-slate-600 whitespace-nowrap block">{label}</span>
       {children}
     </label>
   );
@@ -619,7 +619,7 @@ function StatusPagamentoBadge({ status }: { status: string }) {
 
   if (isPago) {
     return (
-      <span className="inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs w-full">
+      <span className="inline-flex items-center justify-center gap-1.5 h-[38px] px-3 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60 shadow-2xs w-full transition-all">
         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
         {status}
       </span>
@@ -627,14 +627,14 @@ function StatusPagamentoBadge({ status }: { status: string }) {
   }
   if (isProvisionado) {
     return (
-      <span className="inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-xl text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200/80 shadow-2xs w-full">
+      <span className="inline-flex items-center justify-center gap-1.5 h-[38px] px-3 rounded-xl text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200/60 shadow-2xs w-full transition-all">
         <span className="w-1.5 h-1.5 rounded-full bg-sky-500 shrink-0"></span>
         {status}
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-xl text-xs font-bold bg-slate-100 text-slate-600 border border-slate-200 shadow-2xs w-full">
+    <span className="inline-flex items-center justify-center gap-1.5 h-[38px] px-3 rounded-xl text-xs font-semibold bg-slate-50 text-slate-600 border border-slate-200/60 shadow-2xs w-full transition-all">
       <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></span>
       {status || "Não Pago"}
     </span>
@@ -647,7 +647,7 @@ function SlaBadge({ sla }: { sla: string }) {
 
   if (isDentro) {
     return (
-      <span className="inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-xl text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/80 shadow-2xs w-full">
+      <span className="inline-flex items-center justify-center gap-1.5 h-[38px] px-3 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60 shadow-2xs w-full transition-all">
         <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
         {sla}
       </span>
@@ -655,14 +655,14 @@ function SlaBadge({ sla }: { sla: string }) {
   }
   if (isFora) {
     return (
-      <span className="inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-xl text-xs font-bold bg-rose-50 text-rose-700 border border-rose-200/80 shadow-2xs w-full">
+      <span className="inline-flex items-center justify-center gap-1.5 h-[38px] px-3 rounded-xl text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200/60 shadow-2xs w-full transition-all">
         <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span>
         {sla}
       </span>
     );
   }
   return (
-    <span className="inline-flex items-center justify-center gap-1.5 h-9 px-3 rounded-xl text-xs font-bold bg-sky-50 text-sky-700 border border-sky-200/80 shadow-2xs w-full">
+    <span className="inline-flex items-center justify-center gap-1.5 h-[38px] px-3 rounded-xl text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200/60 shadow-2xs w-full transition-all">
       <span className="w-1.5 h-1.5 rounded-full bg-sky-500 shrink-0"></span>
       {sla || "Em Aberto"}
     </span>
@@ -697,14 +697,14 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
           <Field label="Data Abertura *" className="w-[140px]"><input type="date" value={form["Dt Abertura"]} onChange={(e) => setField("Dt Abertura", e.target.value)} className={inputCls} required /></Field>
           <Field label="Data Finalização" className="w-[140px]"><input type="date" value={form["Dt Finalização"]} onChange={(e) => setField("Dt Finalização", e.target.value)} className={inputCls} /></Field>
           <Field label="Data Pagamento" className="w-[140px]"><input type="date" value={form["Dt Pagamento"]} onChange={(e) => setField("Dt Pagamento", e.target.value)} className={inputCls} /></Field>
-          <Field label="Status Pagamento (auto)" className="w-[160px]"><StatusPagamentoBadge status={statusPagamento} /></Field>
-          <Field label="Situação (tarefa atual) *" className="w-[240px]">
+          <Field label="Status Pagamento" className="w-[150px]"><StatusPagamentoBadge status={statusPagamento} /></Field>
+          <Field label="Situação (tarefa atual) *" className="w-[230px]">
             <select value={form["Situação "]} onChange={(e) => setField("Situação ", e.target.value)} className={inputCls} required><option value="">— Selecionar —</option>{SITUACAO_OPCOES.map((o) => <option key={o}>{o}</option>)}</select>
           </Field>
           <Field label="Status Chamado *" className="w-[180px]">
             <select value={form["Status Chamado"]} onChange={(e) => setField("Status Chamado", e.target.value)} className={inputCls} required><option value="">— Selecionar —</option>{STATUS_CHAMADO_OPCOES.map((o) => <option key={o}>{o}</option>)}</select>
           </Field>
-          <Field label="SLA (auto, dias úteis)" className="w-[160px]"><SlaBadge sla={sla || "—"} /></Field>
+          <Field label="SLA" className="w-[140px]"><SlaBadge sla={sla || "—"} /></Field>
         </div>
       </section>
       <section>
