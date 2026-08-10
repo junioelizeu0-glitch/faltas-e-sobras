@@ -3,6 +3,8 @@ import {
   ChevronDown,
   ChevronRight,
   ChevronLeft,
+  Menu,
+  ArrowLeft,
   Plus,
   Search,
   BarChart2,
@@ -23,22 +25,22 @@ import { useRouter } from "@tanstack/react-router";
 import { lockSite } from "@/lib/gate.functions";
 import SessionGuard from "@/components/SessionGuard";
 
-interface AppShellProps {
+const LOGO_URL = "https://iili.io/CKolF1t.png";
+
+type Props = {
   children: React.ReactNode;
   selectedSubmenu: string | null;
   setSelectedSubmenu: (val: string | null) => void;
-}
-
-const LOGO_URL = "https://iili.io/CKolF1t.png";
+};
 
 export default function AppShell({
   children,
   selectedSubmenu,
   setSelectedSubmenu,
-}: AppShellProps) {
+}: Props) {
   const [menuAberto, setMenuAberto] = useState(false);
-  const [openFaltas, setOpenFaltas] = useState(false);
-  const [openCadastros, setOpenCadastros] = useState(false);
+  const [openFaltas, setOpenFaltas] = useState(true);
+  const [openCadastros, setOpenCadastros] = useState(true);
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     if (typeof document !== "undefined") {
       const attr = document.documentElement.getAttribute("data-theme");
@@ -46,31 +48,41 @@ export default function AppShell({
     }
     return "light";
   });
+
+  // Escuta evento global de retorno à página principal
+  useEffect(() => {
+    const handleNavHome = () => setSelectedSubmenu(null);
+    window.addEventListener("nav_home", handleNavHome);
+    return () => window.removeEventListener("nav_home", handleNavHome);
+  }, [setSelectedSubmenu]);
+
   const toggleTheme = () => {
     const next = theme === "dark" ? "light" : "dark";
-    // 1) Aplica no DOM de forma síncrona (troca visual imediata via CSS vars)
     document.documentElement.setAttribute("data-theme", next);
-    // 2) Persiste
     try { localStorage.setItem("theme", next); } catch {}
-    // 3) Atualiza state apenas para re-renderizar o ícone do botão
     setTheme(next);
   };
-  const lock = useServerFn(lockSite);
+
+  const lockFn = useServerFn(lockSite);
   const router = useRouter();
-  async function handleLogout() {
-    try { sessionStorage.removeItem("tab-session-active"); } catch {}
-    window.localStorage.removeItem("site-gate-token");
-    try { await lock(); } catch {}
-    window.location.href = "/unlock";
-  }
+
+  const handleLock = async () => {
+    try {
+      sessionStorage.removeItem("tab-session-active");
+      window.localStorage.removeItem("site-gate-token");
+      await lockFn();
+      router.navigate({ to: "/unlock" });
+    } catch {
+      router.navigate({ to: "/unlock" });
+    }
+  };
 
   return (
     <div className="min-h-screen bg-slate-100 text-slate-900 font-sans flex overflow-hidden">
       {/* Menu Lateral Fixo à Esquerda */}
       <div
-        onClick={() => !menuAberto && setMenuAberto(true)}
         className={`bg-white border-r border-slate-200 flex flex-col flex-shrink-0 h-screen select-none transition-all duration-200 ease-in-out ${
-          menuAberto ? "w-[220px]" : "w-16 cursor-pointer overflow-x-hidden"
+          menuAberto ? "w-[220px]" : "w-16"
         }`}
       >
         {menuAberto ? (
@@ -78,10 +90,7 @@ export default function AppShell({
             {/* Cabeçalho */}
             <div className="p-5 border-b border-slate-100 flex flex-col relative justify-center min-h-[72px]">
               <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setMenuAberto(false);
-                }}
+                onClick={() => setMenuAberto(false)}
                 className="absolute right-3 top-5 p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
                 title="Recolher menu"
               >
@@ -89,7 +98,7 @@ export default function AppShell({
               </button>
               <button
                 type="button"
-                onClick={(e) => { e.stopPropagation(); setSelectedSubmenu(null); }}
+                onClick={() => { setSelectedSubmenu(null); setMenuAberto(false); }}
                 className="flex items-center gap-2 pr-6 text-left hover:opacity-80 transition-opacity cursor-pointer"
                 title="Ir para tela inicial"
               >
@@ -220,22 +229,42 @@ export default function AppShell({
                   </button>
                 </div>
               </div>
-
             </div>
           </div>
         ) : (
-          <div className="flex flex-col h-full items-center justify-between py-6">
-            <img
-              src={LOGO_URL}
-              alt="Logo"
-              width={32}
-              height={32}
-              className="w-8 h-8 object-contain shrink-0"
-              referrerPolicy="no-referrer"
-            />
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-              Menu
-            </span>
+          <div className="flex flex-col h-full items-center justify-between py-5">
+            {/* Logo no Topo */}
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setSelectedSubmenu(null); }}
+              className="p-1 hover:opacity-80 transition-opacity cursor-pointer"
+              title="Ir para tela inicial"
+            >
+              <img
+                src={LOGO_URL}
+                alt="Logo"
+                width={32}
+                height={32}
+                className="w-8 h-8 object-contain shrink-0"
+                referrerPolicy="no-referrer"
+              />
+            </button>
+
+            {/* Menu Centralizado na Barra Lateral */}
+            <button
+              type="button"
+              onClick={(e) => { e.stopPropagation(); setMenuAberto(true); }}
+              className="p-3 rounded-2xl bg-slate-50 hover:bg-emerald-50 text-slate-600 hover:text-emerald-700 border border-slate-200/80 hover:border-emerald-200/80 flex flex-col items-center gap-1.5 transition-all shadow-2xs group cursor-pointer"
+              title="Abrir menu lateral"
+            >
+              <Menu className="w-5 h-5 text-slate-600 group-hover:text-emerald-700 transition-colors" />
+              <span className="text-[10px] font-bold text-slate-500 group-hover:text-emerald-700 uppercase tracking-wider">
+                Menu
+              </span>
+            </button>
+
+            {/* Espaçador inferior para manter o alinhamento visual */}
+            <div className="w-8 h-8 shrink-0" />
           </div>
         )}
       </div>
@@ -244,15 +273,30 @@ export default function AppShell({
       <div className="flex-1 flex flex-col min-w-0 h-screen bg-[#EAECEB] overflow-hidden relative">
         <div className="flex justify-between items-center px-6 py-3 border-b border-slate-200/80 bg-white/90 backdrop-blur-md">
           <div className="flex items-center gap-2 text-xs font-medium text-slate-500">
-            <span className="text-slate-900 font-semibold">Faltas e Sobras</span>
+            <button onClick={() => setSelectedSubmenu(null)} className="text-slate-900 font-semibold hover:text-emerald-700 transition-colors cursor-pointer">
+              Faltas e Sobras
+            </button>
             {selectedSubmenu && (
               <>
                 <span>/</span>
-                <span className="capitalize text-emerald-700 font-medium">{selectedSubmenu.replace("cad_", "Cadastro ").replace("_", " ")}</span>
+                <span className="capitalize text-emerald-700 font-medium">
+                  {selectedSubmenu === "novo" ? "Novo Chamado" : selectedSubmenu.replace("cad_", "Cadastro ").replace("_", " ")}
+                </span>
               </>
             )}
           </div>
           <div className="flex items-center gap-3">
+            {selectedSubmenu && (
+              <button
+                type="button"
+                onClick={() => setSelectedSubmenu(null)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-semibold text-slate-600 hover:text-emerald-700 bg-white border border-slate-200/80 hover:border-emerald-200/80 hover:bg-emerald-50/50 shadow-2xs transition-all cursor-pointer"
+                title="Voltar para a página principal"
+              >
+                <ArrowLeft className="w-3.5 h-3.5" />
+                <span>Voltar ao Início</span>
+              </button>
+            )}
             <button
               onClick={toggleTheme}
               className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-xs font-medium text-slate-600 hover:bg-slate-100 transition-colors cursor-pointer"

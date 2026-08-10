@@ -1590,7 +1590,7 @@ export default function Dashboard() {
 
 
         {selectedSubmenu === 'novo' && (
-          <NovoChamadoForm rawData={rawData} onCreated={() => refetch()} />
+          <NovoChamadoForm rawData={rawData} onCreated={() => { refetch(); setSelectedSubmenu(null); }} onCancel={() => setSelectedSubmenu(null)} />
         )}
 
         {selectedSubmenu === 'consulta' && (
