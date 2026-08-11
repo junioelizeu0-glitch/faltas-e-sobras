@@ -10,11 +10,10 @@ function makeFetch(key: string): typeof fetch {
       typeof Request !== "undefined" && input instanceof Request ? input.headers : undefined,
     );
     if (init?.headers) new Headers(init.headers).forEach((v, k) => headers.set(k, v));
-    if ((key.startsWith("sb_publishable_") || key.startsWith("sb_secret_")) &&
-        headers.get("Authorization") === `Bearer ${key}`) {
-      headers.delete("Authorization");
-    }
     headers.set("apikey", key);
+    if (!headers.has("Authorization")) {
+      headers.set("Authorization", `Bearer ${key}`);
+    }
     return fetch(input, { ...init, headers });
   };
 }
