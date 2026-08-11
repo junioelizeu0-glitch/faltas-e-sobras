@@ -328,16 +328,61 @@ export const getChamadoCompleto = createServerFn({ method: "GET" })
     const { requireUnlockedSession } = await import("@/lib/gate.server");
     await requireUnlockedSession();
     const supabase = await getSupabase();
-    const { data: chamado, error: e1 } = await supabase
-      .from("chamados_faltas").select("*").eq("id", data.id).maybeSingle();
-    if (e1) throw new Error(e1.message);
-    const { data: refs, error: e2 } = await supabase
-      .from("chamados_referencias").select("*").eq("chamado_id", data.id);
-    if (e2) throw new Error(e2.message);
-    const { data: etapas, error: e3 } = await supabase
-      .from("chamados_etapas").select("*").eq("chamado_id", data.id).order("ordem");
-    if (e3) throw new Error(e3.message);
-    return { chamado, referencias: refs || [], etapas: etapas || [] };
+
+    let chamado: any = null;
+    let refs: any[] = [];
+    let etapas: any[] = [];
+
+    // 1. Chamado principal
+    try {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(data.id);
+      let query = supabase.from("chamados_faltas").select("*");
+      if (isUuid) {
+        query = query.eq("id", data.id);
+      } else {
+        query = query.eq("chamado", data.id);
+      }
+      const { data: res, error: e1 } = await query.maybeSingle();
+      if (e1) throw new Error(e1.message);
+      chamado = res;
+    } catch {
+      const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(data.id);
+      const whereClause = isUuid ? `id = '${data.id}'` : `chamado = '${data.id}'`;
+      const { data: rpcRes } = await supabase.rpc("aiiliana_run_sql", {
+        sql: `SELECT * FROM chamados_faltas WHERE ${whereClause} LIMIT 1`
+      });
+      if (Array.isArray(rpcRes) && rpcRes.length > 0) chamado = rpcRes[0];
+    }
+
+    if (!chamado) return { chamado: null, referencias: [], etapas: [] };
+
+    const cId = chamado.id;
+
+    // 2. Referencias
+    try {
+      const { data: res, error: e2 } = await supabase.from("chamados_referencias").select("*").eq("chamado_id", cId);
+      if (e2) throw new Error(e2.message);
+      refs = res || [];
+    } catch {
+      const { data: rpcRes } = await supabase.rpc("aiiliana_run_sql", {
+        sql: `SELECT * FROM chamados_referencias WHERE chamado_id = '${cId}'`
+      });
+      if (Array.isArray(rpcRes)) refs = rpcRes;
+    }
+
+    // 3. Etapas
+    try {
+      const { data: res, error: e3 } = await supabase.from("chamados_etapas").select("*").eq("chamado_id", cId).order("ordem");
+      if (e3) throw new Error(e3.message);
+      etapas = res || [];
+    } catch {
+      const { data: rpcRes } = await supabase.rpc("aiiliana_run_sql", {
+        sql: `SELECT * FROM chamados_etapas WHERE chamado_id = '${cId}' ORDER BY ordem ASC`
+      });
+      if (Array.isArray(rpcRes)) etapas = rpcRes;
+    }
+
+    return { chamado, referencias: refs, etapas };
   });
 
 // ===== Atualizar chamado completo (substitui refs e etapas) =====
