@@ -4,8 +4,9 @@ import { createHash, timingSafeEqual } from "node:crypto";
 export type GateSession = { unlocked?: boolean };
 
 export function sessionConfig() {
+  const secret = process.env.SESSION_SECRET || "faltas-e-sobras-session-secret-key-32chars-minimum";
   return {
-    password: process.env.SESSION_SECRET!,
+    password: secret,
     name: "site-gate",
     maxAge: 60 * 60 * 24 * 7,
     cookie: {
