@@ -22,13 +22,11 @@ export function getServerSupabase() {
   const url =
     (typeof process !== 'undefined' && process.env?.SUPABASE_URL) ||
     (typeof process !== 'undefined' && process.env?.VITE_SUPABASE_URL) ||
-    "https://mmjiengtszgchogyhuon.supabase.co";
+    "https://fqffsqgzlkahqcshpxom.supabase.co";
 
   const key =
     (typeof process !== 'undefined' && process.env?.SUPABASE_SERVICE_ROLE_KEY) ||
-    (typeof process !== 'undefined' && process.env?.SUPABASE_PUBLISHABLE_KEY) ||
-    (typeof process !== 'undefined' && process.env?.VITE_SUPABASE_PUBLISHABLE_KEY) ||
-    "sb_publishable_XUESwKupgR1i-y5Ad7r1uQ_Jh64YHVG";
+    "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZxZmZzcWd6bGthaHFjc2hweG9tIiwicm9sZSI6InNlcnZpY2Vfcm9sZSIsImlhdCI6MTc4NjEyMTA0OSwiZXhwIjoyMTAxNjk3MDQ5fQ.AelO7YcxqagVpX-8NI3E90Mw5NtzxKhuWq3iPI6mssA";
   return createClient<Database>(url, key, {
     auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
   });
