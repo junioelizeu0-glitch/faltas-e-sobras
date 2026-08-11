@@ -40,9 +40,6 @@ function createSupabaseAdminClient() {
     "sb_publishable_XUESwKupgR1i-y5Ad7r1uQ_Jh64YHVG";
 
   return createClient<Database>(SUPABASE_URL, SUPABASE_SERVICE_ROLE_KEY, {
-    global: {
-      fetch: createSupabaseFetch(SUPABASE_SERVICE_ROLE_KEY),
-    },
     auth: {
       storage: undefined,
       persistSession: false,

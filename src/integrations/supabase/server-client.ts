@@ -30,7 +30,6 @@ export function getServerSupabase() {
     (typeof process !== 'undefined' && process.env?.VITE_SUPABASE_PUBLISHABLE_KEY) ||
     "sb_publishable_XUESwKupgR1i-y5Ad7r1uQ_Jh64YHVG";
   return createClient<Database>(url, key, {
-    global: { fetch: makeFetch(key) },
     auth: { storage: undefined, persistSession: false, autoRefreshToken: false },
   });
 }
