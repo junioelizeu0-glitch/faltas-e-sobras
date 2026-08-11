@@ -198,7 +198,7 @@ export const createChamadoCompleto = createServerFn({ method: "POST" })
       chamado: nullIfEmpty(c.Chamado),
       loja: nullIfEmpty(c.Loja),
       tipo: nullIfEmpty(c.Tipo),
-      nf: nullIfEmpty(c["NF Venda"] ?? c.NF),
+      nf: nullIfEmpty(c.NF),
       dt_emissao: dateOrNull(c["Dt Emissão"]),
       valor: numOrNull(c[" Valor "]),
       cd: nullIfEmpty(c.CD),
@@ -214,11 +214,6 @@ export const createChamadoCompleto = createServerFn({ method: "POST" })
       conferente: nullIfEmpty(c.Conferente),
       periodo: dateOrNull(c.Periodo),
     };
-
-    // Regra: Data de pagamento não pode ser maior que Data de finalização
-    if (chamadoRow.dt_pagamento && chamadoRow.dt_finalizacao && chamadoRow.dt_pagamento > chamadoRow.dt_finalizacao) {
-      throw new Error("A Data de Pagamento não pode ser posterior à Data de Finalização.");
-    }
 
     // Regra: número do chamado não pode duplicar
     if (chamadoRow.chamado) {
@@ -333,31 +328,15 @@ export const getChamadoCompleto = createServerFn({ method: "GET" })
     const { requireUnlockedSession } = await import("@/lib/gate.server");
     await requireUnlockedSession();
     const supabase = await getSupabase();
-
-    const idStr = String(data.id || "").trim();
-    if (!idStr) return { chamado: null, referencias: [], etapas: [] };
-
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idStr);
-
-    let query = supabase.from("chamados_faltas").select("*");
-    if (isUuid) {
-      query = query.eq("id", idStr);
-    } else {
-      query = query.eq("chamado", idStr);
-    }
-
-    const { data: chamado, error: e1 } = await query.maybeSingle();
+    const { data: chamado, error: e1 } = await supabase
+      .from("chamados_faltas").select("*").eq("id", data.id).maybeSingle();
     if (e1) throw new Error(e1.message);
-    if (!chamado) return { chamado: null, referencias: [], etapas: [] };
-
     const { data: refs, error: e2 } = await supabase
-      .from("chamados_referencias").select("*").eq("chamado_id", chamado.id);
+      .from("chamados_referencias").select("*").eq("chamado_id", data.id);
     if (e2) throw new Error(e2.message);
-
     const { data: etapas, error: e3 } = await supabase
-      .from("chamados_etapas").select("*").eq("chamado_id", chamado.id).order("ordem");
+      .from("chamados_etapas").select("*").eq("chamado_id", data.id).order("ordem");
     if (e3) throw new Error(e3.message);
-
     return { chamado, referencias: refs || [], etapas: etapas || [] };
   });
 
@@ -400,7 +379,7 @@ export const updateChamadoCompleto = createServerFn({ method: "POST" })
       chamado: nullIfEmpty(c.Chamado),
       loja: nullIfEmpty(c.Loja),
       tipo: nullIfEmpty(c.Tipo),
-      nf: nullIfEmpty(c["NF Venda"] ?? c.NF),
+      nf: nullIfEmpty(c.NF),
       dt_emissao: dateOrNull(c["Dt Emissão"]),
       valor: numOrNull(c[" Valor "]),
       cd: nullIfEmpty(c.CD),
@@ -416,37 +395,23 @@ export const updateChamadoCompleto = createServerFn({ method: "POST" })
       conferente: nullIfEmpty(c.Conferente),
       periodo: dateOrNull(c.Periodo),
     };
-
-    // Regra: Data de pagamento não pode ser maior que Data de finalização
-    if (row.dt_pagamento && row.dt_finalizacao && row.dt_pagamento > row.dt_finalizacao) {
-      throw new Error("A Data de Pagamento não pode ser posterior à Data de Finalização.");
-    }
-
-    const idStr = String(data.id || "").trim();
-    const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(idStr);
-    let targetId = idStr;
-    if (!isUuid) {
-      const { data: found } = await supabase.from("chamados_faltas").select("id").eq("chamado", idStr).maybeSingle();
-      if (found) targetId = found.id;
-    }
-
     // Regra: número do chamado não pode duplicar (exceto o próprio)
     if (row.chamado) {
       const { data: dup } = await supabase
-        .from("chamados_faltas").select("id").eq("chamado", row.chamado).neq("id", targetId).limit(1).maybeSingle();
+        .from("chamados_faltas").select("id").eq("chamado", row.chamado).neq("id", data.id).limit(1).maybeSingle();
       if (dup) throw new Error(`Já existe outro chamado com o número ${row.chamado}.`);
     }
-    const { error: eu } = await supabase.from("chamados_faltas").update(row).eq("id", targetId);
+    const { error: eu } = await supabase.from("chamados_faltas").update(row).eq("id", data.id);
     if (eu) throw new Error(eu.message);
     await upsertConferenteCD(supabase, row.conferente, row.cd);
     await upsertTransportadora(supabase, row.transportadora);
 
 
     // refs: delete + reinsert
-    await supabase.from("chamados_referencias").delete().eq("chamado_id", targetId);
+    await supabase.from("chamados_referencias").delete().eq("chamado_id", data.id);
     const refs = (data.referencias || [])
       .map((r: any) => ({
-        chamado_id: targetId,
+        chamado_id: data.id,
         referencia: nullIfEmpty(r.referencia),
         cor: nullIfEmpty(r.cor),
         tamanho: nullIfEmpty(r.tamanho),

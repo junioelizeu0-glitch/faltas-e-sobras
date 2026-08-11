@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Loader2, CheckCircle2, AlertCircle, Save, Plus, Trash2, Search, X, Pencil, ClipboardCheck } from "lucide-react";
+import { Loader2, CheckCircle2, AlertCircle, Save, Plus, Trash2, Search, X, Pencil, ClipboardCheck, FileText } from "lucide-react";
 
 const fmtBR = (iso: string | null | undefined) => {
   if (!iso) return "";
@@ -84,7 +84,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   const [motivos, setMotivos] = useState<string[]>([]);
   const [submitting, setSubmitting] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "ok" | "err"; msg: string } | null>(null);
-  const [loading, setLoading] = useState(mode === "editar" && Boolean(chamadoIdProp));
+  const [loading, setLoading] = useState(mode === "editar");
   const [manage, setManage] = useState<null | "transp" | "conf" | "motivo">(null);
   const [lojaOpen, setLojaOpen] = useState(false);
   const [lojaInfo, setLojaInfo] = useState<Loja | null>(null);
@@ -120,11 +120,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   const prevStatusRef = useRef<string>("");
 
   useEffect(() => {
-    if (mode !== "editar") return;
-    if (!chamadoId) {
-      setLoading(false);
-      return;
-    }
+    if (mode !== "editar" || !chamadoId) return;
     (async () => {
       setLoading(true);
       try {
@@ -203,7 +199,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
 
 
 
-  // Busca dados bancários e modelo da loja (Franquia / Própria) e auto-preenche o Tipo
+  // Busca dados bancários da loja quando o número muda (ou depois de fechar o modal de cadastro)
   useEffect(() => {
     const numero = String(form.Loja || "").trim();
     if (!numero) { setLojaInfo(null); return; }
@@ -211,16 +207,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     const t = setTimeout(async () => {
       try {
         const r = await getLojaFn({ data: { numero } });
-        if (!cancelled) {
-          const l = (r as Loja | null) || null;
-          setLojaInfo(l);
-          if (l && typeof l.tipo === "string" && l.tipo.trim()) {
-            let tipoVal = l.tipo.trim();
-            if (/franquia/i.test(tipoVal)) tipoVal = "Franquia";
-            else if (/pr[oó]pria/i.test(tipoVal)) tipoVal = "Própria";
-            setForm((prev) => ({ ...prev, Tipo: tipoVal }));
-          }
-        }
+        if (!cancelled) setLojaInfo((r as Loja | null) || null);
       } catch { if (!cancelled) setLojaInfo(null); }
     }, 300);
     return () => { cancelled = true; clearTimeout(t); };
@@ -299,9 +286,6 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     const sit = (form["Situação "] || "").toLowerCase();
     if ((/chamado recusado/.test(sit) || /finaliz/.test(sit)) && !form["Dt Finalização"]) {
       return `Preencha a Data de Finalização (obrigatória quando a situação é "${form["Situação "]}").`;
-    }
-    if (form["Dt Pagamento"] && form["Dt Finalização"] && form["Dt Pagamento"] > form["Dt Finalização"]) {
-      return "A Data de Pagamento não pode ser posterior à Data de Finalização.";
     }
     return null;
   };
@@ -606,71 +590,14 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   );
 }
 
-const inputCls = "w-full text-xs h-[38px] rounded-xl border border-slate-200 bg-white px-3 shadow-2xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium transition-all flex items-center";
+const inputCls = "w-full text-sm rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500";
 
 function Field({ label, children, className = "", style }: { label: string; children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
   return (
-    <label className={`flex flex-col gap-1.5 ${className}`} style={style}>
-      <span className="text-xs font-semibold text-slate-600 whitespace-nowrap block">{label}</span>
+    <label className={`flex flex-col gap-1 ${className}`} style={style}>
+      <span className="text-xs font-semibold text-slate-600">{label}</span>
       {children}
     </label>
-  );
-}
-
-
-function StatusPagamentoBadge({ status }: { status: string }) {
-  const isPago = /pago/i.test(status) && !/não/i.test(status);
-  const isProvisionado = /provisionado/i.test(status);
-
-  if (isPago) {
-    return (
-      <span className="inline-flex items-center justify-center gap-1.5 h-[38px] px-3 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60 shadow-2xs w-full transition-all">
-        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
-        {status}
-      </span>
-    );
-  }
-  if (isProvisionado) {
-    return (
-      <span className="inline-flex items-center justify-center gap-1.5 h-[38px] px-3 rounded-xl text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200/60 shadow-2xs w-full transition-all">
-        <span className="w-1.5 h-1.5 rounded-full bg-sky-500 shrink-0"></span>
-        {status}
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex items-center justify-center gap-1.5 h-[38px] px-3 rounded-xl text-xs font-semibold bg-slate-50 text-slate-600 border border-slate-200/60 shadow-2xs w-full transition-all">
-      <span className="w-1.5 h-1.5 rounded-full bg-slate-400 shrink-0"></span>
-      {status || "Não Pago"}
-    </span>
-  );
-}
-
-function SlaBadge({ sla }: { sla: string }) {
-  const isDentro = /dentro/i.test(sla);
-  const isFora = /fora/i.test(sla);
-
-  if (isDentro) {
-    return (
-      <span className="inline-flex items-center justify-center gap-1.5 h-[38px] px-3 rounded-xl text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60 shadow-2xs w-full transition-all">
-        <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0"></span>
-        {sla}
-      </span>
-    );
-  }
-  if (isFora) {
-    return (
-      <span className="inline-flex items-center justify-center gap-1.5 h-[38px] px-3 rounded-xl text-xs font-semibold bg-rose-50 text-rose-700 border border-rose-200/60 shadow-2xs w-full transition-all">
-        <span className="w-1.5 h-1.5 rounded-full bg-rose-500 shrink-0"></span>
-        {sla}
-      </span>
-    );
-  }
-  return (
-    <span className="inline-flex items-center justify-center gap-1.5 h-[38px] px-3 rounded-xl text-xs font-semibold bg-sky-50 text-sky-700 border border-sky-200/60 shadow-2xs w-full transition-all">
-      <span className="w-1.5 h-1.5 rounded-full bg-sky-500 shrink-0"></span>
-      {sla || "Em Aberto"}
-    </span>
   );
 }
 
@@ -683,33 +610,33 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
     </button>
   );
   return (
-    <div className="space-y-4">
+    <div className="space-y-5">
       <section>
-        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Identificação</h2>
-        <div className="flex flex-wrap gap-2.5">
+        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Identificação</h2>
+        <div className="flex flex-wrap gap-3">
           <Field label="Chamado *" className="w-[110px]"><input type="number" value={form.Chamado} onChange={(e) => setField("Chamado", e.target.value.slice(0, 8))} className={inputCls} required /></Field>
           <Field label="Loja *" className="w-[90px]"><input type="number" value={form.Loja} onChange={(e) => setField("Loja", e.target.value.slice(0, 5))} className={inputCls} required /></Field>
           <Field label="Tipo *" className="w-[130px]"><select value={form.Tipo} onChange={(e) => setField("Tipo", e.target.value)} className={inputCls} required><option value="">— Selecionar —</option>{TIPO_OPCOES.map((o) => <option key={o}>{o}</option>)}</select></Field>
           <Field label="CD *" className="w-[80px]"><select value={form.CD} onChange={(e) => setField("CD", e.target.value)} className={inputCls} required><option value="">—</option>{CD_OPCOES.map((o) => <option key={o}>{o}</option>)}</select></Field>
-          <Field label="NF Venda" className="w-[130px]"><input type="text" value={form.NF} onChange={(e) => setField("NF", e.target.value.slice(0, 15))} placeholder="Nº NF Venda" className={inputCls} /></Field>
-          <Field label="Data Emissão" className="w-[135px]"><input type="date" value={form["Dt Emissão"]} onChange={(e) => setField("Dt Emissão", e.target.value)} className={inputCls} /></Field>
-          <Field label="Valor" className="w-[120px]"><input type="number" step="0.01" value={form._valor} onChange={(e) => setField("_valor", e.target.value.slice(0, 14))} className={inputCls} /></Field>
+          <Field label="NF" className="w-[130px]"><input type="number" value={form.NF} onChange={(e) => setField("NF", e.target.value.slice(0, 10))} className={inputCls} /></Field>
+          <Field label="Data Emissão" className="w-[140px]"><input type="date" value={form["Dt Emissão"]} onChange={(e) => setField("Dt Emissão", e.target.value)} className={inputCls} /></Field>
+          <Field label="Valor" className="w-[130px]"><input type="number" step="0.01" value={form._valor} onChange={(e) => setField("_valor", e.target.value.slice(0, 14))} className={inputCls} /></Field>
         </div>
       </section>
       <section>
         <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Status e Datas</h2>
-        <div className="flex flex-wrap gap-3 items-end">
+        <div className="flex flex-wrap gap-3">
           <Field label="Data Abertura *" className="w-[140px]"><input type="date" value={form["Dt Abertura"]} onChange={(e) => setField("Dt Abertura", e.target.value)} className={inputCls} required /></Field>
           <Field label="Data Finalização" className="w-[140px]"><input type="date" value={form["Dt Finalização"]} onChange={(e) => setField("Dt Finalização", e.target.value)} className={inputCls} /></Field>
           <Field label="Data Pagamento" className="w-[140px]"><input type="date" value={form["Dt Pagamento"]} onChange={(e) => setField("Dt Pagamento", e.target.value)} className={inputCls} /></Field>
-          <Field label="Status Pagamento" className="w-[150px]"><StatusPagamentoBadge status={statusPagamento} /></Field>
-          <Field label="Situação (tarefa atual) *" className="w-[230px]">
+          <Field label="Status Pagamento (auto)" className="w-[140px]"><input value={statusPagamento} readOnly className={inputCls + " bg-slate-50 text-slate-500"} /></Field>
+          <Field label="Situação (tarefa atual) *" className="w-[240px]">
             <select value={form["Situação "]} onChange={(e) => setField("Situação ", e.target.value)} className={inputCls} required><option value="">— Selecionar —</option>{SITUACAO_OPCOES.map((o) => <option key={o}>{o}</option>)}</select>
           </Field>
           <Field label="Status Chamado *" className="w-[180px]">
             <select value={form["Status Chamado"]} onChange={(e) => setField("Status Chamado", e.target.value)} className={inputCls} required><option value="">— Selecionar —</option>{STATUS_CHAMADO_OPCOES.map((o) => <option key={o}>{o}</option>)}</select>
           </Field>
-          <Field label="SLA" className="w-[140px]"><SlaBadge sla={sla || "—"} /></Field>
+          <Field label="SLA (auto, dias úteis)" className="w-[150px]"><input value={sla || "—"} readOnly className={inputCls + " bg-slate-50 text-slate-500"} /></Field>
         </div>
       </section>
       <section>

@@ -9,60 +9,60 @@
  * ============================================================= */
 :root,
 [data-theme="light"] {
-  --bg-page: #EAECEB;
+  --bg-page: #F2EFE4;
   --bg-card: #FFFFFF;
-  --border-c: #CBD5E1;
-  --text-primary: #0F172A;
-  --text-secondary: #64748B;
-  --bg-header: #F8FAFC;
-  --accent: #047857;
-  --accent-hover: #065F46;
+  --border-c: #E2DFD3;
+  --text-primary: #242320;
+  --text-secondary: #6B6A63;
+  --bg-header: #F7F5EC;
+  --accent: #378ADD;
+  --accent-hover: #2f78c4;
   --accent-text-on: #FFFFFF;
-  --success-bg: #ECFDF5;
-  --success-text: #047857;
-  --info-bg: #F0F9FF;
-  --info-text: #0369A1;
-  --warn-bg: #FFFBEB;
-  --warn-text: #B45309;
-  --danger: #EF4444;
-  --danger-bg: #FEF2F2;
-  --shadow-c: 0 2px 10px rgba(15, 23, 42, 0.03);
+  --success-bg: #EAF3DE;
+  --success-text: #3B6D11;
+  --info-bg: #E6F1FB;
+  --info-text: #185FA5;
+  --warn-bg: #FFF3D6;
+  --warn-text: #8A5A00;
+  --danger: #D85A30;
+  --danger-bg: #FBE4DA;
+  --shadow-c: 0 1px 3px rgba(0,0,0,0.06);
 
   /* Paleta para colorir etapas do chamado */
-  --etapa-1-bg: #F0F9FF; --etapa-1-fg: #0369A1;
-  --etapa-2-bg: #ECFDF5; --etapa-2-fg: #047857;
-  --etapa-3-bg: #FFFBEB; --etapa-3-fg: #B45309;
-  --etapa-4-bg: #FDF4FF; --etapa-4-fg: #86198F;
-  --etapa-5-bg: #FEF2F2; --etapa-5-fg: #B91C1C;
-  --etapa-6-bg: #ECFDF5; --etapa-6-fg: #065F46;
+  --etapa-1-bg: #E6F1FB; --etapa-1-fg: #185FA5;
+  --etapa-2-bg: #EAF3DE; --etapa-2-fg: #3B6D11;
+  --etapa-3-bg: #FFF3D6; --etapa-3-fg: #8A5A00;
+  --etapa-4-bg: #F5E4F7; --etapa-4-fg: #703D82;
+  --etapa-5-bg: #FBE4DA; --etapa-5-fg: #A63C15;
+  --etapa-6-bg: #E1EFEA; --etapa-6-fg: #1F6B54;
 }
 
 [data-theme="dark"] {
-  --bg-page: #0F172A;
-  --bg-card: #1E293B;
-  --border-c: #334155;
-  --text-primary: #F8FAFC;
-  --text-secondary: #94A3B8;
-  --bg-header: #1E293B;
-  --accent: #10B981;
-  --accent-hover: #059669;
-  --accent-text-on: #0F172A;
-  --success-bg: #064E3B;
-  --success-text: #A7F3D0;
-  --info-bg: #0C4A6E;
-  --info-text: #BAE6FD;
-  --warn-bg: #78350F;
-  --warn-text: #FDE68A;
-  --danger: #F87171;
-  --danger-bg: #7F1D1D;
-  --shadow-c: 0 4px 12px rgba(0,0,0,0.3);
+  --bg-page: #3A3936;
+  --bg-card: #454340;
+  --border-c: #565349;
+  --text-primary: #F1EFE8;
+  --text-secondary: #C4C1B6;
+  --bg-header: #4E4C47;
+  --accent: #5A9BE0;
+  --accent-hover: #74acea;
+  --accent-text-on: #1C1C1A;
+  --success-bg: #5A6B45;
+  --success-text: #E3EFC8;
+  --info-bg: #3E5F80;
+  --info-text: #C9E2FA;
+  --warn-bg: #6B5E3A;
+  --warn-text: #F4E4B8;
+  --danger: #E8967A;
+  --danger-bg: #6B4A3A;
+  --shadow-c: 0 1px 3px rgba(0,0,0,0.2);
 
-  --etapa-1-bg: #0C4A6E; --etapa-1-fg: #BAE6FD;
-  --etapa-2-bg: #064E3B; --etapa-2-fg: #A7F3D0;
-  --etapa-3-bg: #78350F; --etapa-3-fg: #FDE68A;
-  --etapa-4-bg: #701A75; --etapa-4-fg: #F5D0FE;
-  --etapa-5-bg: #7F1D1D; --etapa-5-fg: #FECACA;
-  --etapa-6-bg: #065F46; --etapa-6-fg: #D1FAE5;
+  --etapa-1-bg: #3E5F80; --etapa-1-fg: #C9E2FA;
+  --etapa-2-bg: #5A6B45; --etapa-2-fg: #E3EFC8;
+  --etapa-3-bg: #6B5E3A; --etapa-3-fg: #F4E4B8;
+  --etapa-4-bg: #5F4A63; --etapa-4-fg: #EDD6F3;
+  --etapa-5-bg: #6B4A3A; --etapa-5-fg: #F5CDBB;
+  --etapa-6-bg: #3F5B52; --etapa-6-fg: #C7E6DA;
 }
 
 /* =============================================================

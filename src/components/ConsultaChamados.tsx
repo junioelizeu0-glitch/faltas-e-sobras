@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Search, X, Pencil, Trash2, DownloadCloud, UploadCloud, Loader2, Plus } from "lucide-react";
+import { Search, X, Pencil, Trash2, DownloadCloud, UploadCloud, Loader2, Plus, FileText } from "lucide-react";
 import { parseDataBR } from "@/lib/data-processing";
 import { deleteChamado } from "@/lib/chamados.functions";
 import { pullFromAppsScript, pushToAppsScript } from "@/lib/sync.functions";
@@ -147,7 +147,7 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
           <div>
             <h1 className="text-xl font-bold text-slate-800">Consulta de Chamados — Faltas</h1>
             <p className="text-sm text-slate-500 mt-1">
-              {selected.size > 0 ? `${selected.size} selecionado(s) de ${linhas.length}` : `Dê um duplo clique em um chamado para editar. Total: ${linhas.length}`}
+              {selected.size > 0 ? `${selected.size} selecionado(s) de ${linhas.length}` : `Clique em um chamado para abrir os detalhes e editar. Total: ${linhas.length}`}
             </p>
           </div>
           <div className="flex items-center gap-1">
@@ -238,16 +238,16 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
               </thead>
               <tbody>
                 {paginadas.map((r: any) => {
-                  const targetId = String(r.id || r._id || r.Chamado || "").trim();
+                  const idStr = r.id != null ? String(r.id) : "";
                   return (
                     <tr
-                      key={targetId || Math.random()}
-                      onDoubleClick={() => targetId && setEditingId(targetId)}
-                      onClick={() => targetId && setEditingId(targetId)}
-                      className={`border-b border-slate-100 hover:bg-blue-50/40 cursor-pointer select-none ${selected.has(targetId) ? "bg-blue-50/60" : ""}`}
+                      key={idStr || r.Chamado}
+                      onClick={() => idStr && setEditingId(idStr)}
+                      onDoubleClick={() => idStr && setEditingId(idStr)}
+                      className={`border-b border-slate-100 hover:bg-blue-50/60 cursor-pointer select-none transition-colors ${idStr && selected.has(idStr) ? "bg-blue-50/80" : ""}`}
                     >
                       <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
-                        <input type="checkbox" checked={selected.has(targetId)} onChange={() => toggleOne(targetId)} className="cursor-pointer"/>
+                        <input type="checkbox" checked={idStr ? selected.has(idStr) : false} onChange={() => idStr && toggleOne(idStr)} className="cursor-pointer"/>
                       </td>
                       <td className="px-3 py-2 font-semibold text-slate-800 whitespace-nowrap">{r.Chamado || "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap">{r.Loja || "—"}</td>
@@ -257,8 +257,8 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
                       <td className="px-3 py-2 whitespace-nowrap">{statusBadge(r["Status Chamado"])}</td>
                       <td className="px-3 py-2 whitespace-nowrap">{slaBadge(r["Dt Abertura"], r["Dt Finalização"])}</td>
                       <td className="px-3 py-2 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                        <button onClick={() => setEditingId(targetId)} title="Editar" className="inline-flex items-center p-1.5 text-blue-600 hover:bg-blue-50 rounded"><Pencil className="w-3.5 h-3.5"/></button>
-                        <button onClick={() => excluirIds([targetId])} title="Excluir" className="inline-flex items-center p-1.5 text-red-500 hover:bg-red-50 rounded ml-0.5"><Trash2 className="w-3.5 h-3.5"/></button>
+                        <button onClick={() => idStr && setEditingId(idStr)} title="Editar" className="inline-flex items-center p-1.5 text-blue-600 hover:bg-blue-50 rounded"><Pencil className="w-3.5 h-3.5"/></button>
+                        <button onClick={() => idStr && excluirIds([idStr])} title="Excluir" className="inline-flex items-center p-1.5 text-red-500 hover:bg-red-50 rounded ml-0.5"><Trash2 className="w-3.5 h-3.5"/></button>
                       </td>
                     </tr>
                   );
@@ -273,18 +273,18 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
       </div>
 
       {editingId && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4">
-          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-[96vw] xl:max-w-7xl max-h-[92vh] flex flex-col overflow-hidden relative">
-            <div className="flex items-center justify-between px-6 py-3.5 border-b border-slate-100 bg-white shrink-0">
-              <h2 className="text-sm font-bold text-slate-800 flex items-center gap-2">
-                <FileText className="w-4 h-4 text-emerald-700" />
-                Consulta / Edição de Chamado
-              </h2>
-              <button onClick={() => setEditingId(null)} className="p-1.5 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-xl transition-colors cursor-pointer"><X className="w-5 h-5"/></button>
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-1">
+          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-2xl w-full max-w-[99vw] h-[99vh] flex flex-col overflow-hidden">
+            <div className="flex items-center justify-between px-5 py-2 border-b border-slate-200 bg-white shrink-0">
+              <div className="flex items-center gap-2">
+                <FileText className="w-5 h-5 text-blue-600" />
+                <h2 className="text-base font-bold text-slate-800">Editar Chamado</h2>
+              </div>
+              <button onClick={() => setEditingId(null)} className="text-slate-400 hover:text-slate-700 p-1 hover:bg-slate-100 rounded-lg"><X className="w-5 h-5"/></button>
             </div>
-            <div className="flex-1 p-6 overflow-y-auto">
+            <div className="flex-1 min-h-0 p-3 overflow-hidden">
               <ChamadoForm
-                mode="editar" chamadoId={editingId} compact
+                mode="editar" chamadoId={String(editingId)} compact
                 onSaved={() => { onChanged?.(); }}
                 onCancel={() => setEditingId(null)}
                 onDeleted={() => { setEditingId(null); onChanged?.(); }}

@@ -80,52 +80,52 @@ export default function CadastroSimples({ titulo, descricao, listFn, upsertFn, d
   };
 
   return (
-    <div className="flex-1 overflow-auto bg-[#F4F6F5] p-4 md:p-6 space-y-4">
+    <div className="flex-1 overflow-auto bg-slate-50 p-4">
       <div className="w-full">
-        <header className="sticky top-0 z-10 -mx-4 md:-mx-6 -mt-4 md:-mt-6 px-6 pt-6 pb-4 mb-5 bg-white/90 backdrop-blur-md border-b border-slate-200/80 flex flex-wrap items-center justify-between gap-4">
+        <header className="sticky top-0 z-10 -mx-4 -mt-4 px-4 pt-4 pb-3 mb-4 bg-slate-50/95 backdrop-blur border-b border-slate-200 flex flex-wrap items-center justify-between gap-3">
           <div>
-            <h1 className="text-2xl font-bold text-slate-900 tracking-tight">{titulo}</h1>
-            {descricao && <p className="text-xs text-slate-500 mt-1">{descricao}</p>}
-            <p className="text-xs text-slate-500 mt-1 font-medium">Total: {filtered.length.toLocaleString("pt-BR")}</p>
+            <h1 className="text-xl font-bold text-slate-800">{titulo}</h1>
+            {descricao && <p className="text-sm text-slate-500 mt-1">{descricao}</p>}
+            <p className="text-sm text-slate-500 mt-1">Total: {filtered.length.toLocaleString("pt-BR")}</p>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={openNew} className="inline-flex items-center gap-2 px-4 py-2 text-xs font-semibold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl shadow-xs transition-all cursor-pointer">
+            <button onClick={openNew} className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-md cursor-pointer">
               <Plus className="w-4 h-4"/>Novo
             </button>
           </div>
         </header>
 
-        <div className="mb-4 relative">
-          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar..." className="w-full pl-10 pr-4 py-2.5 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 shadow-2xs transition-all"/>
+        <div className="mb-3 relative">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar..." className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"/>
         </div>
 
-        <div className="bg-white border border-slate-200/80 rounded-2xl shadow-[0_2px_10px_rgba(0,0,0,0.03)] overflow-hidden">
-          {loading ? <div className="p-12 text-center text-slate-400 text-xs"><Loader2 className="inline w-5 h-5 animate-spin mr-2 text-emerald-600"/>Carregando...</div> : (
-            <table className="min-w-full text-xs">
-              <thead className="bg-slate-50/80 border-b border-slate-100 text-[11px] font-semibold uppercase tracking-wider text-slate-500">
+        <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
+          {loading ? <div className="p-8 text-center"><Loader2 className="inline w-5 h-5 animate-spin mr-2"/>Carregando...</div> : (
+            <table className="min-w-full text-sm">
+              <thead className="bg-slate-50 border-b text-xs uppercase text-slate-500">
                 <tr>
-                  <th className="text-left px-4 py-3.5 w-[280px]">{nomeLabel}</th>
+                  <th className="text-left px-3 py-2 w-[260px]">{nomeLabel}</th>
                   {extraFields.map((f) => (
-                    <th key={f.key} className="text-left px-4 py-3.5 w-[120px]">{f.label}</th>
+                    <th key={f.key} className="text-left px-3 py-2 w-[100px]">{f.label}</th>
                   ))}
-                  <th className="text-right px-4 py-3.5 w-[100px]">Ações</th>
+                  <th className="text-right px-3 py-2 w-[100px]">Ações</th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-slate-100 text-slate-700">
+              <tbody>
                 {paginated.map((r) => (
-                  <tr key={r.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="px-4 py-3 font-semibold text-slate-900 max-w-[280px] truncate" title={r.nome}>{r.nome}</td>
+                  <tr key={r.id} className="border-b border-slate-100 hover:bg-slate-50">
+                    <td className="px-3 py-2 font-medium text-slate-800 w-[260px] max-w-[260px] truncate" title={r.nome}>{r.nome}</td>
                     {extraFields.map((f) => (
-                      <td key={f.key} className="px-4 py-3 text-slate-600 max-w-[120px] truncate" title={String(r[f.key] ?? "")}>{r[f.key] || "—"}</td>
+                      <td key={f.key} className="px-3 py-2 text-slate-600 w-[100px] max-w-[100px] truncate" title={String(r[f.key] ?? "")}>{r[f.key] || "—"}</td>
                     ))}
-                    <td className="px-4 py-3 text-right space-x-1.5 w-[100px]">
-                      <button onClick={() => setEditing(r)} title="Editar" className="inline-flex items-center p-1.5 text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer"><Pencil className="w-4 h-4"/></button>
-                      <button onClick={() => remove(r)} title="Excluir" className="inline-flex items-center p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer"><Trash2 className="w-4 h-4"/></button>
+                    <td className="px-3 py-2 text-right space-x-2 w-[100px]">
+                      <button onClick={() => setEditing(r)} title="Editar" className="inline-flex items-center p-1.5 text-blue-600 hover:bg-blue-50 rounded"><Pencil className="w-3.5 h-3.5"/></button>
+                      <button onClick={() => remove(r)} title="Excluir" className="inline-flex items-center p-1.5 text-red-500 hover:bg-red-50 rounded ml-0.5"><Trash2 className="w-3.5 h-3.5"/></button>
                     </td>
                   </tr>
                 ))}
-                {filtered.length === 0 && <tr><td colSpan={2 + extraFields.length} className="px-4 py-12 text-center text-slate-400">Nenhum registro encontrado.</td></tr>}
+                {filtered.length === 0 && <tr><td colSpan={2 + extraFields.length} className="px-3 py-6 text-center text-slate-400">Nenhum registro.</td></tr>}
               </tbody>
             </table>
           )}
@@ -135,38 +135,39 @@ export default function CadastroSimples({ titulo, descricao, listFn, upsertFn, d
       </div>
 
       {editing && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl shadow-2xl border border-slate-200 w-full max-w-md overflow-hidden">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
-              <h3 className="font-bold text-slate-900 text-sm">{editing.id ? "Editar" : "Novo"} registro</h3>
-              <button onClick={() => setEditing(null)} className="p-1 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"><X className="w-5 h-5"/></button>
+        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
+          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-2xl w-full max-w-md">
+            <div className="flex items-center justify-between px-6 py-4 border-b">
+              <h3 className="font-semibold">{editing.id ? "Editar" : "Novo"} registro</h3>
+              <button onClick={() => setEditing(null)}><X className="w-5 h-5 text-slate-400"/></button>
             </div>
-            <div className="p-6 space-y-4">
-              {err && <div className="text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-xl p-3">{err}</div>}
+            <div className="p-6 space-y-5">
+              {err && <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded p-2">{err}</div>}
               <label className="block">
-                <span className="text-xs font-bold text-slate-700">{nomeLabel} *</span>
-                <input autoFocus value={editing.nome} onChange={(e) => setEditing({ ...editing, nome: e.target.value })} className="mt-1.5 w-full text-xs rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-2xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"/>
+                <span className="text-xs font-semibold text-slate-600">{nomeLabel} *</span>
+                <input autoFocus value={editing.nome} onChange={(e) => setEditing({ ...editing, nome: e.target.value })} className="mt-1.5 w-full text-sm rounded-md border border-slate-300 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
               </label>
               {extraFields.map((f) => (
                 <label key={f.key} className="block">
-                  <span className="text-xs font-bold text-slate-700">{f.label}{f.required ? " *" : ""}</span>
+                  <span className="text-xs font-semibold text-slate-600">{f.label}{f.required ? " *" : ""}</span>
                   {f.type === "select" ? (
-                    <select value={(editing as any)[f.key] || ""} onChange={(e) => setEditing({ ...editing, [f.key]: e.target.value } as Row)} className="mt-1.5 w-full text-xs rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-2xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 cursor-pointer">
+                    <select value={(editing as any)[f.key] || ""} onChange={(e) => setEditing({ ...editing, [f.key]: e.target.value } as Row)} className="mt-1.5 w-full text-sm rounded-md border border-slate-300 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white">
                       <option value="">— Selecionar —</option>
                       {(f.options || []).map((o) => <option key={o} value={o}>{o}</option>)}
                     </select>
                   ) : (
-                    <input value={(editing as any)[f.key] || ""} onChange={(e) => setEditing({ ...editing, [f.key]: e.target.value } as Row)} className="mt-1.5 w-full text-xs rounded-xl border border-slate-200 bg-white px-3 py-2.5 shadow-2xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500"/>
+                    <input value={(editing as any)[f.key] || ""} onChange={(e) => setEditing({ ...editing, [f.key]: e.target.value } as Row)} className="mt-1.5 w-full text-sm rounded-md border border-slate-300 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"/>
                   )}
                 </label>
               ))}
             </div>
-            <div className="flex justify-end gap-3 px-6 py-3.5 border-t border-slate-100 bg-slate-50/50">
-              <button onClick={() => setEditing(null)} className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-200 rounded-xl transition-colors cursor-pointer">Cancelar</button>
-              <button onClick={save} disabled={saving} className="inline-flex items-center gap-2 px-5 py-2 text-xs font-semibold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl shadow-xs transition-all disabled:opacity-50 cursor-pointer">
+            <div className="flex justify-end gap-2 px-6 py-4 border-t bg-slate-50">
+              <button onClick={() => setEditing(null)} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-md">Cancelar</button>
+              <button onClick={save} disabled={saving} className="inline-flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50">
                 {saving ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4"/>}Salvar
               </button>
             </div>
+
           </div>
         </div>
       )}

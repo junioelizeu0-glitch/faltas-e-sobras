@@ -473,48 +473,37 @@ export function useDashboardData(filters?: FilterState) {
         if (maxTempo === null || days > maxTempo) maxTempo = days;
       }
 
-      // SLA do Chamado (considere finalizados e aprovados em aberto)
-      const isAprovadoAberto = statusChamado === "Aprovado" && !dtFin;
-      if (
-        dtOpen &&
-        !isNaN(dtOpen.getTime()) &&
-        (dtFin || isAprovadoAberto) &&
-        dtOpen.getFullYear() === new Date().getFullYear()
-      ) {
-        const targetDate = dtFin || new Date();
-        const diasUteisChamado = getBusinessDays(dtOpen, targetDate);
-        if (diasUteisChamado <= 60) slaChamadoDentro++;
-        else slaChamadoFora++;
+      // SLA do Chamado (considere TODOS os chamados da lista filtrada)
+      const targetDate = dtFin && !isNaN(dtFin.getTime()) ? dtFin : new Date();
+      const diasUteisChamado = dtOpen && !isNaN(dtOpen.getTime()) ? getBusinessDays(dtOpen, targetDate) : 0;
+      if (diasUteisChamado <= 60) slaChamadoDentro++;
+      else slaChamadoFora++;
 
-        if (dtFin) {
-          slaChamadoList.push({
-            chamadoId:
-              item["Chamados"] ||
-              item["Chamado"] ||
-              item["Chave"] ||
-              item["Número"] ||
-              item["Nº"] ||
-              item["N° Chamado"] ||
-              item["Nº Chamado"] ||
-              "",
-            dtAbertura: formatarDataBR(item["Dt Abertura"]),
-            dtFinalizacao: formatarDataBR(item["Dt Finalização"]),
-            status: statusChamado || "",
-            slaDias: 60,
-            diasDemorou: diasUteisChamado,
-            dentroSla: diasUteisChamado <= 60 ? "Sim" : "Não",
-          });
-        }
-      }
+      slaChamadoList.push({
+        chamadoId:
+          item["Chamados"] ||
+          item["Chamado"] ||
+          item["Chave"] ||
+          item["Número"] ||
+          item["Nº"] ||
+          item["N° Chamado"] ||
+          item["Nº Chamado"] ||
+          "",
+        dtAbertura: formatarDataBR(item["Dt Abertura"]),
+        dtFinalizacao: formatarDataBR(item["Dt Finalização"]) || "Em Aberto",
+        status: statusChamado || "",
+        slaDias: 60,
+        diasDemorou: diasUteisChamado,
+        dentroSla: diasUteisChamado <= 60 ? "Sim" : "Não",
+      });
 
-      // SLA de Pagamento
+      // SLA de Pagamento (chamados com data de abertura e pagamento válidas, exceto recusados)
       if (
         statusChamadoRaw !== "recusado" &&
         dtOpen &&
         dtPag &&
         !isNaN(dtOpen.getTime()) &&
-        !isNaN(dtPag.getTime()) &&
-        dtOpen.getFullYear() === new Date().getFullYear()
+        !isNaN(dtPag.getTime())
       ) {
         const diasUteisPagamento = getBusinessDays(dtOpen, dtPag);
         if (diasUteisPagamento <= 60) slaPagamentoDentro++;

@@ -26,7 +26,7 @@ export const fetchTableRows = createServerFn({ method: "GET" })
     let query = supabase
       .from(data.table)
       .select("*", { count: "exact" })
-      .order("id", { ascending: false })
+      .order("created_at", { ascending: false })
       .limit(data.limit);
 
     if (data.search) {

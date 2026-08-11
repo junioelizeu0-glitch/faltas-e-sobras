@@ -8,6 +8,7 @@ import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
+  FileText,
 } from "lucide-react";
 import { getTarefaAtual, parseDataBR, formatarDataBR } from "@/lib/data-processing";
 import { exportToExcel } from "@/lib/excel-export";

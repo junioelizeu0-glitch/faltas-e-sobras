@@ -1,47 +1,45 @@
-import { createFileRoute, redirect } from "@tanstack/react-router";
+import { createFileRoute, useRouter } from "@tanstack/react-router";
+import { useServerFn } from "@tanstack/react-start";
+import { useState } from "react";
+import { unlockSite } from "@/lib/gate.functions";
+
+const LOGO_URL = "https://iili.io/CKolF1t.png";
 
 export const Route = createFileRoute("/unlock")({
-  beforeLoad: () => {
-    throw redirect({ to: "/" });
-  },
-  component: () => null,
+  component: UnlockPage,
+  head: () => ({ meta: [{ title: "Entrar — Faltas e Sobras" }] }),
 });
 
 function UnlockPage() {
+  const router = useRouter();
   const unlock = useServerFn(unlockSite);
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
-  async function handleLogin() {
-    if (loading) return;
+  async function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
     setLoading(true);
     setError(null);
     try {
-      try { sessionStorage.setItem("tab-session-active", "1"); } catch {}
-      const res: any = await unlock({ data: { username, password } });
-      if (res && res.ok) {
-        window.location.href = "/";
+      const { ok } = await unlock({ data: { username, password } });
+      if (ok) {
+        try { sessionStorage.setItem("tab-session-active", "1"); } catch {}
+        await router.invalidate();
+        await router.navigate({ to: "/" });
       } else {
         setError("Usuário ou senha incorretos.");
-        setLoading(false);
       }
     } catch (err: any) {
-      console.error("[Login error]", err);
-      setError(err?.message || "Erro de comunicação ao entrar.");
+      setError(err?.message ?? "Erro ao entrar.");
+    } finally {
       setLoading(false);
     }
   }
 
-  function onSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    e.stopPropagation();
-    handleLogin();
-  }
-
   return (
-    <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-sky-50 via-blue-50 to-sky-100 px-6 py-12">
+    <div className="flex min-h-screen items-center justify-center bg-white px-6 py-12">
       <form
         onSubmit={onSubmit}
         className="w-full max-w-sm rounded-2xl border border-stone-100 bg-white p-8 shadow-sm"

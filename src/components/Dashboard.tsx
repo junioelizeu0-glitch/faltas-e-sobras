@@ -503,19 +503,19 @@ const AbaVisaoExecutiva = ({ data, onOpenModal }: any) => (
             <Tooltip cursor={{ fill: "#e2e8f0" }} />
             <Bar dataKey="No Prazo" stackId="a" fill="#16a34a" barSize={30} style={{ cursor: 'pointer' }}>
               <LabelList dataKey="No Prazo" position="center" fill="#ffffff" fontSize={11} fontWeight="bold" formatter={(val: any, entry: any) => {
-                const row: any = (data.charts?.slaComparativoData || data.kpis?.slaComparativoData || []).find((r: any) => r['No Prazo'] === val);
+                const row: any = entry?.payload;
                 const total = row?.Total || 0;
-                return total > 0 ? `${Math.round((val / total) * 100)}%` : '';
+                return (val > 0 && total > 0) ? `${Math.round((val / total) * 100)}%` : '';
               }} />
             </Bar>
             <Bar dataKey="Fora do Prazo" stackId="a" fill="#dc2626" barSize={30} radius={[0, 4, 4, 0]} style={{ cursor: 'pointer' }}>
-              <LabelList dataKey="Fora do Prazo" position="center" fill="#ffffff" fontSize={11} fontWeight="bold" formatter={(val: any) => {
-                const row: any = (data.charts?.slaComparativoData || data.kpis?.slaComparativoData || []).find((r: any) => r['Fora do Prazo'] === val);
+              <LabelList dataKey="Fora do Prazo" position="center" fill="#ffffff" fontSize={11} fontWeight="bold" formatter={(val: any, entry: any) => {
+                const row: any = entry?.payload;
                 const total = row?.Total || 0;
-                return total > 0 ? `${Math.round((val / total) * 100)}%` : '';
+                return (val > 0 && total > 0) ? `${Math.round((val / total) * 100)}%` : '';
               }} />
               <LabelList dataKey="Total" position="right" fill="#0f172a" fontSize={11} fontWeight="bold" formatter={(val: any, entry: any) => {
-                const row: any = (data.charts?.slaComparativoData || data.kpis?.slaComparativoData || []).find((r: any) => r.Total === val);
+                const row: any = entry?.payload;
                 const dentro = row?.['No Prazo'] || 0;
                 const pct = val > 0 ? Math.round((dentro / val) * 100) : 0;
                 return `Total: ${val} • ${pct}%`;
@@ -578,7 +578,7 @@ const AbaVisaoExecutiva = ({ data, onOpenModal }: any) => (
     </div>
 
     <div className="grid grid-cols-1 gap-6 mt-6">
-      <ChartCard title="Detalhes: SLA do Chamado (Apenas Finalizados)">
+      <ChartCard title="Detalhes: SLA do Chamado (Todos os Chamados)">
         <div className="overflow-x-auto w-full max-h-[400px]">
           <table className="w-full text-xs text-left">
             <thead className="bg-slate-50 text-slate-500 uppercase sticky top-0 z-10 shadow-sm">
@@ -772,7 +772,7 @@ const AbaOperacao = ({ data, onOpenModal }: any) => {
         <KpiCard title="Pend. Mais Antiga" value={`${oldestDays} dias`} subtitle="Maior retenção" icon={Clock} colorClass="slate" />
         <KpiCard title="CD Crítico" value={cdCritico} subtitle="Maior backlog" icon={AlertCircle} colorClass="rose" />
         <KpiCard title="Etapa Crítica" value={etapaCritica} subtitle="Maior gargalo" icon={Settings} colorClass="amber" disableTruncate={true} />
-        <KpiCard onClick={() => onOpenModal('SLA DO CHAMADO')} title="SLA DO CHAMADO" value={`${percSlaChamado}%`} subtitle={`${slaChamadoDentro} de ${totalSlaChamado} finalizados em até 60 dias úteis`} icon={CheckCircle2} colorClass="emerald" />
+        <KpiCard onClick={() => onOpenModal('SLA DO CHAMADO')} title="SLA DO CHAMADO" value={`${percSlaChamado}%`} subtitle={`${slaChamadoDentro} de ${totalSlaChamado} no prazo (SLA 60 dias úteis)`} icon={CheckCircle2} colorClass="emerald" />
         <KpiCard onClick={() => onOpenModal('SLA DE PAGAMENTO')} title="SLA DE PAGAMENTO" value={`${percSlaPagamento}%`} subtitle={`${slaPagamentoDentro} de ${totalSlaPagamento} pagos em até 60 dias úteis`} icon={DollarSign} colorClass="indigo" />
       </div>
       
@@ -1085,24 +1085,144 @@ const AbaConferentes = ({ mode, data, onOpenModal }: { mode: 'geral', data: any,
   const conferentesES = data.charts?.conferentesES || [];
   const conferentesPB = data.charts?.conferentesPB || [];
 
+  // Cálculos de resumo
+  const totalAnalisados = conferentesGeral.reduce((acc: number, c: any) => acc + (Number(c.aprovados) || 0) + (Number(c.recusados) || 0), 0);
+  const totalAprovados = conferentesGeral.reduce((acc: number, c: any) => acc + (Number(c.aprovados) || 0), 0);
+  const totalRecusados = conferentesGeral.reduce((acc: number, c: any) => acc + (Number(c.recusados) || 0), 0);
+  const taxaAprovGeral = totalAnalisados > 0 ? Math.round((totalAprovados / totalAnalisados) * 100) : 0;
+  const topConferente = conferentesGeral.length ? [...conferentesGeral].sort((a: any, b: any) => ((Number(b.aprovados)||0)+(Number(b.recusados)||0)) - ((Number(a.aprovados)||0)+(Number(a.recusados)||0)))[0] : null;
+
+  // Dados ordenados por taxa de recusa
+  const conferentesRecusaData = [...conferentesGeral]
+    .map((c: any) => {
+      const ap = Number(c.aprovados) || 0;
+      const rec = Number(c.recusados) || 0;
+      const tot = ap + rec;
+      const taxaRecusa = tot > 0 ? Math.round((rec / tot) * 100) : 0;
+      return { ...c, total: tot, taxaRecusa };
+    })
+    .filter((c) => c.total >= 1)
+    .sort((a, b) => b.taxaRecusa - a.taxaRecusa)
+    .slice(0, 10);
+
   return (
     <div className="flex flex-col gap-6">
-      <div className="grid grid-cols-1 gap-6">
-        <ChartCard title="Chamados por Conferente (Geral)">
-          <div className="flex items-center gap-4 mb-2 text-xs justify-end w-full px-2">
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded bg-[#16a34a] inline-block" />
-              <span className="font-semibold text-[#898781]">Aprovados</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded bg-[#dc2626] inline-block" />
-              <span className="font-semibold text-[#898781]">Recusados</span>
-            </div>
+      {/* Cards de Resumo Executivo para Conferentes */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
+          <div className="p-3 bg-blue-50 text-blue-600 rounded-lg font-bold">
+            <UserCheck className="w-6 h-6" />
           </div>
-          <ConferenteBarChart items={conferentesGeral} limit={15} onOpenModal={onOpenModal} />
-        </ChartCard>
+          <div>
+            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Analisados</div>
+            <div className="text-xl font-bold text-slate-800">{formatNum(totalAnalisados)}</div>
+            <div className="text-[11px] text-slate-500">Volume auditado no período</div>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
+          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-lg font-bold">
+            <CheckCircle2 className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Taxa de Aprovação</div>
+            <div className="text-xl font-bold text-emerald-600">{taxaAprovGeral}%</div>
+            <div className="text-[11px] text-slate-500">{formatNum(totalAprovados)} aprovados</div>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
+          <div className="p-3 bg-indigo-50 text-indigo-600 rounded-lg font-bold">
+            <Target className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Top Conferente</div>
+            <div className="text-lg font-bold text-slate-800 truncate max-w-[150px]" title={topConferente?.name || '—'}>{topConferente?.name || '—'}</div>
+            <div className="text-[11px] text-indigo-600 font-semibold">{topConferente ? `${(Number(topConferente.aprovados)||0)+(Number(topConferente.recusados)||0)} conferências` : 'N/A'}</div>
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
+          <div className="p-3 bg-rose-50 text-rose-600 rounded-lg font-bold">
+            <XCircle className="w-6 h-6" />
+          </div>
+          <div>
+            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Recusados</div>
+            <div className="text-xl font-bold text-rose-600">{formatNum(totalRecusados)}</div>
+            <div className="text-[11px] text-slate-500">{totalAnalisados > 0 ? `${Math.round((totalRecusados/totalAnalisados)*100)}% das análises` : '0%'}</div>
+          </div>
+        </div>
       </div>
 
+      {/* Grid Principal: Leaderboard + Gráfico Geral */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        {/* Leaderboard / Ranking de Produtividade */}
+        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm lg:col-span-1 flex flex-col">
+          <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
+            <div>
+              <h3 className="font-bold text-slate-800 text-sm">Ranking de Produtividade</h3>
+              <p className="text-xs text-slate-400">Conferentes com maior volume</p>
+            </div>
+            <span className="px-2 py-1 bg-amber-50 text-amber-700 font-semibold text-[10px] rounded-md">Top Performer</span>
+          </div>
+
+          <div className="flex-1 space-y-3 overflow-auto max-h-[380px] pr-1">
+            {conferentesGeral.slice(0, 7).map((c: any, idx: number) => {
+              const ap = Number(c.aprovados) || 0;
+              const rec = Number(c.recusados) || 0;
+              const tot = ap + rec;
+              const pct = tot > 0 ? Math.round((ap / tot) * 100) : 0;
+              const rankBadge = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `#${idx + 1}`;
+
+              return (
+                <div
+                  key={c.name || idx}
+                  onClick={() => onOpenModal?.(`CONF - ${c.name}`)}
+                  className="p-2.5 rounded-lg border border-slate-100 bg-slate-50/50 hover:bg-blue-50/50 hover:border-blue-200 transition-all cursor-pointer flex flex-col gap-1.5"
+                >
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2 min-w-0">
+                      <span className="text-xs font-bold text-slate-500 w-6 text-center">{rankBadge}</span>
+                      <span className="text-xs font-bold text-slate-800 truncate" title={c.name}>{c.name}</span>
+                    </div>
+                    <span className="text-[11px] font-bold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">{tot} chamados</span>
+                  </div>
+
+                  <div className="flex items-center justify-between text-[10px] text-slate-500 pl-8">
+                    <span>Aprovados: <b className="text-emerald-600">{ap}</b> • Recusados: <b className="text-rose-600">{rec}</b></span>
+                    <span className="font-semibold text-blue-600">{pct}% aprovação</span>
+                  </div>
+
+                  {/* Progress bar */}
+                  <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden flex">
+                    <div className="bg-emerald-500 h-full" style={{ width: `${pct}%` }} />
+                    <div className="bg-rose-500 h-full" style={{ width: `${100 - pct}%` }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Gráfico Geral de Análises */}
+        <div className="lg:col-span-2">
+          <ChartCard title="Chamados por Conferente (Visão Geral)">
+            <div className="flex items-center gap-4 mb-2 text-xs justify-end w-full px-2">
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded bg-[#16a34a] inline-block" />
+                <span className="font-semibold text-[#898781]">Aprovados</span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <span className="w-3 h-3 rounded bg-[#dc2626] inline-block" />
+                <span className="font-semibold text-[#898781]">Recusados</span>
+              </div>
+            </div>
+            <ConferenteBarChart items={conferentesGeral} limit={15} onOpenModal={onOpenModal} />
+          </ChartCard>
+        </div>
+      </div>
+
+      {/* Gráficos Regionais e Auditoria de Recusas */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <ChartCard title="Chamados por Conferente (CD Espírito Santo)">
           <div className="flex items-center gap-4 mb-2 text-xs justify-end w-full px-2">
@@ -1130,6 +1250,28 @@ const AbaConferentes = ({ mode, data, onOpenModal }: { mode: 'geral', data: any,
             </div>
           </div>
           <ConferenteBarChart items={conferentesPB} limit={10} onOpenModal={onOpenModal} />
+        </ChartCard>
+      </div>
+
+      {/* Gráfico de Auditoria: Taxa de Recusa por Conferente */}
+      <div className="grid grid-cols-1 gap-6">
+        <ChartCard title="Auditoria de Qualidade: Taxa de Recusa por Conferente (%)" desc="Conferentes com maior proporção de recusas de chamados">
+          <ResponsiveContainer width="100%" height={280}>
+            <BarChart
+              layout="vertical"
+              data={conferentesRecusaData}
+              onClick={(e: any) => { if (e && e.activeLabel) onOpenModal?.(`CONF - ${e.activeLabel}`); }}
+              margin={{ top: 0, right: 50, left: 0, bottom: 0 }}
+            >
+              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
+              <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b' }} domain={[0, 100]} />
+              <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#475569', fontWeight: 600 }} width={150} />
+              <Tooltip cursor={{ fill: '#f8fafc' }} formatter={(val: any) => `${val}% recusas`} />
+              <Bar dataKey="taxaRecusa" name="Taxa de Recusa (%)" fill="#dc2626" radius={[0, 4, 4, 0]} barSize={18} style={{ cursor: 'pointer' }}>
+                <LabelList dataKey="taxaRecusa" position="right" fill="#dc2626" fontSize={11} fontWeight="bold" formatter={(val: any) => `${val}%`} />
+              </Bar>
+            </BarChart>
+          </ResponsiveContainer>
         </ChartCard>
       </div>
     </div>
@@ -1446,12 +1588,12 @@ export default function Dashboard() {
         case 'SLA DO CHAMADO':
           raw = raw.filter((d:any) => {
             const dtOpen = parseDataBR(d['Dt Abertura']);
-            const dtFin = parseDataBR(d['Dt Finalização']);
-            return dtOpen && dtFin && !isNaN(dtOpen.getTime()) && !isNaN(dtFin.getTime()) && dtOpen.getFullYear() === new Date().getFullYear();
+            return dtOpen && !isNaN(dtOpen.getTime());
           }).map((d: any) => {
             const dtOpen = parseDataBR(d['Dt Abertura']);
             const dtFin = parseDataBR(d['Dt Finalização']);
-            const diasUteis = (dtOpen && dtFin) ? getBusinessDays(dtOpen, dtFin) : 0;
+            const targetDate = dtFin && !isNaN(dtFin.getTime()) ? dtFin : new Date();
+            const diasUteis = dtOpen ? getBusinessDays(dtOpen, targetDate) : 0;
             return {
               ...d,
               'Dias Decorridos': diasUteis,
@@ -1459,14 +1601,14 @@ export default function Dashboard() {
             };
           });
           cols = ['Chamado', 'Loja', 'CD', 'Dt Abertura', 'Dt Finalização', 'Dias Decorridos', 'SLA'];
-          title = 'Detalhes: SLA do Chamado (Apenas Finalizados)';
+          title = 'Detalhes: SLA do Chamado';
           break;
         case 'SLA DE PAGAMENTO':
           raw = raw.filter((d:any) => {
             const statusChamadoRaw = (d['Status Chamado'] || '').toString().toLowerCase().trim();
             const dtOpen = parseDataBR(d['Dt Abertura']);
             const dtPag = parseDataBR(d['Dt Pagamento']);
-            return statusChamadoRaw !== 'recusado' && dtOpen && dtPag && !isNaN(dtOpen.getTime()) && !isNaN(dtPag.getTime()) && dtOpen.getFullYear() === new Date().getFullYear();
+            return statusChamadoRaw !== 'recusado' && dtOpen && dtPag && !isNaN(dtOpen.getTime()) && !isNaN(dtPag.getTime());
           }).map((d: any) => {
             const dtOpen = parseDataBR(d['Dt Abertura']);
             const dtPag = parseDataBR(d['Dt Pagamento']);
@@ -1590,7 +1732,7 @@ export default function Dashboard() {
 
 
         {selectedSubmenu === 'novo' && (
-          <NovoChamadoForm rawData={rawData} onCreated={() => { refetch(); setSelectedSubmenu(null); }} onCancel={() => setSelectedSubmenu(null)} />
+          <NovoChamadoForm rawData={rawData} onCreated={() => refetch()} />
         )}
 
         {selectedSubmenu === 'consulta' && (
