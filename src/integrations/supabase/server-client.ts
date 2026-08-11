@@ -21,14 +21,14 @@ function makeFetch(key: string): typeof fetch {
 
 export function getServerSupabase() {
   const url =
-    process.env?.SUPABASE_URL ||
-    process.env?.VITE_SUPABASE_URL ||
+    (typeof process !== 'undefined' && process.env?.SUPABASE_URL) ||
+    (typeof process !== 'undefined' && process.env?.VITE_SUPABASE_URL) ||
     "https://mmjiengtszgchogyhuon.supabase.co";
 
   const key =
-    process.env?.SUPABASE_SERVICE_ROLE_KEY ||
-    process.env?.SUPABASE_PUBLISHABLE_KEY ||
-    process.env?.VITE_SUPABASE_PUBLISHABLE_KEY ||
+    (typeof process !== 'undefined' && process.env?.SUPABASE_SERVICE_ROLE_KEY) ||
+    (typeof process !== 'undefined' && process.env?.SUPABASE_PUBLISHABLE_KEY) ||
+    (typeof process !== 'undefined' && process.env?.VITE_SUPABASE_PUBLISHABLE_KEY) ||
     "sb_publishable_XUESwKupgR1i-y5Ad7r1uQ_Jh64YHVG";
   return createClient<Database>(url, key, {
     global: { fetch: makeFetch(key) },
