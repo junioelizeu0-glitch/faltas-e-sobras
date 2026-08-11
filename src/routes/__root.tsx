@@ -36,37 +36,24 @@ function NotFoundComponent() {
 }
 
 function ErrorComponent({ error, reset }: { error: Error; reset: () => void }) {
-  console.error(error);
+  console.error("[Root Error]:", error);
   const router = useRouter();
   useEffect(() => {
     reportLovableError(error, { boundary: "tanstack_root_error_component" });
-  }, [error]);
+    const timer = setTimeout(() => {
+      try {
+        router.invalidate();
+        reset();
+      } catch {
+        window.location.replace('/');
+      }
+    }, 100);
+    return () => clearTimeout(timer);
+  }, [error, reset, router]);
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-slate-50 px-4">
-      <div className="max-w-md w-full text-center bg-white p-6 rounded-xl border border-slate-200 shadow-sm">
-        <h1 className="text-xl font-bold tracking-tight text-slate-800">
-          Não foi possível carregar o sistema
-        </h1>
-        <p className="mt-2 text-sm text-slate-500">
-          Ocorreu uma oscilação temporária de conexão ou carregamento no servidor.
-        </p>
-        {error?.message && (
-          <p className="mt-3 p-2 bg-slate-100 rounded text-xs font-mono text-slate-600 truncate max-w-full" title={error.message}>
-            {error.message}
-          </p>
-        )}
-        <div className="mt-6 flex flex-wrap justify-center gap-3">
-          <button
-            onClick={() => {
-              window.location.href = '/';
-            }}
-            className="inline-flex items-center justify-center rounded-md bg-blue-600 px-5 py-2.5 text-sm font-semibold text-white transition-colors hover:bg-blue-700 shadow-sm"
-          >
-            Carregar Sistema
-          </button>
-        </div>
-      </div>
+    <div className="flex min-h-screen items-center justify-center bg-slate-50 p-6 text-slate-500 text-sm font-medium">
+      Carregando sistema...
     </div>
   );
 }
