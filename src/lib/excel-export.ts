@@ -1,11 +1,13 @@
 import XLSX from "xlsx-js-style";
 
 /**
- * Exporta um array de objetos para .xlsx com formatação minimalista padrão:
- * - Cabeçalho em negrito + borda inferior
- * - Filtros automáticos
- * - Congelar 1ª linha
- * - Larguras auto-ajustadas pelo conteúdo (limitadas)
+ * Exporta um array de objetos para .xlsx com formatação executiva profissional:
+ * - Cabeçalho Esmeralda com texto em negrito
+ * - Borda sutil em todas as células
+ * - Destacamento visual para "Sim" / "No Prazo" (Verde) e "Não" / "Fora do Prazo" (Vermelho)
+ * - Formatação de alinhamento para números, datas e IDs
+ * - Filtros automáticos e congelamento da 1ª linha
+ * - Auto-ajuste de largura das colunas
  */
 export function exportToExcel(
   rows: Record<string, any>[],
@@ -18,7 +20,6 @@ export function exportToExcel(
 ) {
   const { filename, sheetName = "Dados", columns } = opts;
   if (!rows || rows.length === 0) {
-    // Ainda gera um arquivo vazio com cabeçalho, se houver colunas definidas
     if (!columns || columns.length === 0) return;
   }
 
@@ -32,38 +33,90 @@ export function exportToExcel(
   const aoa = [headerRow, ...dataRows];
   const ws = XLSX.utils.aoa_to_sheet(aoa);
 
-  // Estilo do cabeçalho: negrito + borda inferior + preenchimento suave
+  // Estilo do cabeçalho executivo (Emerald 700 `#047857`)
   const headerStyle = {
-    font: { bold: true, sz: 11, color: { rgb: "1E293B" } },
-    fill: { fgColor: { rgb: "F1F5F9" } },
-    alignment: { vertical: "center", horizontal: "left" },
+    font: { bold: true, sz: 11, color: { rgb: "FFFFFF" } },
+    fill: { fgColor: { rgb: "047857" } },
+    alignment: { vertical: "center", horizontal: "center", wrapText: true },
     border: {
-      bottom: { style: "medium", color: { rgb: "334155" } },
+      top: { style: "thin", color: { rgb: "065F46" } },
+      bottom: { style: "medium", color: { rgb: "065F46" } },
+      left: { style: "thin", color: { rgb: "065F46" } },
+      right: { style: "thin", color: { rgb: "065F46" } },
     },
   };
-  const cellStyle = {
+
+  const defaultCellStyle = {
     font: { sz: 10, color: { rgb: "1E293B" } },
     alignment: { vertical: "center", horizontal: "left" },
+    border: {
+      top: { style: "thin", color: { rgb: "E2E8F0" } },
+      bottom: { style: "thin", color: { rgb: "E2E8F0" } },
+      left: { style: "thin", color: { rgb: "E2E8F0" } },
+      right: { style: "thin", color: { rgb: "E2E8F0" } },
+    },
   };
 
+  const simStyle = {
+    ...defaultCellStyle,
+    font: { bold: true, sz: 10, color: { rgb: "065F46" } },
+    fill: { fgColor: { rgb: "D1FAE5" } },
+    alignment: { vertical: "center", horizontal: "center" },
+  };
+
+  const naoStyle = {
+    ...defaultCellStyle,
+    font: { bold: true, sz: 10, color: { rgb: "991B1B" } },
+    fill: { fgColor: { rgb: "FEE2E2" } },
+    alignment: { vertical: "center", horizontal: "center" },
+  };
+
+  const centerStyle = {
+    ...defaultCellStyle,
+    alignment: { vertical: "center", horizontal: "center" },
+  };
+
+  const numberStyle = {
+    ...defaultCellStyle,
+    alignment: { vertical: "center", horizontal: "right" },
+  };
+
+  // Aplica estilos aos cabeçalhos
   for (let c = 0; c < headerRow.length; c++) {
     const addr = XLSX.utils.encode_cell({ r: 0, c });
     if (ws[addr]) ws[addr].s = headerStyle;
   }
+
+  // Aplica estilos às linhas de dados
   for (let r = 1; r <= dataRows.length; r++) {
     for (let c = 0; c < headerRow.length; c++) {
       const addr = XLSX.utils.encode_cell({ r, c });
-      if (ws[addr]) ws[addr].s = cellStyle;
+      if (!ws[addr]) continue;
+
+      const rawVal = String(dataRows[r - 1][c] ?? "").trim();
+      const normVal = rawVal.toLowerCase();
+
+      if (normVal === "sim" || normVal === "no prazo" || normVal === "dentro do sla") {
+        ws[addr].s = simStyle;
+      } else if (normVal === "não" || normVal === "nao" || normVal === "fora do prazo" || normVal === "fora do sla") {
+        ws[addr].s = naoStyle;
+      } else if (typeof dataRows[r - 1][c] === "number") {
+        ws[addr].s = numberStyle;
+      } else if (["dt ", "data", "sla", "status", "chamado"].some((k) => cols[c].header.toLowerCase().includes(k))) {
+        ws[addr].s = centerStyle;
+      } else {
+        ws[addr].s = defaultCellStyle;
+      }
     }
   }
 
-  // Auto-fit de colunas (limite entre 8 e 45)
+  // Auto-fit de colunas (limite entre 12 e 50)
   const widths = cols.map((_, idx) => {
     const maxLen = Math.max(
       String(headerRow[idx] ?? "").length,
       ...dataRows.map((row) => String(row[idx] ?? "").length)
     );
-    return { wch: Math.min(Math.max(maxLen + 2, 10), 45) };
+    return { wch: Math.min(Math.max(maxLen + 4, 12), 50) };
   });
   ws["!cols"] = widths;
 

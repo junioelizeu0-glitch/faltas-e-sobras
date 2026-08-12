@@ -10,7 +10,7 @@ import {
 import {
   Filter, Brain, Calendar, MapPin, Truck, Users, Activity, FileText, 
   AlertTriangle, Clock, CheckCircle2, XCircle, DollarSign, DownloadCloud, 
-  ChevronDown, LayoutDashboard, Settings, History, Store, UserCheck, UserX, Target, AlertCircle, Banknote, ListTodo, PackageX, Search, Loader2, RefreshCcw, MoreVertical, Download,
+  ChevronDown, LayoutDashboard, Settings, History, Store, UserCheck, UserX, Target, AlertCircle, Banknote, ListTodo, PackageX, Search, Loader2, RefreshCcw, MoreVertical, Download, FileSpreadsheet,
   Plus, BarChart2, LayoutGrid, Menu, ChevronLeft, Package
 } from 'lucide-react';
 import { useDashboardData, isValidField, getTarefaAtual, isSemRetorno, parseDataBR, getBusinessDays } from '@/lib/data-processing';
@@ -35,6 +35,7 @@ import { useQuery } from '@tanstack/react-query';
 import DrillDownModal from '@/components/DrillDownModal';
 import AppShell from '@/components/AppShell';
 import { toPng } from 'html-to-image';
+import { exportToExcel } from '@/lib/excel-export';
 
 // --- MOCK DATA ---
 const evolucaoMensal = [
@@ -191,7 +192,7 @@ const KpiCard = ({ title, value, subtitle, icon: Icon, colorClass = "blue", onCl
   );
 };
 
-const ChartCard = ({ title, children, span = 1, desc, onClick }: any) => {
+const ChartCard = ({ title, children, span = 1, desc, onClick, onDownloadExcel }: any) => {
   const cardRef = useRef<HTMLDivElement>(null);
 
   const generateImageFromNode = async (originalNode: HTMLDivElement, filename: string) => {
@@ -253,6 +254,10 @@ const ChartCard = ({ title, children, span = 1, desc, onClick }: any) => {
 
   const handleExport = async (e: any) => {
     e.stopPropagation();
+    if (onDownloadExcel) {
+      onDownloadExcel();
+      return;
+    }
     if (!cardRef.current) return;
     await generateImageFromNode(cardRef.current, `grafico-${title.replace(/[^a-z0-9]/gi, '-').toLowerCase()}.png`);
   };
@@ -265,9 +270,21 @@ const ChartCard = ({ title, children, span = 1, desc, onClick }: any) => {
           {desc && <p className="text-[13px] text-slate-500 mt-1">{desc}</p>}
         </div>
         <div className="relative">
-          <button data-html2canvas-ignore onClick={handleExport} title="Baixar Gráfico (PNG)" className="p-1.5 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
-            <Download className="w-4 h-4" />
-          </button>
+          {onDownloadExcel ? (
+            <button
+              data-html2canvas-ignore
+              onClick={handleExport}
+              title="Baixar Planilha Excel (.xlsx)"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/80 text-xs font-semibold transition-all shadow-xs cursor-pointer"
+            >
+              <FileSpreadsheet className="w-3.5 h-3.5 text-emerald-600" />
+              <span>Baixar Planilha (.xlsx)</span>
+            </button>
+          ) : (
+            <button data-html2canvas-ignore onClick={handleExport} title="Baixar Gráfico (PNG)" className="p-1.5 rounded-md hover:bg-slate-100 text-slate-400 hover:text-slate-600 transition-colors">
+              <Download className="w-4 h-4" />
+            </button>
+          )}
         </div>
       </div>
       <div onClick={onClick} className="w-full min-h-[320px] relative">
@@ -578,7 +595,26 @@ const AbaVisaoExecutiva = ({ data, onOpenModal }: any) => (
     </div>
 
     <div className="grid grid-cols-1 gap-6 mt-6">
-      <ChartCard title="Detalhes: SLA do Chamado (Todos os Chamados)">
+      <ChartCard
+        title="Detalhes: SLA do Chamado (Todos os Chamados)"
+        onDownloadExcel={() => {
+          const list = data.kpis?.slaChamadoList || [];
+          const dateStr = new Date().toISOString().slice(0, 10);
+          const rows = list.map((item: any) => ({
+            "Chamado": item.chamadoId,
+            "Data Abertura": item.dtAbertura,
+            "Data Finalização": item.dtFinalizacao,
+            "Status": item.status,
+            "SLA (Dias)": item.slaDias,
+            "Dias Decorridos": item.diasDemorou,
+            "Dentro do SLA": item.dentroSla,
+          }));
+          exportToExcel(rows, {
+            filename: `SLA_do_Chamado_${dateStr}.xlsx`,
+            sheetName: "SLA do Chamado",
+          });
+        }}
+      >
         <div className="overflow-x-auto w-full max-h-[400px]">
           <table className="w-full text-xs text-left">
             <thead className="bg-slate-50 text-slate-500 uppercase sticky top-0 z-10 shadow-sm">
@@ -615,7 +651,28 @@ const AbaVisaoExecutiva = ({ data, onOpenModal }: any) => (
     </div>
 
     <div className="grid grid-cols-1 gap-6 mt-6">
-      <ChartCard title="Detalhes: SLA de Pagamento (Apenas Pagos)">
+      <ChartCard
+        title="Detalhes: SLA de Pagamento (Apenas Pagos)"
+        onDownloadExcel={() => {
+          const list = data.kpis?.slaPagamentoList || [];
+          const dateStr = new Date().toISOString().slice(0, 10);
+          const rows = list.map((item: any) => ({
+            "Chamado": item.chamadoId,
+            "NF": item.nfe,
+            "Data Abertura": item.dtAbertura,
+            "Data Pagamento": item.dtPagamento,
+            "Valor": item.valor,
+            "Status": item.status,
+            "SLA (Dias)": item.slaDias,
+            "Dias Decorridos": item.diasDemorou,
+            "Dentro do SLA": item.dentroSla,
+          }));
+          exportToExcel(rows, {
+            filename: `SLA_de_Pagamento_${dateStr}.xlsx`,
+            sheetName: "SLA de Pagamento",
+          });
+        }}
+      >
         <div className="overflow-x-auto w-full max-h-[400px]">
           <table className="w-full text-xs text-left">
             <thead className="bg-slate-50 text-slate-500 uppercase sticky top-0 z-10 shadow-sm">
