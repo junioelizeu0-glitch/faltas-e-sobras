@@ -456,46 +456,48 @@ export function useDashboardData(filters?: FilterState) {
         }
       }
 
-      // SLA dynamics (Only for finalized tickets)
-      if (dtOpen && dtFin && !isNaN(dtOpen.getTime()) && !isNaN(dtFin.getTime())) {
-        const days = (dtFin.getTime() - dtOpen.getTime()) / (1000 * 3600 * 24);
-        const slaKey = days > 60 ? "Fora da SLA" : "Dentro da SLA";
+      // SLA do Chamado (considere 60 dias úteis da abertura até a finalização, ou hoje se em aberto)
+      if (dtOpen && !isNaN(dtOpen.getTime())) {
+        const targetDate = dtFin && !isNaN(dtFin.getTime()) ? dtFin : new Date();
+        const diasUteisChamado = getBusinessDays(dtOpen, targetDate);
+        const dentroSlaBool = diasUteisChamado <= 60;
 
-        if (slaKey === "Fora da SLA") foraSlaQtd++;
+        if (dentroSlaBool) {
+          slaChamadoDentro++;
+        } else {
+          slaChamadoFora++;
+          foraSlaQtd++;
+        }
 
-        if (!slaStatusMap[slaKey]) slaStatusMap[slaKey] = 0;
-        slaStatusMap[slaKey]++;
+        const slaKey = dentroSlaBool ? "Dentro da SLA" : "Fora da SLA";
+        slaStatusMap[slaKey] = (slaStatusMap[slaKey] || 0) + 1;
 
-        // Tempo Médio Calculation
-        accTempo += days;
-        tempoCount++;
-        if (minTempo === null || days < minTempo) minTempo = days;
-        if (maxTempo === null || days > maxTempo) maxTempo = days;
+        if (dtFin && !isNaN(dtFin.getTime())) {
+          const days = (dtFin.getTime() - dtOpen.getTime()) / (1000 * 3600 * 24);
+          accTempo += days;
+          tempoCount++;
+          if (minTempo === null || days < minTempo) minTempo = days;
+          if (maxTempo === null || days > maxTempo) maxTempo = days;
+        }
+
+        slaChamadoList.push({
+          chamadoId:
+            item["Chamados"] ||
+            item["Chamado"] ||
+            item["Chave"] ||
+            item["Número"] ||
+            item["Nº"] ||
+            item["N° Chamado"] ||
+            item["Nº Chamado"] ||
+            "",
+          dtAbertura: formatarDataBR(item["Dt Abertura"]),
+          dtFinalizacao: formatarDataBR(item["Dt Finalização"]) || "Em Aberto",
+          status: statusChamado || "",
+          slaDias: 60,
+          diasDemorou: diasUteisChamado,
+          dentroSla: dentroSlaBool ? "Sim" : "Não",
+        });
       }
-
-      // SLA do Chamado (considere TODOS os chamados da lista filtrada)
-      const targetDate = dtFin && !isNaN(dtFin.getTime()) ? dtFin : new Date();
-      const diasUteisChamado = dtOpen && !isNaN(dtOpen.getTime()) ? getBusinessDays(dtOpen, targetDate) : 0;
-      if (diasUteisChamado <= 60) slaChamadoDentro++;
-      else slaChamadoFora++;
-
-      slaChamadoList.push({
-        chamadoId:
-          item["Chamados"] ||
-          item["Chamado"] ||
-          item["Chave"] ||
-          item["Número"] ||
-          item["Nº"] ||
-          item["N° Chamado"] ||
-          item["Nº Chamado"] ||
-          "",
-        dtAbertura: formatarDataBR(item["Dt Abertura"]),
-        dtFinalizacao: formatarDataBR(item["Dt Finalização"]) || "Em Aberto",
-        status: statusChamado || "",
-        slaDias: 60,
-        diasDemorou: diasUteisChamado,
-        dentroSla: diasUteisChamado <= 60 ? "Sim" : "Não",
-      });
 
       // SLA de Pagamento (chamados com data de abertura e pagamento válidas, exceto recusados)
       if (
@@ -817,8 +819,8 @@ export function useDashboardData(filters?: FilterState) {
         ? Math.trunc((totalRecusadosQtd / filteredData.length) * 1000) / 10
         : 0,
       foraSla: foraSlaQtd,
-      slaCumprido: filteredData.length
-        ? Math.round(((filteredData.length - foraSlaQtd) / filteredData.length) * 100)
+      slaCumprido: (slaChamadoDentro + slaChamadoFora) > 0
+        ? Math.round((slaChamadoDentro / (slaChamadoDentro + slaChamadoFora)) * 100)
         : 0,
       valAprovado: totalAprovado,
       valPago: totalPago,

@@ -397,7 +397,7 @@ const AbaVisaoExecutiva = ({ data, onOpenModal }: any) => (
       <KpiCard onClick={() => onOpenModal('VALOR PENDENTE')} title="Valor Pendente" value={formatCurrency(data.kpis?.valPendente || 0)} subtitle="Aguardando fin." icon={AlertCircle} colorClass="amber" />
       <KpiCard title="Taxa Aprovação" value={formatTaxa(data.kpis?.aprovados || 0, data.kpis?.totalChamados || 0)} subtitle="Efetividade (%)" icon={Activity} colorClass="indigo" />
       <KpiCard title="Taxa Recusa" value={formatTaxa(data.kpis?.recusados || 0, data.kpis?.totalChamados || 0)} subtitle="Improcedentes (%)" icon={XCircle} colorClass="rose" />
-      <KpiCard title="SLA Cumprido" value={`${data.kpis?.slaCumprido || 0}%`} subtitle="Chamados no prazo" icon={CheckCircle2} colorClass="emerald" />
+      <KpiCard onClick={() => onOpenModal('SLA DO CHAMADO')} title="SLA Cumprido" value={`${data.kpis?.slaCumprido || 0}%`} subtitle="Chamados no prazo (60d úteis)" icon={CheckCircle2} colorClass="emerald" />
       <KpiCard title="Ticket Médio" value={formatCurrency(data.kpis?.ticketMedio || 0)} subtitle="Por chamado aprovado" icon={Target} colorClass="slate" />
     </div>
 
