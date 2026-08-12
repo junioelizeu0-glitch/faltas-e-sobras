@@ -11,9 +11,9 @@ import {
   Filter, Brain, Calendar, MapPin, Truck, Users, Activity, FileText, 
   AlertTriangle, Clock, CheckCircle2, XCircle, DollarSign, DownloadCloud, 
   ChevronDown, LayoutDashboard, Settings, History, Store, UserCheck, UserX, Target, AlertCircle, Banknote, ListTodo, PackageX, Search, Loader2, RefreshCcw, MoreVertical, Download, FileSpreadsheet,
-  Plus, BarChart2, LayoutGrid, Menu, ChevronLeft, Package
+  Plus, BarChart2, LayoutGrid, Menu, ChevronLeft, ChevronRight, Package
 } from 'lucide-react';
-import { useDashboardData, isValidField, getTarefaAtual, isSemRetorno, parseDataBR, getBusinessDays } from '@/lib/data-processing';
+import { useDashboardData, isValidField, getTarefaAtual, isSemRetorno, parseDataBR, getBusinessDays, isMotivoErroConferente } from '@/lib/data-processing';
 import NovoChamadoForm from '@/components/NovoChamadoForm';
 import PainelAbertos from '@/components/PainelAbertos';
 import ConsultaChamados from '@/components/ConsultaChamados';
@@ -1244,202 +1244,354 @@ const ConferenteBarChart = ({ items, limit, onOpenModal }: { items: any[]; limit
   );
 };
 
-const AbaConferentes = ({ mode, data, onOpenModal }: { mode: 'geral', data: any, onOpenModal?: any }) => {
-  const conferentesGeral = data.charts?.conferentesGeral || [];
-  const conferentesES = data.charts?.conferentesES || [];
-  const conferentesPB = data.charts?.conferentesPB || [];
+const PodioRankingConferentes = ({ data, onOpenModal }: { data: any; onOpenModal?: any }) => {
+  const [statusFilter, setStatusFilter] = useState<'aprovados' | 'recusados' | 'todos'>('aprovados');
+  const [cdFilter, setCdFilter] = useState<'geral' | 'es' | 'pb'>('geral');
+  const [searchQuery, setSearchQuery] = useState('');
 
-  // Cálculos de resumo
-  const totalAnalisados = conferentesGeral.reduce((acc: number, c: any) => acc + (Number(c.aprovados) || 0) + (Number(c.recusados) || 0), 0);
-  const totalAprovados = conferentesGeral.reduce((acc: number, c: any) => acc + (Number(c.aprovados) || 0), 0);
-  const totalRecusados = conferentesGeral.reduce((acc: number, c: any) => acc + (Number(c.recusados) || 0), 0);
-  const taxaAprovGeral = totalAnalisados > 0 ? Math.round((totalAprovados / totalAnalisados) * 100) : 0;
-  const topConferente = conferentesGeral.length ? [...conferentesGeral].sort((a: any, b: any) => ((Number(b.aprovados)||0)+(Number(b.recusados)||0)) - ((Number(a.aprovados)||0)+(Number(a.recusados)||0)))[0] : null;
+  // 1. Obter lista base de conferentes pelo CD selecionado
+  const baseList = useMemo(() => {
+    if (cdFilter === 'es') return data.charts?.conferentesES || [];
+    if (cdFilter === 'pb') return data.charts?.conferentesPB || [];
+    return data.charts?.conferentesGeral || [];
+  }, [cdFilter, data]);
 
-  // Dados ordenados por taxa de recusa
-  const conferentesRecusaData = [...conferentesGeral]
-    .map((c: any) => {
-      const ap = Number(c.aprovados) || 0;
-      const rec = Number(c.recusados) || 0;
-      const tot = ap + rec;
-      const taxaRecusa = tot > 0 ? Math.round((rec / tot) * 100) : 0;
-      return { ...c, total: tot, taxaRecusa };
-    })
-    .filter((c) => c.total >= 1)
-    .sort((a, b) => b.taxaRecusa - a.taxaRecusa)
-    .slice(0, 10);
+  // 2. Mapear e calcular quantidades de acordo com o status selecionado
+  const rankedConferentes = useMemo(() => {
+    return (baseList || [])
+      .map((c: any) => {
+        let qtd = 0;
+        let subtitulo = '';
+
+        if (statusFilter === 'aprovados') {
+          // Nos chamados APROVADOS: apenas motivos específicos de erro de conferência
+          qtd = Number(c.aprovadosMotivoConferente) || 0;
+          subtitulo = 'Erros de Conferência';
+        } else if (statusFilter === 'recusados') {
+          // Nos chamados RECUSADOS: chamados recusados/improcedentes
+          qtd = Number(c.recusados) || 0;
+          subtitulo = 'Chamados Recusados';
+        } else {
+          // TODOS
+          qtd = (Number(c.aprovados) || 0) + (Number(c.recusados) || 0);
+          subtitulo = 'Total Auditados';
+        }
+
+        return {
+          ...c,
+          qtd,
+          subtitulo,
+          valAprovadoMotivo: Number(c.valAprovadoMotivo) || 0,
+        };
+      })
+      .filter((c: any) => {
+        if (c.qtd <= 0) return false;
+        if (searchQuery.trim()) {
+          return c.name.toLowerCase().includes(searchQuery.toLowerCase());
+        }
+        return true;
+      })
+      .sort((a: any, b: any) => b.qtd - a.qtd);
+  }, [baseList, statusFilter, searchQuery]);
+
+  // Total da métrica atual
+  const totalQtdRanking = useMemo(() => {
+    return rankedConferentes.reduce((acc: number, item: any) => acc + item.qtd, 0);
+  }, [rankedConferentes]);
+
+  // Pódio: 1º, 2º e 3º Lugar
+  const first = rankedConferentes[0] || null;
+  const second = rankedConferentes[1] || null;
+  const third = rankedConferentes[2] || null;
+  const leaderboard = rankedConferentes.slice(3);
+
+  const handleConferenteClick = (confName: string) => {
+    if (!onOpenModal) return;
+    if (statusFilter === 'aprovados') {
+      onOpenModal(`CONF_APROVADOS - ${confName}`);
+    } else if (statusFilter === 'recusados') {
+      onOpenModal(`CONF_RECUSADOS - ${confName}`);
+    } else {
+      onOpenModal(`CONF - ${confName}`);
+    }
+  };
 
   return (
     <div className="flex flex-col gap-6">
-      {/* Cards de Resumo Executivo para Conferentes */}
-      <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
-          <div className="p-3 bg-blue-50 text-blue-600 rounded-lg font-bold">
-            <UserCheck className="w-6 h-6" />
-          </div>
-          <div>
-            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Analisados</div>
-            <div className="text-xl font-bold text-slate-800">{formatNum(totalAnalisados)}</div>
-            <div className="text-[11px] text-slate-500">Volume auditado no período</div>
-          </div>
+      {/* BARRA DE CONTROLES E FILTROS */}
+      <div className="bg-white p-5 rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-wrap items-center justify-between gap-4">
+        {/* Filtro de Status (Aprovados vs Recusados vs Todos) */}
+        <div className="flex items-center gap-1.5 bg-slate-100/80 p-1 rounded-xl border border-slate-200/60">
+          <button
+            onClick={() => setStatusFilter('aprovados')}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              statusFilter === 'aprovados'
+                ? 'bg-emerald-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+            }`}
+          >
+            <CheckCircle2 className="w-3.5 h-3.5" />
+            <span>Aprovados (Erros de Conferência)</span>
+          </button>
+          <button
+            onClick={() => setStatusFilter('recusados')}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              statusFilter === 'recusados'
+                ? 'bg-rose-600 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+            }`}
+          >
+            <XCircle className="w-3.5 h-3.5" />
+            <span>Recusados (Improcedentes)</span>
+          </button>
+          <button
+            onClick={() => setStatusFilter('todos')}
+            className={`flex items-center gap-2 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              statusFilter === 'todos'
+                ? 'bg-slate-800 text-white shadow-xs'
+                : 'text-slate-600 hover:text-slate-900 hover:bg-slate-200/50'
+            }`}
+          >
+            <UserCheck className="w-3.5 h-3.5" />
+            <span>Todos</span>
+          </button>
         </div>
 
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
-          <div className="p-3 bg-emerald-50 text-emerald-600 rounded-lg font-bold">
-            <CheckCircle2 className="w-6 h-6" />
-          </div>
-          <div>
-            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Taxa de Aprovação</div>
-            <div className="text-xl font-bold text-emerald-600">{taxaAprovGeral}%</div>
-            <div className="text-[11px] text-slate-500">{formatNum(totalAprovados)} aprovados</div>
-          </div>
+        {/* Filtro de CD */}
+        <div className="flex items-center gap-1.5 bg-slate-100/80 p-1 rounded-xl border border-slate-200/60">
+          <button
+            onClick={() => setCdFilter('geral')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              cdFilter === 'geral'
+                ? 'bg-white text-emerald-800 shadow-xs border border-slate-200'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            Visão Geral
+          </button>
+          <button
+            onClick={() => setCdFilter('es')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              cdFilter === 'es'
+                ? 'bg-white text-emerald-800 shadow-xs border border-slate-200'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            CD Espírito Santo
+          </button>
+          <button
+            onClick={() => setCdFilter('pb')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              cdFilter === 'pb'
+                ? 'bg-white text-emerald-800 shadow-xs border border-slate-200'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            CD Paraíba
+          </button>
         </div>
 
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
-          <div className="p-3 bg-indigo-50 text-indigo-600 rounded-lg font-bold">
-            <Target className="w-6 h-6" />
-          </div>
-          <div>
-            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Top Conferente</div>
-            <div className="text-lg font-bold text-slate-800 truncate max-w-[150px]" title={topConferente?.name || '—'}>{topConferente?.name || '—'}</div>
-            <div className="text-[11px] text-indigo-600 font-semibold">{topConferente ? `${(Number(topConferente.aprovados)||0)+(Number(topConferente.recusados)||0)} conferências` : 'N/A'}</div>
-          </div>
-        </div>
-
-        <div className="bg-white p-4 rounded-xl border border-slate-200 shadow-sm flex items-center gap-3">
-          <div className="p-3 bg-rose-50 text-rose-600 rounded-lg font-bold">
-            <XCircle className="w-6 h-6" />
-          </div>
-          <div>
-            <div className="text-xs font-semibold text-slate-400 uppercase tracking-wider">Total Recusados</div>
-            <div className="text-xl font-bold text-rose-600">{formatNum(totalRecusados)}</div>
-            <div className="text-[11px] text-slate-500">{totalAnalisados > 0 ? `${Math.round((totalRecusados/totalAnalisados)*100)}% das análises` : '0%'}</div>
-          </div>
+        {/* Campo de Busca */}
+        <div className="relative min-w-[220px]">
+          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            type="text"
+            placeholder="Buscar conferente..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="w-full pl-9 pr-3 py-1.5 bg-slate-50 border border-slate-200 rounded-xl text-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none"
+          />
         </div>
       </div>
 
-      {/* Grid Principal: Leaderboard + Gráfico Geral */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Leaderboard / Ranking de Produtividade */}
-        <div className="bg-white p-5 rounded-xl border border-slate-200 shadow-sm lg:col-span-1 flex flex-col">
-          <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-            <div>
-              <h3 className="font-bold text-slate-800 text-sm">Ranking de Produtividade</h3>
-              <p className="text-xs text-slate-400">Conferentes com maior volume</p>
-            </div>
-            <span className="px-2 py-1 bg-amber-50 text-amber-700 font-semibold text-[10px] rounded-md">Top Performer</span>
+      {/* REGRAS EXPLICATIVAS DO FILTRO SELECIONADO */}
+      {statusFilter === 'aprovados' && (
+        <div className="bg-emerald-50/70 border border-emerald-200/80 rounded-xl p-3.5 text-xs text-emerald-900 flex items-start gap-2.5">
+          <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+          <div>
+            <span className="font-bold">Regra de Filtro (Chamados Aprovados):</span>
+            <span className="ml-1 text-emerald-800">
+              Contabilizando apenas os chamados aprovados com motivos de erro de conferência (<i>"Conferente não inseriu o produto"</i>, <i>"Conferente não estava na mesa"</i>, <i>"Etiqueta diferente do produto físico"</i>, <i>"Mesma ref / numeração diferente"</i>).
+            </span>
           </div>
+        </div>
+      )}
 
-          <div className="flex-1 space-y-3 overflow-auto max-h-[380px] pr-1">
-            {conferentesGeral.slice(0, 7).map((c: any, idx: number) => {
-              const ap = Number(c.aprovados) || 0;
-              const rec = Number(c.recusados) || 0;
-              const tot = ap + rec;
-              const pct = tot > 0 ? Math.round((ap / tot) * 100) : 0;
-              const rankBadge = idx === 0 ? "🥇" : idx === 1 ? "🥈" : idx === 2 ? "🥉" : `#${idx + 1}`;
+      {/* CARDS DE PÓDIO VISUAL */}
+      <div className="bg-gradient-to-b from-slate-50/80 to-slate-100/60 p-6 rounded-2xl border border-slate-200/80 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+        <div className="flex items-center justify-between mb-6">
+          <div>
+            <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+              🏆 Ranking de Conferentes (Pódio)
+            </h3>
+            <p className="text-xs text-slate-500">
+              Conferentes com maior volume no critério selecionado
+            </p>
+          </div>
+          <div className="px-3 py-1 bg-white rounded-full border border-slate-200 text-xs font-semibold text-slate-700 shadow-2xs">
+            Total no Ranking: <span className="font-extrabold text-emerald-700">{totalQtdRanking}</span>
+          </div>
+        </div>
+
+        {rankedConferentes.length === 0 ? (
+          <div className="flex items-center justify-center h-48 text-sm text-slate-400 font-medium">
+            Nenhum conferente encontrado para o filtro selecionado.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 items-end max-w-4xl mx-auto pt-4 pb-2">
+            {/* 🥈 2º LUGAR (ESQUERDA) */}
+            <div className="order-2 md:order-1 flex flex-col items-center">
+              {second ? (
+                <div
+                  onClick={() => handleConferenteClick(second.name)}
+                  className="w-full bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 flex flex-col items-center hover:border-slate-400 hover:shadow-md transition-all cursor-pointer group relative pt-7"
+                >
+                  <span className="absolute -top-3.5 px-3 py-0.5 bg-gradient-to-r from-slate-400 to-slate-500 text-white font-black text-xs rounded-full shadow-xs uppercase tracking-wider flex items-center gap-1">
+                    🥈 2º Lugar
+                  </span>
+                  <div className="w-14 h-14 rounded-full bg-slate-100 border-2 border-slate-300 text-slate-700 font-black text-lg flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform mb-2">
+                    {second.name.slice(0, 2).toUpperCase()}
+                  </div>
+                  <h4 className="font-bold text-slate-800 text-sm text-center truncate max-w-[160px]" title={second.name}>
+                    {second.name}
+                  </h4>
+                  <p className="text-[11px] text-slate-500 mb-3">{second.subtitulo}</p>
+                  
+                  <div className="w-full bg-slate-100/80 rounded-xl p-2.5 flex flex-col items-center">
+                    <span className="text-xl font-extrabold text-slate-800">{second.qtd}</span>
+                    <span className="text-[10px] text-slate-500 font-medium">chamados ({totalQtdRanking > 0 ? Math.round((second.qtd / totalQtdRanking) * 100) : 0}%)</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="w-full h-44 bg-slate-100/50 rounded-2xl border border-dashed border-slate-200 flex items-center justify-center text-xs text-slate-400">
+                  Sem 2º Lugar
+                </div>
+              )}
+              <div className="w-full h-16 bg-gradient-to-t from-slate-200/80 to-slate-100 rounded-b-2xl mt-1 border-t border-slate-300/60 flex items-center justify-center font-black text-slate-400 text-sm">
+                2º
+              </div>
+            </div>
+
+            {/* 🥇 1º LUGAR (CENTRO - MAIS ALTO) */}
+            <div className="order-1 md:order-2 flex flex-col items-center">
+              {first ? (
+                <div
+                  onClick={() => handleConferenteClick(first.name)}
+                  className="w-full bg-gradient-to-b from-amber-50/90 via-white to-emerald-50/40 rounded-2xl border-2 border-amber-400/80 shadow-md p-5 flex flex-col items-center hover:border-amber-500 hover:shadow-lg transition-all cursor-pointer group relative pt-8"
+                >
+                  <span className="absolute -top-4 px-4 py-1 bg-gradient-to-r from-amber-500 via-yellow-500 to-amber-500 text-white font-black text-xs rounded-full shadow-md uppercase tracking-wider flex items-center gap-1">
+                    👑 1º LUGAR
+                  </span>
+                  <div className="w-16 h-16 rounded-full bg-gradient-to-tr from-amber-400 to-yellow-300 text-amber-950 font-black text-xl flex items-center justify-center shadow-md ring-4 ring-amber-300/50 group-hover:scale-105 transition-transform mb-2">
+                    {first.name.slice(0, 2).toUpperCase()}
+                  </div>
+                  <h4 className="font-extrabold text-slate-900 text-base text-center truncate max-w-[180px]" title={first.name}>
+                    {first.name}
+                  </h4>
+                  <p className="text-[11px] text-amber-700 font-semibold mb-3">{first.subtitulo}</p>
+                  
+                  <div className="w-full bg-emerald-600 text-white rounded-xl p-3 flex flex-col items-center shadow-xs">
+                    <span className="text-2xl font-black">{first.qtd}</span>
+                    <span className="text-[11px] text-emerald-100 font-bold">chamados ({totalQtdRanking > 0 ? Math.round((first.qtd / totalQtdRanking) * 100) : 0}%)</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="w-full h-52 bg-slate-100/50 rounded-2xl border border-dashed border-slate-200 flex items-center justify-center text-xs text-slate-400">
+                  Sem 1º Lugar
+                </div>
+              )}
+              <div className="w-full h-24 bg-gradient-to-t from-amber-200/80 to-amber-100 rounded-b-2xl mt-1 border-t border-amber-300 flex items-center justify-center font-black text-amber-700/80 text-lg">
+                1º
+              </div>
+            </div>
+
+            {/* 🥉 3º LUGAR (DIREITA) */}
+            <div className="order-3 flex flex-col items-center">
+              {third ? (
+                <div
+                  onClick={() => handleConferenteClick(third.name)}
+                  className="w-full bg-white rounded-2xl border border-slate-200/90 shadow-sm p-4 flex flex-col items-center hover:border-amber-600/50 hover:shadow-md transition-all cursor-pointer group relative pt-7"
+                >
+                  <span className="absolute -top-3.5 px-3 py-0.5 bg-gradient-to-r from-amber-700 to-amber-800 text-white font-black text-xs rounded-full shadow-xs uppercase tracking-wider flex items-center gap-1">
+                    🥉 3º Lugar
+                  </span>
+                  <div className="w-14 h-14 rounded-full bg-amber-100 text-amber-900 font-black text-lg flex items-center justify-center shadow-xs group-hover:scale-105 transition-transform mb-2">
+                    {third.name.slice(0, 2).toUpperCase()}
+                  </div>
+                  <h4 className="font-bold text-slate-800 text-sm text-center truncate max-w-[160px]" title={third.name}>
+                    {third.name}
+                  </h4>
+                  <p className="text-[11px] text-slate-500 mb-3">{third.subtitulo}</p>
+                  
+                  <div className="w-full bg-slate-100/80 rounded-xl p-2.5 flex flex-col items-center">
+                    <span className="text-xl font-extrabold text-slate-800">{third.qtd}</span>
+                    <span className="text-[10px] text-slate-500 font-medium">chamados ({totalQtdRanking > 0 ? Math.round((third.qtd / totalQtdRanking) * 100) : 0}%)</span>
+                  </div>
+                </div>
+              ) : (
+                <div className="w-full h-44 bg-slate-100/50 rounded-2xl border border-dashed border-slate-200 flex items-center justify-center text-xs text-slate-400">
+                  Sem 3º Lugar
+                </div>
+              )}
+              <div className="w-full h-12 bg-gradient-to-t from-amber-100/80 to-slate-100 rounded-b-2xl mt-1 border-t border-amber-200 flex items-center justify-center font-black text-amber-800/60 text-sm">
+                3º
+              </div>
+            </div>
+          </div>
+        )}
+      </div>
+
+      {/* LEADERBOARD DAS DEMAIS POSIÇÕES (4º LUGAR EM DIANTE) */}
+      {leaderboard.length > 0 && (
+        <div className="bg-white rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] p-5">
+          <h4 className="text-sm font-bold text-slate-800 mb-3 pb-2 border-b border-slate-100 flex items-center justify-between">
+            <span>Demais Conferentes no Ranking</span>
+            <span className="text-xs font-normal text-slate-400">Clique para ver os chamados</span>
+          </h4>
+          <div className="divide-y divide-slate-100">
+            {leaderboard.map((item: any, idx: number) => {
+              const pos = idx + 4;
+              const maxQtd = first?.qtd || 1;
+              const pctBar = Math.min(100, Math.round((item.qtd / maxQtd) * 100));
 
               return (
                 <div
-                  key={c.name || idx}
-                  onClick={() => onOpenModal?.(`CONF - ${c.name}`)}
-                  className="p-2.5 rounded-lg border border-slate-100 bg-slate-50/50 hover:bg-blue-50/50 hover:border-blue-200 transition-all cursor-pointer flex flex-col gap-1.5"
+                  key={item.name || idx}
+                  onClick={() => handleConferenteClick(item.name)}
+                  className="py-3 px-3 hover:bg-slate-50 rounded-xl transition-colors cursor-pointer flex items-center justify-between gap-4 group"
                 >
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2 min-w-0">
-                      <span className="text-xs font-bold text-slate-500 w-6 text-center">{rankBadge}</span>
-                      <span className="text-xs font-bold text-slate-800 truncate" title={c.name}>{c.name}</span>
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <span className="w-7 h-7 rounded-lg bg-slate-100 font-bold text-slate-600 text-xs flex items-center justify-center shrink-0">
+                      #{pos}
+                    </span>
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold text-slate-800 text-xs truncate group-hover:text-emerald-700 transition-colors">
+                        {item.name}
+                      </p>
+                      <div className="w-full max-w-[200px] h-1.5 bg-slate-100 rounded-full mt-1 overflow-hidden">
+                        <div className="h-full bg-emerald-500 rounded-full" style={{ width: `${pctBar}%` }} />
+                      </div>
                     </div>
-                    <span className="text-[11px] font-bold text-slate-700 bg-white px-2 py-0.5 rounded border border-slate-200">{tot} chamados</span>
                   </div>
 
-                  <div className="flex items-center justify-between text-[10px] text-slate-500 pl-8">
-                    <span>Aprovados: <b className="text-emerald-600">{ap}</b> • Recusados: <b className="text-rose-600">{rec}</b></span>
-                    <span className="font-semibold text-blue-600">{pct}% aprovação</span>
-                  </div>
-
-                  {/* Progress bar */}
-                  <div className="w-full bg-slate-200 rounded-full h-1.5 overflow-hidden flex">
-                    <div className="bg-emerald-500 h-full" style={{ width: `${pct}%` }} />
-                    <div className="bg-rose-500 h-full" style={{ width: `${100 - pct}%` }} />
+                  <div className="flex items-center gap-3 shrink-0">
+                    <span className="px-3 py-1 bg-emerald-50 text-emerald-800 border border-emerald-200/60 rounded-full font-extrabold text-xs">
+                      {item.qtd} chamados
+                    </span>
+                    <ChevronRight className="w-4 h-4 text-slate-300 group-hover:text-emerald-600 transition-colors" />
                   </div>
                 </div>
               );
             })}
           </div>
         </div>
-
-        {/* Gráfico Geral de Análises */}
-        <div className="lg:col-span-2">
-          <ChartCard title="Chamados por Conferente (Visão Geral)">
-            <div className="flex items-center gap-4 mb-2 text-xs justify-end w-full px-2">
-              <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded bg-[#16a34a] inline-block" />
-                <span className="font-semibold text-[#898781]">Aprovados</span>
-              </div>
-              <div className="flex items-center gap-1.5">
-                <span className="w-3 h-3 rounded bg-[#dc2626] inline-block" />
-                <span className="font-semibold text-[#898781]">Recusados</span>
-              </div>
-            </div>
-            <ConferenteBarChart items={conferentesGeral} limit={15} onOpenModal={onOpenModal} />
-          </ChartCard>
-        </div>
-      </div>
-
-      {/* Gráficos Regionais e Auditoria de Recusas */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <ChartCard title="Chamados por Conferente (CD Espírito Santo)">
-          <div className="flex items-center gap-4 mb-2 text-xs justify-end w-full px-2">
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded bg-[#16a34a] inline-block" />
-              <span className="font-semibold text-[#898781]">Aprovados</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded bg-[#dc2626] inline-block" />
-              <span className="font-semibold text-[#898781]">Recusados</span>
-            </div>
-          </div>
-          <ConferenteBarChart items={conferentesES} limit={10} onOpenModal={onOpenModal} />
-        </ChartCard>
-
-        <ChartCard title="Chamados por Conferente (CD Paraíba)">
-          <div className="flex items-center gap-4 mb-2 text-xs justify-end w-full px-2">
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded bg-[#16a34a] inline-block" />
-              <span className="font-semibold text-[#898781]">Aprovados</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded bg-[#dc2626] inline-block" />
-              <span className="font-semibold text-[#898781]">Recusados</span>
-            </div>
-          </div>
-          <ConferenteBarChart items={conferentesPB} limit={10} onOpenModal={onOpenModal} />
-        </ChartCard>
-      </div>
-
-      {/* Gráfico de Auditoria: Taxa de Recusa por Conferente */}
-      <div className="grid grid-cols-1 gap-6">
-        <ChartCard title="Auditoria de Qualidade: Taxa de Recusa por Conferente (%)" desc="Conferentes com maior proporção de recusas de chamados">
-          <ResponsiveContainer width="100%" height={280}>
-            <BarChart
-              layout="vertical"
-              data={conferentesRecusaData}
-              onClick={(e: any) => { if (e && e.activeLabel) onOpenModal?.(`CONF - ${e.activeLabel}`); }}
-              margin={{ top: 0, right: 50, left: 0, bottom: 0 }}
-            >
-              <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
-              <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b' }} domain={[0, 100]} />
-              <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#475569', fontWeight: 600 }} width={150} />
-              <Tooltip cursor={{ fill: '#f8fafc' }} formatter={(val: any) => `${val}% recusas`} />
-              <Bar dataKey="taxaRecusa" name="Taxa de Recusa (%)" fill="#dc2626" radius={[0, 4, 4, 0]} barSize={18} style={{ cursor: 'pointer' }}>
-                <LabelList dataKey="taxaRecusa" position="right" fill="#dc2626" fontSize={11} fontWeight="bold" formatter={(val: any) => `${val}%`} />
-              </Bar>
-            </BarChart>
-          </ResponsiveContainer>
-        </ChartCard>
-      </div>
+      )}
     </div>
   );
+};
+
+const AbaConferentes = ({ mode, data, onOpenModal }: { mode: 'geral'; data: any; onOpenModal?: any }) => {
+  return <PodioRankingConferentes data={data} onOpenModal={onOpenModal} />;
 };
 
 // --- MAIN COMPONENT ---
@@ -1667,15 +1819,31 @@ export default function Dashboard() {
       });
       cols = ['Chamado', 'CD', 'NF', 'Valor', 'Tarefa Atual', 'Status', 'Dt Abertura'];
       title = `Detalhamento - Transportadora: ${transpInfo}`;
+    } else if (type.startsWith('CONF_APROVADOS - ')) {
+      const confInfo = type.replace('CONF_APROVADOS - ', '');
+      raw = raw.filter((d: any) => {
+        if ((d['Conferente'] || '') !== confInfo) return false;
+        if (d['Status Chamado'] !== 'Aprovado') return false;
+        return isMotivoErroConferente(d['Motivo'] || d['motivo']);
+      });
+      cols = ['Chamado', 'Loja', 'CD', 'Motivo', 'Valor', 'Tarefa Atual', 'Status', 'Dt Abertura'];
+      title = `Detalhamento - Erros de Conferência: ${confInfo}`;
+    } else if (type.startsWith('CONF_RECUSADOS - ')) {
+      const confInfo = type.replace('CONF_RECUSADOS - ', '');
+      raw = raw.filter((d: any) => {
+        if ((d['Conferente'] || '') !== confInfo) return false;
+        return d['Status Chamado'] === 'Recusado';
+      });
+      cols = ['Chamado', 'Loja', 'CD', 'Motivo', 'Valor', 'Tarefa Atual', 'Status', 'Dt Abertura'];
+      title = `Detalhamento - Chamados Recusados: ${confInfo}`;
     } else if (type.startsWith('CONF - ')) {
       const confInfo = type.replace('CONF - ', '');
-      raw = raw.filter((d:any) => {
-        if ((d['Conferente']||'') !== confInfo) return false;
+      raw = raw.filter((d: any) => {
+        if ((d['Conferente'] || '') !== confInfo) return false;
         const st = d['Status Chamado'];
-        if (st !== 'Aprovado' && st !== 'Recusado') return false;
-        return true;
+        return st === 'Aprovado' || st === 'Recusado';
       });
-      cols = ['Chamado', 'CD', 'NF', 'Valor', 'Tarefa Atual', 'Status', 'Dt Abertura'];
+      cols = ['Chamado', 'Loja', 'CD', 'Motivo', 'Valor', 'Tarefa Atual', 'Status', 'Dt Abertura'];
       title = `Detalhamento - Conferente: ${confInfo}`;
     } else if (type.startsWith('VALORES TOP CDS - ')) {
       const cdInfo = type.replace('VALORES TOP CDS - ', '');

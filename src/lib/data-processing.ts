@@ -13,6 +13,23 @@ export type FilterState = {
   tipo: string;
 };
 
+export function isMotivoErroConferente(motivoRaw: any): boolean {
+  if (!motivoRaw) return false;
+  const m = String(motivoRaw).toUpperCase().trim();
+  return (
+    m.includes("INSERIU") ||
+    m.includes("MESA") ||
+    m.includes("ETIQUETA DIFERENTE") ||
+    m.includes("TIQUERTA DIFERENTE") ||
+    m.includes("PRODUTO FISICO DIFERENTE") ||
+    m.includes("MESMA REF") ||
+    m.includes("NUMERAÇÃO DIFERENTE") ||
+    m.includes("NUMERACAO DIFERENTE") ||
+    m.includes("NUMERAÇÃO TROCADA") ||
+    m.includes("NUMERACAO TROCADA")
+  );
+}
+
 export function parseDataBR(dataStr: any): Date | null {
   if (!dataStr) return null;
   if (dataStr instanceof Date) {
@@ -614,10 +631,27 @@ export function useDashboardData(filters?: FilterState) {
 
       // Conferentes
       if (isValidField(conf)) {
+        const motivoVal = item["Motivo"] || item["motivo"];
+        const isErroConf = isMotivoErroConferente(motivoVal);
+
         if (!confMap[conf])
-          confMap[conf] = { name: conf, analisados: 0, aprovados: 0, recusados: 0, score: 0 };
+          confMap[conf] = {
+            name: conf,
+            analisados: 0,
+            aprovados: 0,
+            aprovadosMotivoConferente: 0,
+            recusados: 0,
+            score: 0,
+            valAprovadoMotivo: 0,
+          };
         confMap[conf].analisados++;
-        if (statusChamado === "Aprovado") confMap[conf].aprovados++;
+        if (statusChamado === "Aprovado") {
+          confMap[conf].aprovados++;
+          if (isErroConf) {
+            confMap[conf].aprovadosMotivoConferente++;
+            confMap[conf].valAprovadoMotivo += val || 0;
+          }
+        }
         if (statusChamado === "Recusado") confMap[conf].recusados++;
 
         const cdStr = String(cd).toUpperCase();
@@ -626,16 +660,46 @@ export function useDashboardData(filters?: FilterState) {
           cdStr.includes("ESPIRITO SANTO") ||
           cdStr.includes("ESPÍRITO SANTO")
         ) {
-          if (!confMapES[conf]) confMapES[conf] = { name: conf, aprovados: 0, recusados: 0 };
-          if (statusChamado === "Aprovado") confMapES[conf].aprovados++;
+          if (!confMapES[conf])
+            confMapES[conf] = {
+              name: conf,
+              analisados: 0,
+              aprovados: 0,
+              aprovadosMotivoConferente: 0,
+              recusados: 0,
+              valAprovadoMotivo: 0,
+            };
+          confMapES[conf].analisados++;
+          if (statusChamado === "Aprovado") {
+            confMapES[conf].aprovados++;
+            if (isErroConf) {
+              confMapES[conf].aprovadosMotivoConferente++;
+              confMapES[conf].valAprovadoMotivo += val || 0;
+            }
+          }
           if (statusChamado === "Recusado") confMapES[conf].recusados++;
         } else if (
           cdStr.includes("PB") ||
           cdStr.includes("PARAIBA") ||
           cdStr.includes("PARAÍBA")
         ) {
-          if (!confMapPB[conf]) confMapPB[conf] = { name: conf, aprovados: 0, recusados: 0 };
-          if (statusChamado === "Aprovado") confMapPB[conf].aprovados++;
+          if (!confMapPB[conf])
+            confMapPB[conf] = {
+              name: conf,
+              analisados: 0,
+              aprovados: 0,
+              aprovadosMotivoConferente: 0,
+              recusados: 0,
+              valAprovadoMotivo: 0,
+            };
+          confMapPB[conf].analisados++;
+          if (statusChamado === "Aprovado") {
+            confMapPB[conf].aprovados++;
+            if (isErroConf) {
+              confMapPB[conf].aprovadosMotivoConferente++;
+              confMapPB[conf].valAprovadoMotivo += val || 0;
+            }
+          }
           if (statusChamado === "Recusado") confMapPB[conf].recusados++;
         }
       }
