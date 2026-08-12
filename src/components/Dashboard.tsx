@@ -1732,7 +1732,7 @@ export default function Dashboard() {
 
 
         {selectedSubmenu === 'novo' && (
-          <NovoChamadoForm rawData={rawData} onCreated={() => refetch()} />
+          <NovoChamadoForm rawData={rawData} onCreated={() => refetch()} onClose={() => setSelectedSubmenu(null)} />
         )}
 
         {selectedSubmenu === 'consulta' && (

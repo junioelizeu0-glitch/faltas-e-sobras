@@ -57,11 +57,12 @@ type Props = {
   initialChamado?: any;
   onSaved?: () => void;
   onCancel?: () => void;
+  onClose?: () => void;
   onDeleted?: () => void;
   compact?: boolean; // se true, sem cabeçalho externo (uso em modal)
 };
 
-export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, initialChamado, onSaved, onCancel, onDeleted, compact }: Props) {
+export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, initialChamado, onSaved, onCancel, onClose, onDeleted, compact }: Props) {
   // Estado interno para transição automática de "novo" -> "editar" após primeiro save
   const [mode, setMode] = useState<"novo" | "editar">(modeProp);
   const [chamadoId, setChamadoId] = useState<string | undefined>(chamadoIdProp);
@@ -90,14 +91,14 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   const [lojaInfo, setLojaInfo] = useState<Loja | null>(null);
   const getLojaFn = useServerFn(getLojaByNumero);
 
-  const [form, setForm] = useState<Record<string, string>>({
-    Chamado: "", Loja: "", Tipo: "", NF: "",
-    "Dt Emissão": "", CD: "", "Situação ": "",
+  const [form, setForm] = useState<Record<string, string>>(() => ({
+    Chamado: initialChamado?.Chamado ? String(initialChamado.Chamado) : "", Loja: "", Tipo: "", NF: "",
+    "Dt Emissão": "", CD: "ES", "Situação ": "Aguardando monitoramento",
     "Dt Abertura": hojeISO(), "Dt Finalização": "", "Dt Pagamento": "",
-    "Status Chamado": "",
+    "Status Chamado": "Pendente Monitoramento",
     Motivo: "", Transportadora: "", Conferente: "",
     _valor: "",
-  });
+  }));
 
   const [refs, setRefs] = useState<Referencia[]>([]);
   const [etapas, setEtapas] = useState<Etapa[]>([]);
@@ -199,7 +200,14 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
 
 
 
-  // Busca dados bancários da loja quando o número muda (ou depois de fechar o modal de cadastro)
+  // Sugestão de número do chamado quando initialChamado muda ou em modo novo
+  useEffect(() => {
+    if (mode === "novo" && initialChamado?.Chamado && !form.Chamado) {
+      setForm((p) => ({ ...p, Chamado: String(initialChamado.Chamado) }));
+    }
+  }, [initialChamado, mode]);
+
+  // Busca dados da loja e auto-preenche a Franquia (Tipo) caso exista no cadastro
   useEffect(() => {
     const numero = String(form.Loja || "").trim();
     if (!numero) { setLojaInfo(null); return; }
@@ -207,7 +215,14 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     const t = setTimeout(async () => {
       try {
         const r = await getLojaFn({ data: { numero } });
-        if (!cancelled) setLojaInfo((r as Loja | null) || null);
+        if (!cancelled) {
+          const loja = (r as Loja | null) || null;
+          setLojaInfo(loja);
+          if (loja && loja.tipo) {
+            // Regra: Puxa o Tipo (Franquia / Própria) automaticamente do Cadastro de Lojas
+            setForm((p) => (p.Tipo !== loja.tipo ? { ...p, Tipo: loja.tipo || p.Tipo } : p));
+          }
+        }
       } catch { if (!cancelled) setLojaInfo(null); }
     }, 300);
     return () => { cancelled = true; clearTimeout(t); };
@@ -276,6 +291,13 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     if (precisaTranspConf && (!form.Transportadora || !form.Conferente))
       return "Preencha Transportadora e Conferente antes de salvar (obrigatórios para " + statusChamado + ").";
     if (precisaMotivo && !form.Motivo) return "Preencha o Motivo antes de salvar (obrigatório para Aprovado).";
+    if (podeMonitorar && (!form.Transportadora?.trim() || !form.Conferente?.trim() || !form.Motivo?.trim())) {
+      const faltantes: string[] = [];
+      if (!form.Transportadora?.trim()) faltantes.push("Transportadora");
+      if (!form.Conferente?.trim()) faltantes.push("Conferente");
+      if (!form.Motivo?.trim()) faltantes.push("Motivo");
+      return `Para registrar o resultado do monitoramento, é obrigatório preencher: ${faltantes.join(", ")}.`;
+    }
     if (precisaDadosNF) {
       const faltando: string[] = [];
       if (!form.NF) faltando.push("Nº NF");
@@ -338,6 +360,31 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
 
   const primaryLabel = mode === "editar" ? "Salvar alterações" : "Incluir chamado";
 
+  // Função para reiniciar e preparar para inclusão de novo chamado
+  const handleResetParaNovo = () => {
+    if (form.Chamado || form.Loja) {
+      if (!confirm("Deseja iniciar um novo chamado? Os dados preenchidos da tela atual serão limpos.")) {
+        return;
+      }
+    }
+    const proxNum = initialChamado?.Chamado ? String(initialChamado.Chamado) : "";
+    setMode("novo");
+    setChamadoId(undefined);
+    setForm({
+      Chamado: proxNum, Loja: "", Tipo: "", NF: "",
+      "Dt Emissão": "", CD: "ES", "Situação ": "Aguardando monitoramento",
+      "Dt Abertura": hojeISO(), "Dt Finalização": "", "Dt Pagamento": "",
+      "Status Chamado": "Pendente Monitoramento",
+      Motivo: "", Transportadora: "", Conferente: "",
+      _valor: "",
+    });
+    setRefs([]);
+    setEtapas([]);
+    setFeedback({ type: "ok", msg: "Formulário pronto para incluir um novo chamado." });
+    setTab("cadastro");
+    toast.info("Formulário pronto para novo chamado");
+  };
+
   // ============ Resultado do Monitoramento ============
   const [monitorAsk, setMonitorAsk] = useState(false);
   const podeMonitorar =
@@ -345,7 +392,34 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     (form["Status Chamado"] === "Pendente Monitoramento" ||
       /monitoramento/i.test(form["Situação "] || ""));
 
+  const handleOpenMonitorAsk = () => {
+    const faltantes: string[] = [];
+    if (!form.Transportadora?.trim()) faltantes.push("Transportadora");
+    if (!form.Conferente?.trim()) faltantes.push("Conferente");
+    if (!form.Motivo?.trim()) faltantes.push("Motivo");
+
+    if (faltantes.length > 0) {
+      const msg = `Para registrar o resultado do monitoramento, é obrigatório preencher: ${faltantes.join(", ")}.`;
+      setFeedback({ type: "err", msg });
+      toast.error(msg);
+      return;
+    }
+    setMonitorAsk(true);
+  };
+
   const aplicarResultadoMonitoramento = async (aprovado: boolean) => {
+    const faltantes: string[] = [];
+    if (!form.Transportadora?.trim()) faltantes.push("Transportadora");
+    if (!form.Conferente?.trim()) faltantes.push("Conferente");
+    if (!form.Motivo?.trim()) faltantes.push("Motivo");
+
+    if (faltantes.length > 0) {
+      const msg = `Para registrar o resultado do monitoramento, é obrigatório preencher: ${faltantes.join(", ")}.`;
+      setFeedback({ type: "err", msg });
+      toast.error(msg);
+      return;
+    }
+
     setMonitorAsk(false);
     const hoje = hojeISO();
     const novaTarefaNome = aprovado ? "Chamado Aprovado" : "Finalizar Chamado";
@@ -397,7 +471,8 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
       }
       toast.success(aprovado ? "Falta aprovada" : "Falta recusada");
       onSaved?.();
-      onCancel?.();
+      if (onCancel) onCancel();
+      else if (onClose) onClose();
     } catch (e: any) {
       const msg = e?.message || "Erro ao salvar resultado";
       setFeedback({ type: "err", msg });
@@ -413,12 +488,61 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   return (
     <div className={compact ? "h-full flex flex-col" : "flex-1 overflow-auto bg-slate-50 p-4"}>
       <div className={compact ? "h-full flex flex-col" : "w-full min-h-full"}>
-        {!compact && (
-          <header className="mb-4">
-            <h1 className="text-xl font-bold text-slate-800">
-              {mode === "editar" ? `Editar Chamado nº ${form.Chamado}` : "Novo Chamado — Faltas"}
-            </h1>
+        {!compact ? (
+          <header className="mb-4 flex items-center justify-between">
+            <div>
+              <h1 className="text-xl font-bold text-slate-800 tracking-tight">
+                {mode === "editar" ? `Editar Chamado nº ${form.Chamado}` : "Novo Chamado — Faltas"}
+              </h1>
+              <p className="text-xs text-slate-500 mt-0.5">
+                {mode === "editar" ? "Altere ou consulte as informações do chamado" : "Preencha os dados abaixo para registrar um novo chamado"}
+              </p>
+            </div>
+            <div className="flex items-center gap-2">
+              <button
+                type="button"
+                onClick={handleResetParaNovo}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 rounded-xl transition-all shadow-xs cursor-pointer"
+                title="Iniciar o cadastro de um novo chamado"
+              >
+                <Plus className="w-3.5 h-3.5" />
+                Incluir Novo Chamado
+              </button>
+
+              {(onCancel || onClose) && (
+                <button
+                  type="button"
+                  onClick={() => (onCancel ? onCancel() : onClose?.())}
+                  className="p-1.5 text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-xl transition-colors cursor-pointer"
+                  title="Fechar aba (X)"
+                >
+                  <X className="w-5 h-5" />
+                </button>
+              )}
+            </div>
           </header>
+        ) : (
+          <div className="flex items-center justify-between mb-3 px-1">
+            <button
+              type="button"
+              onClick={handleResetParaNovo}
+              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 rounded-lg transition-all cursor-pointer"
+              title="Iniciar o cadastro de um novo chamado"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Incluir Novo Chamado
+            </button>
+            {(onCancel || onClose) && (
+              <button
+                type="button"
+                onClick={() => (onCancel ? onCancel() : onClose?.())}
+                className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-lg transition-colors cursor-pointer"
+                title="Fechar (X)"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
+          </div>
         )}
 
         {feedback && (
@@ -485,11 +609,11 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
               {podeMonitorar && (
                 <button
                   type="button"
-                  onClick={() => setMonitorAsk(true)}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-indigo-700 bg-indigo-50 border border-indigo-200 rounded-md hover:bg-indigo-100"
+                  onClick={handleOpenMonitorAsk}
+                  className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200/80 rounded-md hover:bg-emerald-100 cursor-pointer transition-colors"
                   title="Registrar resultado do monitoramento"
                 >
-                  <ClipboardCheck className="w-4 h-4"/>Resultado do monitoramento
+                  <ClipboardCheck className="w-4 h-4 text-emerald-600"/>Resultado do monitoramento
                 </button>
               )}
               <div className="flex items-center gap-2">
@@ -573,15 +697,24 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
 
       {monitorAsk && (
         <div className="fixed inset-0 z-[80] bg-black/50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) setMonitorAsk(false); }}>
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm">
-            <div className="px-6 py-8 text-center">
-              <ClipboardCheck className="w-8 h-8 text-indigo-600 mx-auto mb-3"/>
-              <h3 className="text-lg font-semibold text-slate-800">Falta aprovada?</h3>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100">
+            <div className="px-6 py-6 text-center">
+              <div className="w-12 h-12 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center mx-auto mb-3 text-emerald-600">
+                <ClipboardCheck className="w-6 h-6"/>
+              </div>
+              <h3 className="text-lg font-bold text-slate-800">Resultado do Monitoramento</h3>
+              <p className="text-xs text-slate-500 mt-1">A falta reportada neste chamado foi aprovada?</p>
+              
+              <div className="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-200/60 text-xs text-slate-600 text-left space-y-1">
+                <div><span className="font-semibold text-slate-700">Transportadora:</span> {form.Transportadora || "—"}</div>
+                <div><span className="font-semibold text-slate-700">Conferente:</span> {form.Conferente || "—"}</div>
+                <div><span className="font-semibold text-slate-700">Motivo:</span> {form.Motivo || "—"}</div>
+              </div>
             </div>
-            <div className="flex items-center justify-center gap-2 px-4 py-3 border-t bg-slate-50">
-              <button onClick={() => setMonitorAsk(false)} className="px-4 py-2 text-sm text-slate-600 hover:text-slate-900">Cancelar</button>
-              <button onClick={() => aplicarResultadoMonitoramento(false)} className="px-4 py-2 text-sm font-semibold text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100">Não</button>
-              <button onClick={() => aplicarResultadoMonitoramento(true)} className="px-4 py-2 text-sm font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-md">Sim</button>
+            <div className="flex items-center justify-end gap-2 px-6 py-3 border-t bg-slate-50">
+              <button onClick={() => setMonitorAsk(false)} className="px-3.5 py-2 text-xs font-medium text-slate-600 hover:text-slate-800 rounded-lg">Cancelar</button>
+              <button onClick={() => aplicarResultadoMonitoramento(false)} className="px-4 py-2 text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200/80 rounded-lg hover:bg-rose-100 transition-colors">Não (Recusar)</button>
+              <button onClick={() => aplicarResultadoMonitoramento(true)} className="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-xs">Sim (Aprovar)</button>
             </div>
           </div>
         </div>
@@ -640,8 +773,11 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
         </div>
       </section>
       <section>
-        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">
-          Responsáveis {precisaTranspConf && <span className="ml-2 text-[10px] text-blue-600 normal-case">(obrigatório para {statusChamado})</span>}
+        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center justify-between">
+          <span>Responsáveis</span>
+          <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-full">
+            * Transportadora, Conferente e Motivo são obrigatórios para o resultado do monitoramento
+          </span>
         </h2>
         <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
           <div className="flex flex-col gap-1">

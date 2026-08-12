@@ -9,7 +9,7 @@ export const Route = createFileRoute("/admin/tabelas")({
   beforeLoad: async () => {
     try {
       const { unlocked } = await checkUnlocked();
-      if (unlocked === false) {
+      if (!unlocked) {
         throw redirect({ to: "/unlock" });
       }
     } catch (e) {
