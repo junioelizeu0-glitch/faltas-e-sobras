@@ -780,23 +780,23 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
               </div>
             </div>
 
-            {/* TABELA DE ATIVIDADES COM BARRA DE ROLAGEM INTERNA E CABEÇALHO FIXO */}
-            <div className="w-full overflow-auto max-h-[520px] border border-slate-200/80 rounded-xl bg-white shadow-xs">
+            {/* TABELA DE ATIVIDADES COM BARRA DE ROLAGEM INTERNA E CABEÇALHO FIXO 100% OPACO */}
+            <div className="w-full overflow-auto max-h-[550px] border border-slate-200/80 rounded-xl bg-white shadow-xs">
               <table className="w-full text-left text-xs border-collapse">
-                <thead className="bg-slate-50/95 text-slate-600 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200 sticky top-0 bg-slate-50 z-10 shadow-2xs">
-                  <tr>
-                    <th className="px-4 py-3 w-12 text-slate-400">#</th>
-                    <th className="px-4 py-3 w-28">Status</th>
-                    <th className="px-4 py-3 w-14 text-center">Anexo</th>
-                    <th className="px-4 py-3 min-w-[160px]">Nome / Loja</th>
-                    <th className="px-4 py-3 w-28 text-center">Tipo Loja</th>
-                    <th className="px-4 py-3 min-w-[130px]">Evento</th>
-                    <th className="px-4 py-3 w-28">Data abertura</th>
-                    <th className="px-4 py-3 w-20 text-right">Dias</th>
-                    <th className="px-4 py-3 w-24 text-center">Cobertura</th>
-                    <th className="px-4 py-3 min-w-[180px]">Tarefa</th>
-                    <th className="px-4 py-3 w-28 text-center">Duração</th>
-                    <th className="px-4 py-3 w-20 text-center">Ações</th>
+                <thead className="sticky top-0 z-20 bg-slate-100 shadow-2xs">
+                  <tr className="bg-slate-100">
+                    <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 w-12 text-slate-500 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">#</th>
+                    <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 w-28 text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Status</th>
+                    <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 w-14 text-center text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Anexo</th>
+                    <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 min-w-[160px] text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Nome / Loja</th>
+                    <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 w-28 text-center text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Tipo Loja</th>
+                    <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 min-w-[130px] text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Evento</th>
+                    <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 w-28 text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Data abertura</th>
+                    <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 w-20 text-right text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Dias</th>
+                    <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 w-24 text-center text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Cobertura</th>
+                    <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 min-w-[180px] text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Tarefa</th>
+                    <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 w-28 text-center text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Duração</th>
+                    <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 w-20 text-center text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 bg-white">
@@ -994,17 +994,17 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
             {/* Tabela do Modal Pré-Lista */}
             <div className="flex-1 overflow-y-auto p-4">
               <table className="w-full text-left text-xs border-collapse">
-                <thead className="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider text-[10px] border-b border-slate-200 sticky top-0 bg-slate-50">
-                  <tr>
-                    <th className="px-3 py-2">Chamado</th>
-                    <th className="px-3 py-2">Loja</th>
-                    <th className="px-3 py-2 text-center">Tipo Loja</th>
-                    <th className="px-3 py-2">CD</th>
-                    <th className="px-3 py-2">Dt Abertura</th>
-                    <th className="px-3 py-2 text-right">Dias Úteis</th>
-                    <th className="px-3 py-2">Status</th>
-                    <th className="px-3 py-2">Tarefa Atual</th>
-                    <th className="px-3 py-2 text-center">Ações</th>
+                <thead className="sticky top-0 z-20 bg-slate-100">
+                  <tr className="bg-slate-100">
+                    <th className="sticky top-0 z-20 bg-slate-100 px-3 py-2 text-slate-700 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200">Chamado</th>
+                    <th className="sticky top-0 z-20 bg-slate-100 px-3 py-2 text-slate-700 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200">Loja</th>
+                    <th className="sticky top-0 z-20 bg-slate-100 px-3 py-2 text-center text-slate-700 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200">Tipo Loja</th>
+                    <th className="sticky top-0 z-20 bg-slate-100 px-3 py-2 text-slate-700 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200">CD</th>
+                    <th className="sticky top-0 z-20 bg-slate-100 px-3 py-2 text-slate-700 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200">Dt Abertura</th>
+                    <th className="sticky top-0 z-20 bg-slate-100 px-3 py-2 text-right text-slate-700 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200">Dias Úteis</th>
+                    <th className="sticky top-0 z-20 bg-slate-100 px-3 py-2 text-slate-700 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200">Status</th>
+                    <th className="sticky top-0 z-20 bg-slate-100 px-3 py-2 text-slate-700 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200">Tarefa Atual</th>
+                    <th className="sticky top-0 z-20 bg-slate-100 px-3 py-2 text-center text-slate-700 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 bg-white">
