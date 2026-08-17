@@ -138,7 +138,7 @@ export default function AuditLogViewer() {
             {ACTIONS.map((t) => <option key={t} value={t}>{t ? actionLabel(t) : "Todas"}</option>)}
           </select>
         </label>
-        <label className="flex flex-col text-xs font-semibold text-slate-600">Nº Chamado
+        <label className="flex flex-col text-xs font-semibold text-slate-600">Chamado
           <input value={chamado} onChange={(e) => setChamado(e.target.value)} className="mt-1 text-sm border border-slate-300 rounded-md px-2 py-1.5" placeholder="ex: 123456" />
         </label>
         <button onClick={load} className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-md">

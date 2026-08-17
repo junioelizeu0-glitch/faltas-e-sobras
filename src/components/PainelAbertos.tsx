@@ -785,7 +785,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
               <table className="w-full text-left text-xs border-collapse">
                 <thead className="sticky top-0 z-20 bg-slate-100 shadow-2xs">
                   <tr className="bg-slate-100">
-                    <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 min-w-[130px] text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Número</th>
+                    <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 min-w-[130px] text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Chamado</th>
                     <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 min-w-[130px] text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Tipo</th>
                     <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 w-28 text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Data abertura</th>
                     <th className="sticky top-0 z-20 bg-slate-100 px-3 py-3 w-24 text-center text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">CD</th>
@@ -827,9 +827,9 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
                         onClick={() => r.id && setEditingId(String(r.id))}
                         className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
                       >
-                        {/* 1. Número */}
+                        {/* 1. Chamado */}
                         <td className="px-4 py-2.5 font-bold text-slate-800 group-hover:text-emerald-700 transition-colors">
-                          <span>Nº {r.chamado}</span>
+                          <span>{r.chamado}</span>
                         </td>
 
                         {/* 2. Tipo (Falta, Sobra, Gato, etc.) */}
@@ -982,7 +982,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
                   {filteredDrillRows.map((r, idx) => (
                     <tr key={`drill-${r.chamado}-${idx}`} className="hover:bg-slate-50 transition-colors">
                       <td className="px-3 py-2.5 font-bold text-slate-900">
-                        Nº {r.chamado}
+                        {r.chamado}
                       </td>
                       <td className="px-3 py-2.5 font-medium text-slate-800">
                         {r.loja}

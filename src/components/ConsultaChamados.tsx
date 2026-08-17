@@ -204,7 +204,7 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
               <input
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
-                placeholder="Nº chamado, loja, NF..."
+                placeholder="Chamado, loja, NF..."
                 className="w-full pl-9 pr-3 py-2 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium"
               />
             </div>
