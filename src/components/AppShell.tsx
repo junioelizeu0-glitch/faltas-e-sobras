@@ -221,9 +221,9 @@ export default function AppShell({
         )}
       </div>
 
-      {/* Área de Conteúdo à Direita */}
-      <div className="flex-1 flex flex-col min-w-0 h-screen bg-slate-50 overflow-hidden relative">
-        <div className="flex justify-end items-center gap-3 px-4 py-2 border-b border-slate-200 bg-white">
+      {/* Área de Conteúdo à Direita com Barra de Rolagem Vertical */}
+      <div className="flex-1 flex flex-col min-w-0 h-screen bg-slate-50 overflow-y-auto relative">
+        <div className="flex justify-end items-center gap-3 px-4 py-2 border-b border-slate-200 bg-white sticky top-0 z-30 shadow-2xs">
           <button
             onClick={toggleTheme}
             className="inline-flex items-center gap-1.5 text-xs text-slate-600 hover:text-slate-900"
