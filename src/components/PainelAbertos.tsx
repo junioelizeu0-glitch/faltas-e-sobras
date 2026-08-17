@@ -780,29 +780,26 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
               </div>
             </div>
 
-            {/* TABELA DE ATIVIDADES AMPLIADA COM MAIOR ALTURA E CABEÇALHO FIXO */}
+            {/* TABELA DE ATIVIDADES AMPLIADA COM AS COLUNAS EXATAS SOLICITADAS */}
             <div className="w-full overflow-auto min-h-[500px] max-h-[780px] border border-slate-200/80 rounded-xl bg-white shadow-xs">
               <table className="w-full text-left text-xs border-collapse">
                 <thead className="sticky top-0 z-20 bg-slate-100 shadow-2xs">
                   <tr className="bg-slate-100">
-                    <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 w-12 text-slate-500 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">#</th>
-                    <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 w-28 text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Status</th>
-                    <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 w-14 text-center text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Anexo</th>
-                    <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 min-w-[160px] text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Nome / Loja</th>
-                    <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 w-28 text-center text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Tipo Loja</th>
+                    <th className="sticky top-0 z-20 bg-slate-100 px-3 py-3 w-14 text-center text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Anexo</th>
+                    <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 min-w-[170px] text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Número / Loja</th>
+                    <th className="sticky top-0 z-20 bg-slate-100 px-3 py-3 w-28 text-center text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Tipo</th>
                     <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 min-w-[130px] text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Evento</th>
                     <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 w-28 text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Data abertura</th>
-                    <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 w-20 text-right text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Dias</th>
-                    <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 w-24 text-center text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Cobertura</th>
-                    <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 min-w-[180px] text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Tarefa</th>
-                    <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 w-28 text-center text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Duração</th>
+                    <th className="sticky top-0 z-20 bg-slate-100 px-3 py-3 w-24 text-center text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">CD</th>
+                    <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 min-w-[180px] text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Tarefa atual</th>
+                    <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 w-36 text-center text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Duração (dias úteis)</th>
                     <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 w-20 text-center text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 bg-white">
                   {isLoading && (
                     <tr>
-                      <td colSpan={12} className="py-12 text-center text-slate-500">
+                      <td colSpan={9} className="py-12 text-center text-slate-500">
                         <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-emerald-600" />
                         <span>Carregando atividades em aberto...</span>
                       </td>
@@ -811,7 +808,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
 
                   {!isLoading && error && (
                     <tr>
-                      <td colSpan={12} className="py-10 text-center text-rose-600 font-medium">
+                      <td colSpan={9} className="py-10 text-center text-rose-600 font-medium">
                         Não foi possível carregar os chamados. Tente recarregar.
                       </td>
                     </tr>
@@ -819,38 +816,27 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
 
                   {!isLoading && !error && pageRows.length === 0 && (
                     <tr>
-                      <td colSpan={12} className="py-10 text-center text-slate-400">
+                      <td colSpan={9} className="py-10 text-center text-slate-400">
                         Nenhuma atividade encontrada com os filtros selecionados.
                       </td>
                     </tr>
                   )}
 
                   {!isLoading && !error && pageRows.map((r, i) => {
-                    const rowIdx = (page - 1) * pageSize + i + 1;
                     return (
                       <tr
                         key={`${r.chamado}-${i}`}
                         onClick={() => r.id && setEditingId(String(r.id))}
                         className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
                       >
-                        {/* # Index / ID */}
-                        <td className="px-4 py-2.5 font-semibold text-slate-400 text-[11px]">
-                          {rowIdx}
-                        </td>
-
-                        {/* Status Badge estilo Pílula com Ponto Indicador */}
-                        <td className="px-4 py-2.5">
-                          <StatusPill alerta={r.alerta} statusText={r.status} />
-                        </td>
-
-                        {/* Anexo Ícone */}
-                        <td className="px-4 py-2.5 text-center">
+                        {/* 1. Anexo Ícone */}
+                        <td className="px-3 py-2.5 text-center">
                           <div className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-slate-400 group-hover:text-emerald-700 group-hover:bg-emerald-50 transition-colors">
                             <Paperclip className="w-3.5 h-3.5" />
                           </div>
                         </td>
 
-                        {/* Nome / Loja */}
+                        {/* 2. Número / Loja */}
                         <td className="px-4 py-2.5 font-bold text-slate-800 group-hover:text-emerald-700 transition-colors">
                           <div className="flex flex-col">
                             <span>{r.loja}</span>
@@ -858,8 +844,8 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
                           </div>
                         </td>
 
-                        {/* Tipo de Loja: Franquia vs Própria */}
-                        <td className="px-4 py-2.5 text-center">
+                        {/* 3. Tipo (Franquia vs Própria) */}
+                        <td className="px-3 py-2.5 text-center">
                           <span className={`inline-block px-2.5 py-0.5 rounded-full font-bold text-[10px] border ${
                             r.tipoLoja === "Franquia"
                               ? "bg-cyan-50 text-cyan-700 border-cyan-200"
@@ -869,39 +855,39 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
                           </span>
                         </td>
 
-                        {/* Evento (Tipo de Chamado) */}
-                        <td className="px-4 py-2.5 font-medium text-slate-600">
-                          {r.tipo}
+                        {/* 4. Evento (Falta, Sobra, Gato, etc.) */}
+                        <td className="px-4 py-2.5 font-semibold text-slate-700">
+                          <span className="inline-block px-2 py-0.5 rounded bg-slate-100 text-slate-800 font-bold text-[11px]">
+                            {r.tipo}
+                          </span>
                         </td>
 
-                        {/* Data Abertura */}
+                        {/* 5. Data Abertura */}
                         <td className="px-4 py-2.5 font-medium text-slate-600 whitespace-nowrap">
                           {fmtBR(r.dtAbertura)}
                         </td>
 
-                        {/* Dias decorridos (SLA) */}
-                        <td className="px-4 py-2.5 text-right font-mono font-bold text-slate-800">
-                          {r.dias}d
-                        </td>
-
-                        {/* Cobertura (CD) */}
-                        <td className="px-4 py-2.5 text-center">
+                        {/* 6. CD */}
+                        <td className="px-3 py-2.5 text-center">
                           <span className="inline-block px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold text-[11px] border border-slate-200/60">
                             {r.cd || "Geral"}
                           </span>
                         </td>
 
-                        {/* Tarefa Atual */}
+                        {/* 7. Tarefa Atual */}
                         <td className="px-4 py-2.5 font-medium text-slate-700">
                           {r.tarefa}
                         </td>
 
-                        {/* Duração / SLA Pill */}
+                        {/* 8. Duração em Dias Úteis */}
                         <td className="px-4 py-2.5 text-center">
-                          <DuracaoPill dias={r.dias} />
+                          <div className="inline-flex items-center justify-center gap-1.5 font-mono font-bold text-slate-800">
+                            <span>{r.dias}d úteis</span>
+                            <DuracaoPill dias={r.dias} />
+                          </div>
                         </td>
 
-                        {/* Botão Ações: Editar */}
+                        {/* 9. Ações */}
                         <td className="px-4 py-2.5 text-center">
                           <button
                             onClick={(e) => {
