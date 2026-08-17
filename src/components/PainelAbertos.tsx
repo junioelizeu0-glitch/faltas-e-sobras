@@ -2,7 +2,7 @@ import React, { useEffect, useMemo, useState, useRef } from "react";
 import {
   AlertTriangle, Clock, CheckCircle2, Search, FileText, Loader2, X,
   ChevronDown, RefreshCcw, Download, Paperclip, ChevronLeft, ChevronRight,
-  Filter, Eye, Pencil, Building2, Store, LayoutGrid, Layers
+  Filter, Eye, Pencil, Building2, Store, LayoutGrid, Layers, ListChecks
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList
@@ -49,14 +49,16 @@ function siglaCD(v: any): string {
 
 // Cores dinâmicas para gráficos
 const CHART_PALETTE = [
-  "#a855f7", // roxo
   "#06b6d4", // ciano
   "#22c55e", // verde
   "#f97316", // laranja
+  "#a855f7", // roxo
   "#eab308", // amarelo
   "#ec4899", // rosa
   "#3b82f6", // azul
   "#84cc16", // verde lima
+  "#6366f1", // índigo
+  "#64748b", // slate
 ];
 
 export default function PainelAbertos({ rawData, isLoading, error, onChanged }: Props) {
@@ -102,7 +104,6 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
     if (tpCampo.includes("propria") || tpCampo.includes("própria")) return "Própria";
     if (tpCampo.includes("franquia")) return "Franquia";
 
-    // Se a loja não for identificada como própria, padrão do sistema é Franquia
     return "Franquia";
   };
 
@@ -124,6 +125,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
   // Refs para exportação de imagem dos gráficos
   const chart1Ref = useRef<HTMLDivElement>(null);
   const chart2Ref = useRef<HTMLDivElement>(null);
+  const chart3Ref = useRef<HTMLDivElement>(null);
 
   const handleExportChart = async (ref: React.RefObject<HTMLDivElement | null>, filename: string) => {
     if (!ref.current) return;
@@ -142,7 +144,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
     }
   };
 
-  // Dados processados dos chamados em aberto
+  // Dados processados dos chamados em aberto (Apenas NÃO FINALIZADOS)
   const rows = useMemo(() => {
     const hoje = new Date();
     hoje.setHours(23, 59, 59, 999);
@@ -224,10 +226,10 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
   }, [rows]);
 
   // =========================================================================
-  // PROCESSAMENTO DOS 2 GRÁFICOS SOLICITADOS
+  // GRÁFICOS (APENAS COM DADOS VÁLIDOS, SEM MESES COM TOTAL 0)
   // =========================================================================
 
-  // GRÁFICO 1: Controle de Eventos (Aberturas Mensais e Atrasos > 60 dias úteis)
+  // GRÁFICO 1: Controle de Eventos (Apenas Não Finalizados e Mês > 0)
   const controleEventosData = useMemo(() => {
     const monthCounts: Record<string, { monthLabel: string; yearMonth: string; total: number; vencidos: number }> = {};
     const now = new Date();
@@ -252,16 +254,38 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
       }
     });
 
-    return Object.values(monthCounts).map((item, idx) => ({
-      name: item.monthLabel,
-      yearMonth: item.yearMonth,
-      total: item.total,
-      vencidos: item.vencidos,
-      fill: CHART_PALETTE[idx % CHART_PALETTE.length]
-    }));
+    // IGNORAR MESES SEM INFORMAÇÃO (TOTAL === 0)
+    return Object.values(monthCounts)
+      .filter((item) => item.total > 0)
+      .map((item, idx) => ({
+        name: item.monthLabel,
+        yearMonth: item.yearMonth,
+        total: item.total,
+        vencidos: item.vencidos,
+        fill: CHART_PALETTE[idx % CHART_PALETTE.length]
+      }));
   }, [rows]);
 
-  // GRÁFICO 2: Chamados por Tipo de Loja (Franquia vs Própria)
+  // GRÁFICO 2: Tarefas em Aberto (Filtrar apenas chamados em aberto por tarefa)
+  const tarefasEmAbertoData = useMemo(() => {
+    const map: Record<string, number> = {};
+    rows.forEach((r) => {
+      const t = r.tarefa || "Outros";
+      map[t] = (map[t] || 0) + 1;
+    });
+
+    return Object.entries(map)
+      .map(([tarefaName, total], idx) => ({
+        name: tarefaName.length > 18 ? `${tarefaName.substring(0, 16)}...` : tarefaName,
+        fullTarefName: tarefaName,
+        total,
+        fill: CHART_PALETTE[(idx + 2) % CHART_PALETTE.length]
+      }))
+      .filter((item) => item.total > 0)
+      .sort((a, b) => b.total - a.total);
+  }, [rows]);
+
+  // GRÁFICO 3: Chamados por Tipo de Loja (Franquia vs Própria)
   const chamadosPorTipoLojaData = useMemo(() => {
     let franquiaCount = 0;
     let propriaCount = 0;
@@ -274,10 +298,10 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
     });
 
     return [
-      { name: "Franquias", categoryKey: "Franquia", total: franquiaCount, fill: "#06b6d4", icon: Store },
-      { name: "Lojas Próprias", categoryKey: "Própria", total: propriaCount, fill: "#a855f7", icon: Building2 },
-      ...(geralCount > 0 ? [{ name: "Outras / Geral", categoryKey: "Geral", total: geralCount, fill: "#64748b", icon: Layers }] : [])
-    ];
+      { name: "Franquias", categoryKey: "Franquia", total: franquiaCount, fill: "#06b6d4" },
+      { name: "Lojas Próprias", categoryKey: "Própria", total: propriaCount, fill: "#a855f7" },
+      ...(geralCount > 0 ? [{ name: "Outras / Geral", categoryKey: "Geral", total: geralCount, fill: "#64748b" }] : [])
+    ].filter((item) => item.total > 0);
   }, [rows]);
 
   // =========================================================================
@@ -301,7 +325,18 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
     setIsDrillOpen(true);
   };
 
-  const handleChart2Click = (data: any) => {
+  const handleChartTarefasClick = (data: any) => {
+    if (!data || !data.fullTarefName) return;
+    const tName = data.fullTarefName;
+    const list = rows.filter((r) => r.tarefa === tName);
+
+    setDrillTitle(`Tarefas em Aberto: ${tName} (${list.length} chamados)`);
+    setDrillRows(list);
+    setDrillBusca("");
+    setIsDrillOpen(true);
+  };
+
+  const handleChartTipoLojaClick = (data: any) => {
     if (!data || !data.categoryKey) return;
     const cat = data.categoryKey;
     const name = data.name;
@@ -330,7 +365,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
 
   // Paginação expandida para mais chamados na tela
   const [page, setPage] = useState(1);
-  const [pageSize, setPageSize] = useState(50); // Padrão 50 itens para exibição ampla
+  const [pageSize, setPageSize] = useState(50); // Padrão 50 itens
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const pageRows = filtered.slice((page - 1) * pageSize, page * pageSize);
 
@@ -340,16 +375,13 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
     <div className="min-h-screen bg-[#F4F6F5] p-4 md:p-6 space-y-6 text-slate-800 font-sans">
 
       {/* ========================================================================= */}
-      {/* 1. SEÇÃO RETRÁTIL: EXCLUSIVAMENTE 2 GRÁFICOS                             */}
+      {/* 1. SEÇÃO RETRÁTIL: GRÁFICOS LIMPOS (APENAS COM INFORMAÇÃO REAL)           */}
       {/* ========================================================================= */}
       <section className="bg-white rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] transition-all overflow-hidden">
         {/* Cabeçalho do Card Gráficos */}
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white select-none">
           <div className="flex items-center gap-2.5">
             <h2 className="text-xl font-bold text-slate-900 tracking-tight">Gráficos</h2>
-            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
-              Clique em qualquer barra para abrir a pré-lista de chamados
-            </span>
           </div>
           <button
             onClick={() => setIsGraficosOpen(!isGraficosOpen)}
@@ -360,18 +392,16 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
           </button>
         </div>
 
-        {/* Conteúdo Expandível dos 2 Gráficos */}
+        {/* Conteúdo Expandível dos Gráficos */}
         {isGraficosOpen && (
-          <div className="p-5 md:p-6 grid grid-cols-1 lg:grid-cols-2 gap-6 bg-slate-50/40">
+          <div className="p-5 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6 bg-slate-50/40">
 
-            {/* GRÁFICO 1: CONTROLE DE EVENTOS (ABERTURAS E REGRA DOS 60 DIAS ÚTEIS) */}
+            {/* GRÁFICO 1: CONTROLE DE EVENTOS (NÃO FINALIZADOS E APENAS MESES COM DADOS) */}
             <div ref={chart1Ref} className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between relative">
               <div className="flex items-start justify-between mb-2">
                 <div>
-                  <h3 className="text-base font-bold text-slate-800">Controle de Eventos (Aberturas Mensais)</h3>
-                  <p className="text-xs text-slate-500">
-                    Volume por mês de abertura e controle do SLA (&gt;60 dias úteis) • <span className="text-emerald-600 font-semibold cursor-pointer">Clique na barra para ver a lista</span>
-                  </p>
+                  <h3 className="text-base font-bold text-slate-800">Controle de Eventos (Não Finalizados)</h3>
+                  <p className="text-xs text-slate-500">Volume por mês de abertura e controle SLA (&gt;60D)</p>
                 </div>
                 <button
                   onClick={() => handleExportChart(chart1Ref, "controle-eventos")}
@@ -382,7 +412,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
                 </button>
               </div>
 
-              <div className="h-64 w-full mt-3 cursor-pointer">
+              <div className="h-60 w-full mt-2 cursor-pointer">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={controleEventosData} margin={{ top: 20, right: 10, left: -20, bottom: 25 }}>
                     <CartesianGrid strokeDasharray="2 2" vertical={false} stroke="#e2e8f0" />
@@ -398,7 +428,6 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
                               <p className="font-bold border-b border-slate-700 pb-1">{d.name}</p>
                               <p>Aberturas: <strong>{d.total}</strong> chamados</p>
                               <p className="text-rose-400">Atrasados (&gt;60D): <strong>{d.vencidos}</strong></p>
-                              <p className="text-[10px] text-cyan-300 italic font-semibold mt-1">Clique para abrir pré-lista</p>
                             </div>
                           );
                         }
@@ -408,10 +437,10 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
                     <Bar
                       dataKey="total"
                       radius={[6, 6, 0, 0]}
-                      barSize={20}
+                      barSize={22}
                       onClick={(entry) => handleChart1Click(entry)}
                     >
-                      <LabelList dataKey="total" position="top" style={{ fontSize: "10px", fontWeight: "bold", fill: "#334155" }} />
+                      <LabelList dataKey="total" position="top" style={{ fontSize: "11px", fontWeight: "bold", fill: "#334155" }} />
                       {controleEventosData.map((entry, index) => (
                         <Cell
                           key={`cell-c1-${index}`}
@@ -424,25 +453,21 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
                 </ResponsiveContainer>
               </div>
 
-              <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 text-xs text-slate-500">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-cyan-500" /> Clique em qualquer barra para abrir pré-lista
-                </span>
-                <span className="font-semibold text-slate-700">Total: {counts.total} chamados</span>
+              <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 text-xs text-slate-500 font-medium">
+                <span>Meses com chamados ativos</span>
+                <span className="font-bold text-slate-700">Total: {counts.total}</span>
               </div>
             </div>
 
-            {/* GRÁFICO 2: CHAMADOS POR TIPO DE LOJA (FRANQUIA VS PRÓPRIA) */}
+            {/* GRÁFICO 2: TAREFAS EM ABERTO */}
             <div ref={chart2Ref} className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between relative">
               <div className="flex items-start justify-between mb-2">
                 <div>
-                  <h3 className="text-base font-bold text-slate-800">Chamados por Tipo de Loja (Franquia vs Própria)</h3>
-                  <p className="text-xs text-slate-500">
-                    Distribuição dos chamados em aberto por modelo corporativo • <span className="text-purple-600 font-semibold cursor-pointer">Clique na barra para filtrar a lista</span>
-                  </p>
+                  <h3 className="text-base font-bold text-slate-800">Tarefas em Aberto</h3>
+                  <p className="text-xs text-slate-500">Distribuição de chamados pendentes por etapa</p>
                 </div>
                 <button
-                  onClick={() => handleExportChart(chart2Ref, "chamados-por-tipo-loja")}
+                  onClick={() => handleExportChart(chart2Ref, "tarefas-em-aberto")}
                   className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
                   title="Baixar Gráfico"
                 >
@@ -450,9 +475,71 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
                 </button>
               </div>
 
-              <div className="h-64 w-full mt-3 cursor-pointer">
+              <div className="h-60 w-full mt-2 cursor-pointer">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={chamadosPorTipoLojaData} margin={{ top: 25, right: 30, left: 10, bottom: 20 }}>
+                  <BarChart data={tarefasEmAbertoData} margin={{ top: 20, right: 10, left: -20, bottom: 35 }}>
+                    <CartesianGrid strokeDasharray="2 2" vertical={false} stroke="#e2e8f0" />
+                    <XAxis dataKey="name" tick={{ fontSize: 9, fill: "#64748b" }} interval={0} angle={-45} textAnchor="end" />
+                    <YAxis tick={{ fontSize: 10, fill: "#64748b" }} domain={[0, "auto"]} />
+                    <Tooltip
+                      cursor={{ fill: "rgba(249, 115, 22, 0.08)" }}
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const d = payload[0].payload;
+                          return (
+                            <div className="bg-slate-900 text-white p-2.5 rounded-xl text-xs shadow-lg space-y-1">
+                              <p className="font-bold border-b border-slate-700 pb-1">{d.fullTarefName}</p>
+                              <p>Total em Aberto: <strong>{d.total}</strong> chamados</p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
+                    />
+                    <Bar
+                      dataKey="total"
+                      radius={[6, 6, 0, 0]}
+                      barSize={22}
+                      onClick={(entry) => handleChartTarefasClick(entry)}
+                    >
+                      <LabelList dataKey="total" position="top" style={{ fontSize: "11px", fontWeight: "bold", fill: "#334155" }} />
+                      {tarefasEmAbertoData.map((entry, index) => (
+                        <Cell
+                          key={`cell-c2-${index}`}
+                          fill={entry.fill}
+                          className="hover:opacity-80 transition-opacity cursor-pointer"
+                        />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+
+              <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 text-xs text-slate-500 font-medium">
+                <span>Por etapa atual do fluxo</span>
+                <span className="font-bold text-slate-700">{tarefasEmAbertoData.length} etapas</span>
+              </div>
+            </div>
+
+            {/* GRÁFICO 3: CHAMADOS POR TIPO DE LOJA (FRANQUIA VS PRÓPRIA) */}
+            <div ref={chart3Ref} className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between relative">
+              <div className="flex items-start justify-between mb-2">
+                <div>
+                  <h3 className="text-base font-bold text-slate-800">Chamados por Tipo de Loja</h3>
+                  <p className="text-xs text-slate-500">Franquias vs Lojas Próprias</p>
+                </div>
+                <button
+                  onClick={() => handleExportChart(chart3Ref, "chamados-por-tipo-loja")}
+                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
+                  title="Baixar Gráfico"
+                >
+                  <Download className="w-4 h-4" />
+                </button>
+              </div>
+
+              <div className="h-60 w-full mt-2 cursor-pointer">
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={chamadosPorTipoLojaData} margin={{ top: 25, right: 20, left: 0, bottom: 20 }}>
                     <CartesianGrid strokeDasharray="2 2" vertical={false} stroke="#e2e8f0" />
                     <XAxis dataKey="name" tick={{ fontSize: 11, fontWeight: "bold", fill: "#475569" }} />
                     <YAxis tick={{ fontSize: 10, fill: "#64748b" }} domain={[0, "auto"]} />
@@ -465,7 +552,6 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
                             <div className="bg-slate-900 text-white p-2.5 rounded-xl text-xs shadow-lg space-y-1">
                               <p className="font-bold border-b border-slate-700 pb-1">{d.name}</p>
                               <p>Total de Chamados: <strong>{d.total}</strong></p>
-                              <p className="text-purple-300 text-[10px] italic font-semibold mt-1">Clique para abrir pré-lista</p>
                             </div>
                           );
                         }
@@ -475,13 +561,13 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
                     <Bar
                       dataKey="total"
                       radius={[6, 6, 0, 0]}
-                      barSize={45}
-                      onClick={(entry) => handleChart2Click(entry)}
+                      barSize={40}
+                      onClick={(entry) => handleChartTipoLojaClick(entry)}
                     >
                       <LabelList dataKey="total" position="top" style={{ fontSize: "12px", fontWeight: "black", fill: "#1e293b" }} />
                       {chamadosPorTipoLojaData.map((entry, index) => (
                         <Cell
-                          key={`cell-c2-${index}`}
+                          key={`cell-c3-${index}`}
                           fill={entry.fill}
                           className="hover:opacity-80 transition-opacity cursor-pointer"
                         />
@@ -491,11 +577,9 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
                 </ResponsiveContainer>
               </div>
 
-              <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 text-xs text-slate-500">
-                <span className="flex items-center gap-1.5">
-                  <span className="w-2 h-2 rounded-full bg-purple-500" /> Clique na barra para listar os chamados
-                </span>
-                <span className="font-semibold text-slate-700">Franquias vs Próprias</span>
+              <div className="flex items-center justify-between mt-2 pt-2 border-t border-slate-100 text-xs text-slate-500 font-medium">
+                <span>Modelo corporativo</span>
+                <span className="font-bold text-slate-700">Franquias vs Próprias</span>
               </div>
             </div>
 
@@ -504,7 +588,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
       </section>
 
       {/* ========================================================================= */}
-      {/* 2. SEÇÃO RETRÁTIL: ATIVIDADES A SEREM REALIZADAS (GRID EXPANDIDO)         */}
+      {/* 2. SEÇÃO RETRÁTIL: ATIVIDADES A SEREM REALIZADAS (GRID EXIBIDO COMPLETO)   */}
       {/* ========================================================================= */}
       <section className="bg-white rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] transition-all overflow-hidden">
 
@@ -516,7 +600,6 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
             </h2>
           </div>
 
-          {/* Manter APENAS a Setinha de Atualizar e o Botão de Recolher no Canto Direito */}
           <div className="flex items-center gap-3 text-slate-600">
             <button
               onClick={() => onChanged?.()}
@@ -537,7 +620,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
           </div>
         </div>
 
-        {/* Conteúdo Expandível da Tabela (Grid Expandido com Capacidade Maior) */}
+        {/* Conteúdo Expandível da Tabela (Grid Exibido de Forma Fluida Sem Truncamento) */}
         {isAtividadesOpen && (
           <div className="p-5 md:p-6 space-y-4 bg-white">
 
@@ -697,10 +780,10 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
               </div>
             </div>
 
-            {/* TABELA EXPANDIDA COM MAIOR ALTURA E GRID AMPLO */}
-            <div className="overflow-x-auto border border-slate-200/80 rounded-xl shadow-xs max-h-[650px] overflow-y-auto">
+            {/* TABELA DE ATIVIDADES EXPANDIDA E SEM RESTRIÇÃO DE ALTURA QUE CORTA AS LINHAS */}
+            <div className="w-full overflow-x-auto border border-slate-200/80 rounded-xl bg-white shadow-xs">
               <table className="w-full text-left text-xs border-collapse">
-                <thead className="bg-slate-50/95 text-slate-500 font-semibold uppercase tracking-wider text-[11px] border-b border-slate-200 sticky top-0 bg-slate-50 z-10">
+                <thead className="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider text-[11px] border-b border-slate-200">
                   <tr>
                     <th className="px-4 py-3 w-12 text-slate-400">#</th>
                     <th className="px-4 py-3 w-28">Status</th>
@@ -751,24 +834,24 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
                         className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
                       >
                         {/* # Index / ID */}
-                        <td className="px-4 py-3 font-semibold text-slate-400 text-[11px]">
+                        <td className="px-4 py-3.5 font-semibold text-slate-400 text-[11px]">
                           {rowIdx}
                         </td>
 
                         {/* Status Badge estilo Pílula com Ponto Indicador */}
-                        <td className="px-4 py-3">
+                        <td className="px-4 py-3.5">
                           <StatusPill alerta={r.alerta} statusText={r.status} />
                         </td>
 
                         {/* Anexo Ícone */}
-                        <td className="px-4 py-3 text-center">
+                        <td className="px-4 py-3.5 text-center">
                           <div className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-slate-400 group-hover:text-emerald-700 group-hover:bg-emerald-50 transition-colors">
                             <Paperclip className="w-3.5 h-3.5" />
                           </div>
                         </td>
 
                         {/* Nome / Loja */}
-                        <td className="px-4 py-3 font-bold text-slate-800 group-hover:text-emerald-700 transition-colors">
+                        <td className="px-4 py-3.5 font-bold text-slate-800 group-hover:text-emerald-700 transition-colors">
                           <div className="flex flex-col">
                             <span>{r.loja}</span>
                             <span className="text-[10px] text-slate-400 font-normal">Nº {r.chamado}</span>
@@ -776,7 +859,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
                         </td>
 
                         {/* Tipo de Loja: Franquia vs Própria */}
-                        <td className="px-4 py-3 text-center">
+                        <td className="px-4 py-3.5 text-center">
                           <span className={`inline-block px-2.5 py-0.5 rounded-full font-bold text-[10px] border ${
                             r.tipoLoja === "Franquia"
                               ? "bg-cyan-50 text-cyan-700 border-cyan-200"
@@ -787,45 +870,45 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
                         </td>
 
                         {/* Evento (Tipo de Chamado) */}
-                        <td className="px-4 py-3 font-medium text-slate-600">
+                        <td className="px-4 py-3.5 font-medium text-slate-600">
                           {r.tipo}
                         </td>
 
                         {/* Data Abertura */}
-                        <td className="px-4 py-3 font-medium text-slate-600 whitespace-nowrap">
+                        <td className="px-4 py-3.5 font-medium text-slate-600 whitespace-nowrap">
                           {fmtBR(r.dtAbertura)}
                         </td>
 
                         {/* Dias decorridos (SLA) */}
-                        <td className="px-4 py-3 text-right font-mono font-bold text-slate-800">
+                        <td className="px-4 py-3.5 text-right font-mono font-bold text-slate-800">
                           {r.dias}d
                         </td>
 
                         {/* Cobertura (CD) */}
-                        <td className="px-4 py-3 text-center">
+                        <td className="px-4 py-3.5 text-center">
                           <span className="inline-block px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold text-[11px] border border-slate-200/60">
                             {r.cd || "Geral"}
                           </span>
                         </td>
 
                         {/* Tarefa Atual */}
-                        <td className="px-4 py-3 font-medium text-slate-700">
+                        <td className="px-4 py-3.5 font-medium text-slate-700">
                           {r.tarefa}
                         </td>
 
                         {/* Duração / SLA Pill */}
-                        <td className="px-4 py-3 text-center">
+                        <td className="px-4 py-3.5 text-center">
                           <DuracaoPill dias={r.dias} />
                         </td>
 
                         {/* Botão Ações: Editar */}
-                        <td className="px-4 py-3 text-center">
+                        <td className="px-4 py-3.5 text-center">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               if (r.id) setEditingId(String(r.id));
                             }}
-                            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 hover:bg-emerald-600 hover:text-white text-slate-700 font-semibold text-[11px] transition-all cursor-pointer"
+                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-emerald-600 hover:text-white text-slate-700 font-semibold text-[11px] transition-all cursor-pointer"
                             title="Editar Chamado"
                           >
                             <Pencil className="w-3 h-3" />
