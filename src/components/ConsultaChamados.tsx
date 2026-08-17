@@ -141,47 +141,47 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
   };
 
   return (
-    <div className="flex-1 overflow-auto bg-slate-50 p-4">
-      <div className="w-full">
-        <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
+    <div className="flex-1 min-h-screen bg-[#F4F6F5] p-4 md:p-6 space-y-6 text-slate-800 font-sans">
+      <div className="w-full bg-white rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] p-6 space-y-6">
+        <header className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-100">
           <div>
-            <h1 className="text-xl font-bold text-slate-800">Consulta de Chamados — Faltas</h1>
-            <p className="text-sm text-slate-500 mt-1">
-              {selected.size > 0 ? `${selected.size} selecionado(s) de ${linhas.length}` : `Clique em um chamado para abrir os detalhes e editar. Total: ${linhas.length}`}
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Consulta de Chamados</h1>
+            <p className="text-xs text-slate-500 mt-1">
+              {selected.size > 0 ? `${selected.size} selecionado(s) de ${linhas.length}` : `Clique em um chamado para abrir os detalhes e editar. Total: ${linhas.length} chamados`}
             </p>
           </div>
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-2">
             <button
               onClick={() => setCreating(true)}
               title="Novo chamado"
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded mr-2"
+              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl cursor-pointer shadow-xs transition-colors"
             >
-              <Plus className="w-3.5 h-3.5"/>
-              Novo chamado
+              <Plus className="w-4 h-4"/>
+              <span>Novo Chamado</span>
             </button>
             <button
               onClick={doPull}
               disabled={syncing !== null}
-              title="Puxar dados atualizados da API (planilha → banco)"
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-slate-700 border border-slate-200 hover:bg-slate-50 rounded disabled:opacity-40"
+              title="Puxar dados atualizados da API"
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 border border-slate-200 hover:bg-slate-50 rounded-xl disabled:opacity-40 transition-colors cursor-pointer bg-white"
             >
-              {syncing === "pull" ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <DownloadCloud className="w-3.5 h-3.5"/>}
-              Puxar da API
+              {syncing === "pull" ? <Loader2 className="w-4 h-4 animate-spin"/> : <DownloadCloud className="w-4 h-4 text-emerald-700"/>}
+              <span>Puxar da API</span>
             </button>
             <button
               onClick={doPush}
               disabled={syncing !== null}
-              title="Enviar dados do banco para a API (banco → planilha)"
-              className="inline-flex items-center gap-1.5 px-2.5 py-1.5 text-xs text-slate-700 border border-slate-200 hover:bg-slate-50 rounded disabled:opacity-40 mr-2"
+              title="Enviar dados do banco para a API"
+              className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 border border-slate-200 hover:bg-slate-50 rounded-xl disabled:opacity-40 transition-colors cursor-pointer bg-white"
             >
-              {syncing === "push" ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <UploadCloud className="w-3.5 h-3.5"/>}
-              Enviar p/ API
+              {syncing === "push" ? <Loader2 className="w-4 h-4 animate-spin"/> : <UploadCloud className="w-4 h-4 text-emerald-700"/>}
+              <span>Enviar p/ API</span>
             </button>
             <button
               onClick={abrirEditarSelecionado}
               disabled={selected.size !== 1}
               title="Alterar"
-              className="inline-flex items-center p-2 text-blue-600 hover:bg-blue-50 rounded disabled:opacity-40 disabled:cursor-not-allowed"
+              className="inline-flex items-center p-2 text-emerald-700 hover:bg-emerald-50 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition-colors border border-slate-200 bg-white"
             >
               <Pencil className="w-4 h-4"/>
             </button>
@@ -189,45 +189,58 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
               onClick={() => excluirIds(Array.from(selected))}
               disabled={selected.size === 0}
               title="Excluir"
-              className="inline-flex items-center p-2 text-red-500 hover:bg-red-50 rounded disabled:opacity-40 disabled:cursor-not-allowed"
+              className="inline-flex items-center p-2 text-rose-600 hover:bg-rose-50 rounded-xl disabled:opacity-40 disabled:cursor-not-allowed transition-colors border border-slate-200 bg-white"
             >
               <Trash2 className="w-4 h-4"/>
             </button>
           </div>
         </header>
 
-        <div className="flex flex-wrap gap-3 mb-3 bg-white border border-slate-200 rounded-lg p-3 shadow-sm items-end">
+        <div className="flex flex-wrap gap-4 bg-slate-50/70 border border-slate-200/60 rounded-xl p-3.5 items-end text-xs">
           <div className="relative w-[260px] min-w-[180px]">
-            <label className="block text-[11px] font-medium text-slate-500 mb-1 uppercase tracking-wide">Buscar chamado</label>
+            <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Buscar chamado</label>
             <div className="relative">
               <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Nº chamado, loja, NF..." className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-100 focus:border-blue-400" />
+              <input
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                placeholder="Nº chamado, loja, NF..."
+                className="w-full pl-9 pr-3 py-2 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium"
+              />
             </div>
           </div>
           <div className="flex flex-col min-w-[160px]">
-            <label className="text-[11px] font-medium text-slate-500 mb-1 uppercase tracking-wide">Status chamado</label>
-            <select value={filtroStatus} onChange={(e) => setFiltroStatus(e.target.value)} className="text-sm border border-slate-200 rounded-md px-3 py-2 bg-white cursor-pointer">
+            <label className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Status chamado</label>
+            <select
+              value={filtroStatus}
+              onChange={(e) => setFiltroStatus(e.target.value)}
+              className="text-xs border border-slate-200 rounded-xl px-3 py-2 bg-white cursor-pointer font-semibold outline-none focus:border-emerald-500"
+            >
               <option>Todos</option>
               {STATUS_CHAMADO_OPCOES.map((s) => <option key={s}>{s}</option>)}
             </select>
           </div>
           <div className="flex flex-col min-w-[200px] flex-1 max-w-md">
-            <label className="text-[11px] font-medium text-slate-500 mb-1 uppercase tracking-wide">Tarefa atual</label>
-            <select value={filtroTarefa} onChange={(e) => setFiltroTarefa(e.target.value)} className="text-sm border border-slate-200 rounded-md px-3 py-2 bg-white cursor-pointer">
+            <label className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Tarefa atual</label>
+            <select
+              value={filtroTarefa}
+              onChange={(e) => setFiltroTarefa(e.target.value)}
+              className="text-xs border border-slate-200 rounded-xl px-3 py-2 bg-white cursor-pointer font-semibold outline-none focus:border-emerald-500"
+            >
               <option>Todas</option>
               {tarefas.map((t) => <option key={t}>{t}</option>)}
             </select>
           </div>
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-          <div className="overflow-x-auto max-h-[calc(100vh-280px)]">
-            <table className="min-w-full text-xs">
-              <thead className="sticky top-0 bg-slate-50 border-b border-slate-200 text-[11px] uppercase tracking-wider text-slate-500 z-10">
-                <tr>
-                  <th className="w-8 px-2 py-2"><input type="checkbox" checked={allSelected} onChange={toggleAll} className="cursor-pointer"/></th>
-                  <th className="text-left px-3 py-2 font-semibold">Chamado</th>
-                  <th className="text-left px-3 py-2 font-semibold">Loja</th>
+        <div className="bg-white border border-slate-200/80 rounded-xl shadow-xs overflow-hidden">
+          <div className="overflow-auto max-h-[600px]">
+            <table className="min-w-full text-xs text-left border-collapse">
+              <thead className="sticky top-0 z-20 bg-slate-100 text-[11px] uppercase tracking-wider text-slate-700 shadow-2xs">
+                <tr className="bg-slate-100">
+                  <th className="sticky top-0 z-20 bg-slate-100 w-8 px-3 py-3"><input type="checkbox" checked={allSelected} onChange={toggleAll} className="cursor-pointer"/></th>
+                  <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 font-bold">Chamado</th>
+                  <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 font-bold">Loja</th>
                   <th className="text-left px-3 py-2 font-semibold">CD</th>
                   <th className="text-left px-3 py-2 font-semibold">Abertura</th>
                   <th className="text-left px-3 py-2 font-semibold">Tarefa Atual</th>

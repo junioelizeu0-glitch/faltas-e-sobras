@@ -38,42 +38,67 @@ export default function CadastroTarefas() {
   };
 
   return (
-    <div className="flex-1 overflow-auto bg-slate-50 p-4">
-      <div className="w-full">
-        <header className="sticky top-0 z-10 -mx-4 -mt-4 px-4 pt-4 pb-3 mb-4 bg-slate-50/95 backdrop-blur border-b border-slate-200 flex items-center justify-between">
+    <div className="flex-1 min-h-screen bg-[#F4F6F5] p-4 md:p-6 space-y-6 text-slate-800 font-sans">
+      <div className="w-full bg-white rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] p-6 space-y-6">
+        <header className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-100">
           <div>
-            <h1 className="text-xl font-bold text-slate-800">Cadastro de Tarefas (Etapas)</h1>
-            <p className="text-sm text-slate-500 mt-1">Define nome, SLA em dias úteis e a qual tipo de chamado se aplica.</p>
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Cadastro de Tarefas (Etapas)</h1>
+            <p className="text-xs text-slate-500 mt-1">Define nome, SLA em dias úteis e a qual tipo de chamado se aplica.</p>
           </div>
-          <button onClick={() => setEditing({ ativo: true, aplica_faltas: true })} className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-md"><Plus className="w-4 h-4"/>Nova tarefa</button>
+          <button
+            onClick={() => setEditing({ ativo: true, aplica_faltas: true })}
+            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl cursor-pointer shadow-xs transition-colors"
+          >
+            <Plus className="w-4 h-4"/>
+            <span>Nova Tarefa</span>
+          </button>
         </header>
-        <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-          {loading ? <div className="p-8 text-center"><Loader2 className="inline w-5 h-5 animate-spin mr-2"/>Carregando...</div> : (
-            <table className="min-w-full text-sm">
-              <thead className="bg-slate-50 border-b text-xs uppercase text-slate-500">
+
+        <div className="bg-white border border-slate-200/80 rounded-xl shadow-xs overflow-hidden">
+          {loading ? (
+            <div className="p-12 text-center text-slate-500">
+              <Loader2 className="inline w-6 h-6 animate-spin mr-2 text-emerald-600"/>
+              <span>Carregando tarefas...</span>
+            </div>
+          ) : (
+            <table className="min-w-full text-xs text-left border-collapse">
+              <thead className="bg-slate-50 text-slate-600 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">
                 <tr>
-                  <th className="text-left px-3 py-2">Ordem</th><th className="text-left px-3 py-2">Nome</th>
-                  <th className="text-left px-3 py-2">SLA</th><th className="text-left px-3 py-2">Faltas</th>
-                  <th className="text-left px-3 py-2">Sobras</th><th className="text-left px-3 py-2">Ativo</th>
-                  <th className="text-right px-3 py-2">Ações</th>
+                  <th className="px-4 py-3">Ordem</th>
+                  <th className="px-4 py-3">Nome</th>
+                  <th className="px-4 py-3">SLA</th>
+                  <th className="px-4 py-3">Faltas</th>
+                  <th className="px-4 py-3">Sobras</th>
+                  <th className="px-4 py-3">Ativo</th>
+                  <th className="px-4 py-3 text-right">Ações</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-100 bg-white">
                 {paginated.map((r) => (
-                  <tr key={r.id} className="border-b border-slate-100 hover:bg-slate-50">
-                    <td className="px-3 py-2">{r.ordem}</td>
-                    <td className="px-3 py-2 font-semibold">{r.nome}</td>
-                    <td className="px-3 py-2">{r.dias_uteis} du</td>
-                    <td className="px-3 py-2">{r.aplica_faltas ? "✓" : "—"}</td>
-                    <td className="px-3 py-2">{r.aplica_sobras ? "✓" : "—"}</td>
-                    <td className="px-3 py-2">{r.ativo ? "Sim" : "Não"}</td>
-                    <td className="px-3 py-2 text-right space-x-2">
-                      <button onClick={() => setEditing(r)} title="Editar" className="inline-flex items-center p-1.5 text-blue-600 hover:bg-blue-50 rounded"><Pencil className="w-3.5 h-3.5"/></button>
-                      <button onClick={() => remove(r.id)} title="Excluir" className="inline-flex items-center p-1.5 text-red-500 hover:bg-red-50 rounded ml-0.5"><Trash2 className="w-3.5 h-3.5"/></button>
+                  <tr key={r.id} className="hover:bg-slate-50/80 transition-colors">
+                    <td className="px-4 py-3 font-mono font-bold text-slate-500">{r.ordem}</td>
+                    <td className="px-4 py-3 font-bold text-slate-900">{r.nome}</td>
+                    <td className="px-4 py-3 text-slate-700 font-medium">{r.dias_uteis} dias úteis</td>
+                    <td className="px-4 py-3">{r.aplica_faltas ? <span className="text-emerald-600 font-bold">✓</span> : <span className="text-slate-300">—</span>}</td>
+                    <td className="px-4 py-3">{r.aplica_sobras ? <span className="text-emerald-600 font-bold">✓</span> : <span className="text-slate-300">—</span>}</td>
+                    <td className="px-4 py-3">{r.ativo ? <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60">Sim</span> : <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500">Não</span>}</td>
+                    <td className="px-4 py-3 text-right space-x-1">
+                      <button onClick={() => setEditing(r)} title="Editar" className="inline-flex items-center p-1.5 text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer">
+                        <Pencil className="w-3.5 h-3.5"/>
+                      </button>
+                      <button onClick={() => remove(r.id)} title="Excluir" className="inline-flex items-center p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer">
+                        <Trash2 className="w-3.5 h-3.5"/>
+                      </button>
                     </td>
                   </tr>
                 ))}
-                {rows.length === 0 && <tr><td colSpan={7} className="px-3 py-6 text-center text-slate-400">Nenhuma tarefa.</td></tr>}
+                {rows.length === 0 && (
+                  <tr>
+                    <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
+                      Nenhuma tarefa cadastrada.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           )}
@@ -82,30 +107,52 @@ export default function CadastroTarefas() {
       </div>
 
       {editing && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-2xl w-full max-w-lg">
-            <div className="flex items-center justify-between px-4 py-3 border-b">
-              <h3 className="font-semibold">{editing.id ? "Editar" : "Nova"} tarefa</h3>
-              <button><X className="w-5 h-5 text-slate-400"/></button>
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
+              <h3 className="font-bold text-slate-900">{editing.id ? "Editar" : "Nova"} Tarefa</h3>
+              <button onClick={() => setEditing(null)} className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer">
+                <X className="w-5 h-5"/>
+              </button>
             </div>
-            <div className="p-4 space-y-3">
-              <label className="block"><span className="text-xs font-semibold text-slate-600">Nome</span>
-                <input autoFocus value={editing.nome || ""} onChange={(e) => setEditing({ ...editing, nome: e.target.value })} className="mt-1 w-full text-sm rounded-md border border-slate-300 px-3 py-2"/></label>
-              <div className="grid grid-cols-2 gap-3">
-                <label><span className="text-xs font-semibold text-slate-600">SLA (dias úteis)</span>
-                  <input type="number" min={0} value={editing.dias_uteis ?? ""} onChange={(e) => setEditing({ ...editing, dias_uteis: e.target.value === "" ? undefined : Number(e.target.value) })} className="mt-1 w-full text-sm rounded-md border border-slate-300 px-3 py-2"/></label>
-                <label><span className="text-xs font-semibold text-slate-600">Ordem</span>
-                  <input type="number" value={editing.ordem ?? ""} onChange={(e) => setEditing({ ...editing, ordem: e.target.value === "" ? undefined : Number(e.target.value) })} className="mt-1 w-full text-sm rounded-md border border-slate-300 px-3 py-2"/></label>
+            <div className="p-6 space-y-4 text-xs">
+              <label className="block">
+                <span className="font-semibold text-slate-600">Nome *</span>
+                <input autoFocus value={editing.nome || ""} onChange={(e) => setEditing({ ...editing, nome: e.target.value })} placeholder="Ex.: Validação NF Espelho" className="mt-1.5 w-full text-sm rounded-xl border border-slate-200 px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white font-medium"/>
+              </label>
+              <div className="grid grid-cols-2 gap-4">
+                <label className="block">
+                  <span className="font-semibold text-slate-600">SLA (dias úteis)</span>
+                  <input type="number" min={0} value={editing.dias_uteis ?? ""} onChange={(e) => setEditing({ ...editing, dias_uteis: e.target.value === "" ? undefined : Number(e.target.value) })} className="mt-1.5 w-full text-sm rounded-xl border border-slate-200 px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white font-medium"/>
+                </label>
+                <label className="block">
+                  <span className="font-semibold text-slate-600">Ordem</span>
+                  <input type="number" value={editing.ordem ?? ""} onChange={(e) => setEditing({ ...editing, ordem: e.target.value === "" ? undefined : Number(e.target.value) })} className="mt-1.5 w-full text-sm rounded-xl border border-slate-200 px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white font-medium"/>
+                </label>
               </div>
-              <div className="flex gap-4 text-sm">
-                <label className="inline-flex items-center gap-2"><input type="checkbox" checked={!!editing.aplica_faltas} onChange={(e) => setEditing({ ...editing, aplica_faltas: e.target.checked })}/>Faltas</label>
-                <label className="inline-flex items-center gap-2"><input type="checkbox" checked={!!editing.aplica_sobras} onChange={(e) => setEditing({ ...editing, aplica_sobras: e.target.checked })}/>Sobras</label>
-                <label className="inline-flex items-center gap-2"><input type="checkbox" checked={editing.ativo !== false} onChange={(e) => setEditing({ ...editing, ativo: e.target.checked })}/>Ativo</label>
+              <div className="flex gap-4 text-xs pt-2">
+                <label className="inline-flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+                  <input type="checkbox" checked={!!editing.aplica_faltas} onChange={(e) => setEditing({ ...editing, aplica_faltas: e.target.checked })} className="rounded text-emerald-600 focus:ring-emerald-500"/>
+                  Faltas
+                </label>
+                <label className="inline-flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+                  <input type="checkbox" checked={!!editing.aplica_sobras} onChange={(e) => setEditing({ ...editing, aplica_sobras: e.target.checked })} className="rounded text-emerald-600 focus:ring-emerald-500"/>
+                  Sobras
+                </label>
+                <label className="inline-flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+                  <input type="checkbox" checked={editing.ativo !== false} onChange={(e) => setEditing({ ...editing, ativo: e.target.checked })} className="rounded text-emerald-600 focus:ring-emerald-500"/>
+                  Ativo
+                </label>
               </div>
             </div>
-            <div className="flex justify-end gap-2 px-4 py-3 border-t bg-slate-50">
-              <button onClick={() => setEditing(null)} className="px-3 py-2 text-sm text-slate-600">Cancelar</button>
-              <button onClick={save} className="inline-flex items-center gap-1 px-3 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-md"><Save className="w-4 h-4"/>Salvar</button>
+            <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-200 bg-slate-50">
+              <button onClick={() => setEditing(null)} className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer">
+                Cancelar
+              </button>
+              <button onClick={save} className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl transition-colors cursor-pointer shadow-xs">
+                <Save className="w-4 h-4"/>
+                <span>Salvar</span>
+              </button>
             </div>
           </div>
         </div>

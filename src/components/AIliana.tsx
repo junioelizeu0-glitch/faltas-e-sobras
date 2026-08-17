@@ -17,12 +17,7 @@ const SUGESTOES = [
 function Avatar() {
   return (
     <div
-      className="shrink-0 w-8 h-8 rounded-full flex items-center justify-center"
-      style={{
-        background: "linear-gradient(135deg, var(--accent), color-mix(in oklab, var(--accent) 60%, #7c3aed))",
-        color: "var(--accent-text-on)",
-        boxShadow: "var(--shadow-c)",
-      }}
+      className="shrink-0 w-8 h-8 rounded-xl flex items-center justify-center bg-emerald-700 text-white shadow-xs"
       aria-hidden
     >
       <Sparkles className="w-4 h-4" />
@@ -81,150 +76,115 @@ export default function AIliana() {
   }
 
   return (
-    <div
-      className="flex flex-col h-full max-h-[calc(100vh-48px)]"
-      style={{ background: "var(--bg-page)" }}
-    >
-      {/* Header compacto */}
-      <div
-        className="px-4 py-2.5 border-b flex items-center justify-between"
-        style={{ borderColor: "var(--border-c)", background: "var(--bg-card)" }}
-      >
-        <div className="flex items-center gap-2.5">
-          <Avatar />
-          <div className="leading-tight">
-            <div className="text-sm font-semibold" style={{ color: "var(--text-primary)" }}>
-              AIliana
-            </div>
-            <div className="text-[11px]" style={{ color: "var(--text-secondary)" }}>
-              IA analítica · somente leitura
+    <div className="flex-1 min-h-screen bg-[#F4F6F5] p-4 md:p-6 flex flex-col font-sans text-slate-800">
+      <div className="w-full flex-1 bg-white rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col overflow-hidden">
+        {/* Header compacto */}
+        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
+          <div className="flex items-center gap-3">
+            <Avatar />
+            <div className="leading-tight">
+              <div className="text-sm font-bold text-slate-900 tracking-tight">
+                Assistente Nativo Antigravity AI
+              </div>
+              <div className="text-[11px] text-slate-500 font-medium">
+                Inteligência Artificial Analítica · Leitura em Tempo Real
+              </div>
             </div>
           </div>
-        </div>
-        {messages.length > 0 && (
-          <button
-            onClick={() => setMessages([])}
-            className="inline-flex items-center gap-1 text-xs hover:opacity-80"
-            style={{ color: "var(--text-secondary)" }}
-          >
-            <Trash2 className="w-3.5 h-3.5" /> Limpar
-          </button>
-        )}
-      </div>
-
-      {/* Transcript */}
-      <div className="flex-1 overflow-y-auto">
-        <div className="max-w-3xl mx-auto px-4 py-6 space-y-6">
-          {messages.length === 0 && (
-            <div className="mt-6 text-center">
-              <div className="inline-flex items-center justify-center mb-3">
-                <Avatar />
-              </div>
-              <h2 className="text-lg font-semibold mb-1" style={{ color: "var(--text-primary)" }}>
-                Como posso ajudar?
-              </h2>
-              <p className="text-sm mb-6" style={{ color: "var(--text-secondary)" }}>
-                Pergunte sobre chamados, indicadores, transportadoras, lojas, SLA…
-              </p>
-              <div className="grid sm:grid-cols-2 gap-2 text-left">
-                {SUGESTOES.map((s) => (
-                  <button
-                    key={s}
-                    onClick={() => send(s)}
-                    className="text-sm px-3.5 py-2.5 rounded-xl border hover:opacity-90 transition"
-                    style={{
-                      borderColor: "var(--border-c)",
-                      background: "var(--bg-card)",
-                      color: "var(--text-primary)",
-                    }}
-                  >
-                    {s}
-                  </button>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {messages.map((m, i) =>
-            m.role === "user" ? (
-              <div key={i} className="flex justify-end">
-                <div
-                  className="rounded-2xl rounded-br-md px-3.5 py-2 max-w-[78%] text-sm whitespace-pre-wrap"
-                  style={{
-                    background: "var(--info-bg)",
-                    color: "var(--text-primary)",
-                  }}
-                >
-                  {m.content}
-                </div>
-              </div>
-            ) : (
-              <div key={i} className="flex gap-3 items-start">
-                <Avatar />
-                <div
-                  className="flex-1 text-sm leading-relaxed prose prose-sm max-w-none
-                             prose-headings:mt-3 prose-headings:mb-2
-                             prose-p:my-2 prose-ul:my-2 prose-ol:my-2
-                             prose-table:my-3 prose-th:px-2 prose-td:px-2
-                             prose-code:px-1 prose-code:py-0.5 prose-code:rounded
-                             ai-response"
-                  style={{ color: "var(--text-primary)" }}
-                >
-                  <ReactMarkdown>{m.content}</ReactMarkdown>
-                </div>
-              </div>
-            )
-          )}
-
-          {loading && (
-            <div className="flex gap-3 items-center">
-              <Avatar />
-              <div className="flex items-center gap-2 text-sm" style={{ color: "var(--text-secondary)" }}>
-                <Loader2 className="w-4 h-4 animate-spin" />
-                Pensando…
-              </div>
-            </div>
-          )}
-          <div ref={endRef} />
-        </div>
-      </div>
-
-      {/* Input pill */}
-      <div className="px-4 pb-4 pt-2" style={{ background: "var(--bg-page)" }}>
-        <div className="max-w-3xl mx-auto">
-          <div
-            className="flex items-end gap-2 rounded-full pl-4 pr-1.5 py-1.5 border shadow-sm"
-            style={{
-              background: "var(--bg-card)",
-              borderColor: "var(--border-c)",
-            }}
-          >
-            <textarea
-              ref={inputRef}
-              value={input}
-              onChange={(e) => setInput(e.target.value)}
-              onKeyDown={onKeyDown}
-              rows={1}
-              placeholder="Pergunte alguma coisa…"
-              className="flex-1 resize-none bg-transparent border-0 outline-none focus:ring-0 px-0 py-2 text-sm max-h-[180px]"
-              style={{ color: "var(--text-primary)" }}
-              disabled={loading}
-            />
+          {messages.length > 0 && (
             <button
-              onClick={() => send()}
-              disabled={loading || !input.trim()}
-              aria-label="Enviar"
-              className="shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition disabled:opacity-40"
-              style={{
-                background: "var(--accent)",
-                color: "var(--accent-text-on)",
-              }}
+              onClick={() => setMessages([])}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
             >
-              {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowUp className="w-4 h-4" />}
+              <Trash2 className="w-3.5 h-3.5" /> Limpar Histórico
             </button>
+          )}
+        </div>
+
+        {/* Transcript */}
+        <div className="flex-1 overflow-y-auto p-6 space-y-6">
+          <div className="max-w-3xl mx-auto space-y-6">
+            {messages.length === 0 && (
+              <div className="mt-8 text-center space-y-4">
+                <div className="inline-flex items-center justify-center p-3 bg-emerald-50 rounded-2xl border border-emerald-200/60 shadow-xs">
+                  <Sparkles className="w-8 h-8 text-emerald-700" />
+                </div>
+                <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+                  Como posso ajudar na sua gestão hoje?
+                </h2>
+                <p className="text-xs text-slate-500 max-w-md mx-auto">
+                  Consulte informações em tempo real sobre chamados, prazos de SLA, transportadoras, lojas e métricas operacionais.
+                </p>
+                <div className="grid sm:grid-cols-2 gap-3 text-left pt-4 max-w-2xl mx-auto">
+                  {SUGESTOES.map((s) => (
+                    <button
+                      key={s}
+                      onClick={() => send(s)}
+                      className="text-xs px-4 py-3 rounded-xl border border-slate-200 bg-white hover:border-emerald-500 hover:bg-emerald-50/40 text-slate-700 font-medium transition-all shadow-xs cursor-pointer"
+                    >
+                      {s}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {messages.map((m, i) =>
+              m.role === "user" ? (
+                <div key={i} className="flex justify-end">
+                  <div className="rounded-2xl rounded-tr-xs px-4 py-3 max-w-[78%] text-xs font-medium bg-emerald-700 text-white shadow-xs leading-relaxed">
+                    {m.content}
+                  </div>
+                </div>
+              ) : (
+                <div key={i} className="flex gap-3 items-start">
+                  <Avatar />
+                  <div className="flex-1 text-xs leading-relaxed text-slate-800 bg-slate-50 rounded-2xl rounded-tl-xs p-4 border border-slate-200/80 shadow-xs prose prose-slate max-w-none">
+                    <ReactMarkdown>{m.content}</ReactMarkdown>
+                  </div>
+                </div>
+              )
+            )}
+
+            {loading && (
+              <div className="flex gap-3 items-center">
+                <Avatar />
+                <div className="flex items-center gap-2 text-xs font-semibold text-emerald-700 bg-emerald-50 px-3.5 py-2 rounded-xl border border-emerald-200/60">
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  <span>Analisando dados da base...</span>
+                </div>
+              </div>
+            )}
+            <div ref={endRef} />
           </div>
-          <div className="text-[11px] text-center mt-2" style={{ color: "var(--text-secondary)" }}>
-            Enter envia · Shift+Enter quebra linha
+        </div>
+
+        {/* Input pill */}
+        <div className="p-4 bg-slate-50 border-t border-slate-100">
+          <div className="max-w-3xl mx-auto">
+            <div className="flex items-center gap-2 rounded-2xl pl-4 pr-2 py-2 border border-slate-200 bg-white shadow-xs focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all">
+              <textarea
+                ref={inputRef}
+                value={input}
+                onChange={(e) => setInput(e.target.value)}
+                onKeyDown={onKeyDown}
+                rows={1}
+                placeholder="Pergunte sobre chamados, prazos, transportadoras..."
+                className="flex-1 resize-none bg-transparent border-0 outline-none focus:ring-0 px-0 py-1 text-xs font-medium text-slate-800 placeholder-slate-400 max-h-[120px]"
+                disabled={loading}
+              />
+              <button
+                onClick={() => send()}
+                disabled={loading || !input.trim()}
+                aria-label="Enviar"
+                className="shrink-0 w-8 h-8 rounded-xl flex items-center justify-center transition bg-emerald-700 hover:bg-emerald-800 text-white disabled:opacity-40 cursor-pointer"
+              >
+                {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ArrowUp className="w-4 h-4" />}
+              </button>
+            </div>
+            <div className="text-[10px] text-center mt-2 text-slate-400 font-medium">
+              Enter envia · Shift+Enter quebra linha
+            </div>
           </div>
         </div>
       </div>

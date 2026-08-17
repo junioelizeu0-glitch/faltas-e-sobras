@@ -107,61 +107,85 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
         value={(editing as any)?.[key] ?? ""}
         onChange={(e) => setEditing({ ...(editing as Loja), [key]: e.target.value })}
         placeholder={opts?.placeholder}
-        className="mt-1 w-full text-sm rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500"
+        className="mt-1.5 w-full text-sm rounded-xl border border-slate-200 px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white font-medium"
       />
     </label>
   );
 
   return (
-    <div className="flex-1 overflow-auto bg-slate-50 p-4">
-      <div className="w-full">
-        <header className="mb-4 flex flex-wrap items-center justify-between gap-3">
+    <div className="flex-1 min-h-screen bg-[#F4F6F5] p-4 md:p-6 space-y-6 text-slate-800 font-sans">
+      <div className="w-full bg-white rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] p-6 space-y-6">
+        <header className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-100">
           <div>
-            <h1 className="text-xl font-bold text-slate-800">Cadastro de Lojas</h1>
-            <p className="text-sm text-slate-500 mt-1">Dados bancários e cadastrais para geração de relatórios. Total: {filtered.length.toLocaleString("pt-BR")}</p>
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Cadastro de Lojas</h1>
+            <p className="text-xs text-slate-500 mt-1">Dados bancários e cadastrais corporativos. Total: {filtered.length.toLocaleString("pt-BR")} lojas</p>
           </div>
-          <button onClick={() => { setErr(null); setEditing({ ...EMPTY }); }} className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-white bg-blue-600 hover:bg-blue-700 rounded-md cursor-pointer">
-            <Plus className="w-4 h-4"/>Nova Loja
+          <button
+            onClick={() => { setErr(null); setEditing({ ...EMPTY }); }}
+            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl cursor-pointer shadow-xs transition-colors"
+          >
+            <Plus className="w-4 h-4"/>
+            <span>Nova Loja</span>
           </button>
         </header>
 
-        <div className="mb-3 relative">
-          <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-          <input value={busca} onChange={(e) => setBusca(e.target.value)} placeholder="Buscar por número, CNPJ, razão social ou banco..." className="w-full pl-9 pr-3 py-2 text-sm border border-slate-200 rounded-md bg-white focus:outline-none focus:ring-2 focus:ring-blue-100"/>
+        <div className="relative max-w-md">
+          <Search className="w-4 h-4 absolute left-3.5 top-1/2 -translate-y-1/2 text-slate-400" />
+          <input
+            value={busca}
+            onChange={(e) => setBusca(e.target.value)}
+            placeholder="Buscar por número, CNPJ, razão social ou banco..."
+            className="w-full pl-10 pr-4 py-2 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium"
+          />
         </div>
 
-        <div className="bg-white border border-slate-200 rounded-lg shadow-sm overflow-hidden">
-          {loading ? <div className="p-8 text-center"><Loader2 className="inline w-5 h-5 animate-spin mr-2"/>Carregando...</div> : (
-            <table className="min-w-full text-sm">
-              <thead className="bg-slate-50 border-b text-xs uppercase text-slate-500">
+        <div className="bg-white border border-slate-200/80 rounded-xl shadow-xs overflow-hidden">
+          {loading ? (
+            <div className="p-12 text-center text-slate-500">
+              <Loader2 className="inline w-6 h-6 animate-spin mr-2 text-emerald-600"/>
+              <span>Carregando lojas...</span>
+            </div>
+          ) : (
+            <table className="min-w-full text-xs text-left border-collapse">
+              <thead className="bg-slate-50 text-slate-600 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">
                 <tr>
-                  <th className="text-left px-3 py-2">Número</th>
-                  <th className="text-left px-3 py-2">Razão Social</th>
-                  <th className="text-left px-3 py-2">CNPJ</th>
-                  <th className="text-left px-3 py-2">Banco</th>
-                  <th className="text-left px-3 py-2">Ag / Conta</th>
-                  <th className="text-right px-3 py-2">Ações</th>
+                  <th className="px-4 py-3">Número</th>
+                  <th className="px-4 py-3">Razão Social</th>
+                  <th className="px-4 py-3">CNPJ</th>
+                  <th className="px-4 py-3">Banco</th>
+                  <th className="px-4 py-3">Ag / Conta</th>
+                  <th className="px-4 py-3 text-right">Ações</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-slate-100 bg-white">
                 {paginated.map((r) => (
-                  <tr key={r.id} className="border-b border-slate-100 hover:bg-slate-50 cursor-pointer" onClick={() => setViewing(r)}>
-                    <td className="px-3 py-2 font-semibold text-slate-800">{r.numero}</td>
-                    <td className="px-3 py-2 text-slate-700">{r.razao_social || "—"}</td>
-                    <td className="px-3 py-2 text-slate-600">{r.cnpj || "—"}</td>
-                    <td className="px-3 py-2 text-slate-600">{r.banco || "—"}</td>
-                    <td className="px-3 py-2 text-slate-600">
+                  <tr key={r.id} className="hover:bg-slate-50/80 transition-colors cursor-pointer" onClick={() => setViewing(r)}>
+                    <td className="px-4 py-3 font-bold text-slate-900">{r.numero}</td>
+                    <td className="px-4 py-3 font-medium text-slate-800">{r.razao_social || "—"}</td>
+                    <td className="px-4 py-3 text-slate-600">{r.cnpj || "—"}</td>
+                    <td className="px-4 py-3 text-slate-600">{r.banco || "—"}</td>
+                    <td className="px-4 py-3 text-slate-600 font-mono">
                       {r.agencia ? `${r.agencia}${r.agencia_dig ? "-" + r.agencia_dig : ""}` : "—"}
                       {" / "}
                       {r.conta ? `${r.conta}${r.conta_dig ? "-" + r.conta_dig : ""}` : "—"}
                     </td>
-                    <td className="px-3 py-2 text-right space-x-1" onClick={(e) => e.stopPropagation()}>
-                      <button onClick={() => setEditing(r)} title="Editar" className="inline-flex items-center p-1.5 text-blue-600 hover:bg-blue-50 rounded"><Pencil className="w-3.5 h-3.5"/></button>
-                      <button onClick={() => remove(r)} title="Excluir" className="inline-flex items-center p-1.5 text-red-500 hover:bg-red-50 rounded"><Trash2 className="w-3.5 h-3.5"/></button>
+                    <td className="px-4 py-3 text-right space-x-1" onClick={(e) => e.stopPropagation()}>
+                      <button onClick={() => setEditing(r)} title="Editar" className="inline-flex items-center p-1.5 text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer">
+                        <Pencil className="w-3.5 h-3.5"/>
+                      </button>
+                      <button onClick={() => remove(r)} title="Excluir" className="inline-flex items-center p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer">
+                        <Trash2 className="w-3.5 h-3.5"/>
+                      </button>
                     </td>
                   </tr>
                 ))}
-                {filtered.length === 0 && <tr><td colSpan={6} className="px-3 py-6 text-center text-slate-400">Nenhuma loja cadastrada.</td></tr>}
+                {filtered.length === 0 && (
+                  <tr>
+                    <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
+                      Nenhuma loja cadastrada.
+                    </td>
+                  </tr>
+                )}
               </tbody>
             </table>
           )}
@@ -172,13 +196,18 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
 
       {/* Modal de visualização somente-leitura */}
       {viewing && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[92vh] overflow-auto">
-            <div className="flex items-center justify-between px-4 py-3 border-b">
-              <h3 className="font-semibold flex items-center gap-2"><Lock className="w-4 h-4 text-slate-400"/> Loja {viewing.numero} — dados bancários (somente leitura)</h3>
-              <button onClick={() => setViewing(null)}><X className="w-5 h-5 text-slate-400"/></button>
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] overflow-auto border border-slate-200">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
+              <h3 className="font-bold text-slate-900 flex items-center gap-2">
+                <Lock className="w-4 h-4 text-slate-400"/>
+                <span>Loja {viewing.numero} — dados bancários</span>
+              </h3>
+              <button onClick={() => setViewing(null)} className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer">
+                <X className="w-5 h-5"/>
+              </button>
             </div>
-            <div className="p-4 grid grid-cols-2 gap-3 text-sm">
+            <div className="p-6 grid grid-cols-2 gap-4 text-xs">
               {[
                 ["Razão Social", viewing.razao_social],
                 ["CNPJ", viewing.cnpj],
@@ -189,31 +218,40 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
                 ["Observação", viewing.observacao],
               ].map(([label, val]) => (
                 <div key={label as string}>
-                  <div className="text-xs font-semibold text-slate-500 uppercase">{label}</div>
-                  <div className="mt-1 rounded-md bg-slate-50 border border-slate-200 px-3 py-2 text-slate-700 min-h-[38px]">{val || "—"}</div>
+                  <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{label}</div>
+                  <div className="mt-1 rounded-xl bg-slate-50 border border-slate-200 px-3.5 py-2.5 text-slate-800 font-medium min-h-[38px]">
+                    {val || "—"}
+                  </div>
                 </div>
               ))}
             </div>
-            <div className="flex justify-end gap-2 px-4 py-3 border-t bg-slate-50">
-              <button onClick={() => { setEditing(viewing); setViewing(null); }} className="inline-flex items-center gap-1 px-3 py-2 text-sm text-blue-600 hover:bg-blue-50 rounded-md"><Pencil className="w-4 h-4"/> Editar</button>
-              <button onClick={() => setViewing(null)} className="px-3 py-2 text-sm text-slate-600">Fechar</button>
+            <div className="flex justify-end gap-2 px-6 py-4 border-t border-slate-200 bg-slate-50">
+              <button onClick={() => { setEditing(viewing); setViewing(null); }} className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-emerald-700 hover:bg-emerald-50 rounded-xl cursor-pointer border border-emerald-200/60">
+                <Pencil className="w-3.5 h-3.5"/> Editar
+              </button>
+              <button onClick={() => setViewing(null)} className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer">
+                Fechar
+              </button>
             </div>
           </div>
         </div>
       )}
 
-      {/* Modal de edição/criação */}
+      {/* Modal de edição/criação com Alinhamento Perfeito da Conta e Dígito */}
       {editing && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4">
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[92vh] overflow-auto">
-            <div className="flex items-center justify-between px-6 py-4 border-b">
-              <h3 className="font-semibold">{editing.id ? "Editar" : "Nova"} loja</h3>
-              <button onClick={() => setEditing(null)}><X className="w-5 h-5 text-slate-400"/></button>
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] overflow-auto border border-slate-200">
+            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
+              <h3 className="font-bold text-slate-900">{editing.id ? "Editar" : "Nova"} loja</h3>
+              <button onClick={() => setEditing(null)} className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer">
+                <X className="w-5 h-5"/>
+              </button>
             </div>
-            <div className="p-6 space-y-6">
-              {err && <div className="text-sm text-red-700 bg-red-50 border border-red-200 rounded p-2">{err}</div>}
-              <div className="flex flex-wrap items-end gap-5">
-                <div className="w-32 shrink-0">
+            <div className="p-6 space-y-5">
+              {err && <div className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-xl p-3 font-semibold">{err}</div>}
+              
+              <div className="flex flex-wrap items-end gap-4">
+                <div className="w-36 shrink-0">
                   <label className="block">
                     <span className="text-xs font-semibold text-slate-600">Número da Loja *</span>
                     <input
@@ -221,7 +259,7 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
                       value={editing?.numero ?? ""}
                       onChange={(e) => setEditing({ ...(editing as Loja), numero: onlyDigits(e.target.value) })}
                       placeholder="Ex.: 101"
-                      className="mt-1.5 w-full text-sm rounded-md border border-slate-300 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="mt-1.5 w-full text-sm rounded-xl border border-slate-200 px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white font-medium"
                     />
                   </label>
                 </div>
@@ -246,24 +284,34 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
                         }
                       }}
                       placeholder="00.000.000/0001-00"
-                      className="flex-1 text-sm rounded-md border border-slate-300 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="flex-1 text-sm rounded-xl border border-slate-200 px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white font-medium"
                     />
-                    <button type="button" onClick={() => buscarCnpj()} disabled={lookupCnpj} title="Buscar dados na Receita" className="inline-flex items-center gap-1 px-3 text-sm text-white bg-emerald-600 hover:bg-emerald-700 rounded-md disabled:opacity-50">
+                    <button
+                      type="button"
+                      onClick={() => buscarCnpj()}
+                      disabled={lookupCnpj}
+                      title="Buscar dados na Receita"
+                      className="inline-flex items-center gap-1.5 px-4 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl disabled:opacity-50 transition-colors cursor-pointer"
+                    >
                       {lookupCnpj ? <Loader2 className="w-4 h-4 animate-spin"/> : <Download className="w-4 h-4"/>}
+                      <span>Buscar</span>
                     </button>
                   </div>
                 </label>
               </div>
+
               {field("Razão Social", "razao_social")}
-              <div className="pt-4 border-t">
-                <div className="text-xs font-bold text-slate-500 uppercase mb-3">Dados Bancários</div>
-                <div className="grid grid-cols-2 gap-5">
+
+              <div className="pt-4 border-t border-slate-100 space-y-4">
+                <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Dados Bancários</div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <label className="block">
                     <span className="text-xs font-semibold text-slate-600">Tipo *</span>
                     <select
                       value={editing?.tipo ?? ""}
                       onChange={(e) => setEditing({ ...(editing as Loja), tipo: e.target.value })}
-                      className="mt-1.5 w-full text-sm rounded-md border border-slate-300 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white"
+                      className="mt-1.5 w-full text-sm rounded-xl border border-slate-200 px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white font-medium cursor-pointer"
                     >
                       <option value="">Selecione...</option>
                       <option value="Própria">Própria</option>
@@ -275,40 +323,63 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
                     <input
                       value={editing?.banco ?? ""}
                       onChange={(e) => setEditing({ ...(editing as Loja), banco: titleCase(e.target.value) })}
-                      className="mt-1.5 w-full text-sm rounded-md border border-slate-300 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="mt-1.5 w-full text-sm rounded-xl border border-slate-200 px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white font-medium"
                     />
                   </label>
                 </div>
-                <div className="grid grid-cols-4 gap-5 mt-5">
+
+                {/* GRADE PERFEITAMENTE ALINHADA DA AGÊNCIA, DÍGITO AG., CONTA E DÍGITO CTA */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <label className="block">
                     <span className="text-xs font-semibold text-slate-600">Agência</span>
                     <input
                       inputMode="numeric"
                       value={editing?.agencia ?? ""}
                       onChange={(e) => setEditing({ ...(editing as Loja), agencia: onlyDigits(e.target.value) })}
-                      className="mt-1.5 w-full text-sm rounded-md border border-slate-300 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="mt-1.5 w-full text-sm rounded-xl border border-slate-200 px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white font-medium"
                     />
                   </label>
+
                   <label className="block">
                     <span className="text-xs font-semibold text-slate-600">Dígito Ag.</span>
                     <input
                       inputMode="numeric"
                       value={editing?.agencia_dig ?? ""}
                       onChange={(e) => setEditing({ ...(editing as Loja), agencia_dig: onlyDigits(e.target.value).slice(0, 2) })}
-                      className="mt-1.5 w-full text-sm rounded-md border border-slate-300 px-3 py-2.5 focus:outline-none focus:ring-2 focus:ring-blue-500"
+                      className="mt-1.5 w-full text-sm rounded-xl border border-slate-200 px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white font-medium"
                     />
                   </label>
-                  {field("Conta", "conta")}
-                  {field("Dígito Cta.", "conta_dig")}
+
+                  <label className="block">
+                    <span className="text-xs font-semibold text-slate-600">Conta</span>
+                    <input
+                      value={editing?.conta ?? ""}
+                      onChange={(e) => setEditing({ ...(editing as Loja), conta: e.target.value })}
+                      className="mt-1.5 w-full text-sm rounded-xl border border-slate-200 px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white font-medium"
+                    />
+                  </label>
+
+                  <label className="block">
+                    <span className="text-xs font-semibold text-slate-600">Dígito Cta.</span>
+                    <input
+                      value={editing?.conta_dig ?? ""}
+                      onChange={(e) => setEditing({ ...(editing as Loja), conta_dig: e.target.value })}
+                      className="mt-1.5 w-full text-sm rounded-xl border border-slate-200 px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white font-medium"
+                    />
+                  </label>
                 </div>
               </div>
 
               {field("Observação", "observacao")}
             </div>
-            <div className="flex justify-end gap-2 px-6 py-4 border-t bg-slate-50">
-              <button onClick={() => setEditing(null)} className="px-4 py-2 text-sm text-slate-600 hover:bg-slate-100 rounded-md">Cancelar</button>
-              <button onClick={save} disabled={saving} className="inline-flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-md disabled:opacity-50">
-                {saving ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4"/>}Salvar
+
+            <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-200 bg-slate-50">
+              <button onClick={() => setEditing(null)} className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer">
+                Cancelar
+              </button>
+              <button onClick={save} disabled={saving} className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl disabled:opacity-50 transition-colors cursor-pointer shadow-xs">
+                {saving ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4"/>}
+                <span>Salvar</span>
               </button>
             </div>
           </div>
