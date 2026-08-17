@@ -1,14 +1,16 @@
 import React, { useEffect, useMemo, useState, useRef } from "react";
 import {
   AlertTriangle, Clock, CheckCircle2, Search, FileText, Loader2, X,
-  ChevronDown, RefreshCcw, Calendar, MessageSquare, Globe, Headphones, HelpCircle,
-  Download, Paperclip, ChevronLeft, ChevronRight, Filter, Eye, Layers, Truck, Building2
+  ChevronDown, RefreshCcw, Download, Paperclip, ChevronLeft, ChevronRight,
+  Filter, Eye, Pencil, Building2, Store, LayoutGrid, Layers
 } from "lucide-react";
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList
 } from "recharts";
 import { parseDataBR, getBusinessDays } from "@/lib/data-processing";
 import ChamadoForm from "./ChamadoForm";
+import { listLojas, type Loja } from "@/lib/lojas.functions";
+import { useServerFn } from "@tanstack/react-start";
 import { toPng } from "html-to-image";
 
 type Props = {
@@ -45,18 +47,16 @@ function siglaCD(v: any): string {
   return "";
 }
 
-// Cores dinâmicas para gráficos estilo imagem de referência
+// Cores dinâmicas para gráficos
 const CHART_PALETTE = [
   "#a855f7", // roxo
-  "#84cc16", // verde lima
-  "#f97316", // laranja
   "#06b6d4", // ciano
+  "#22c55e", // verde
+  "#f97316", // laranja
   "#eab308", // amarelo
   "#ec4899", // rosa
-  "#22c55e", // verde
   "#3b82f6", // azul
-  "#6366f1", // índigo
-  "#64748b", // slate
+  "#84cc16", // verde lima
 ];
 
 export default function PainelAbertos({ rawData, isLoading, error, onChanged }: Props) {
@@ -64,7 +64,49 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
   const [isGraficosOpen, setIsGraficosOpen] = useState(true);
   const [isAtividadesOpen, setIsAtividadesOpen] = useState(true);
 
-  // Filtros da tabela
+  // Mapeamento de lojas para Franquia vs Própria
+  const [lojasMap, setLojasMap] = useState<Record<string, string>>({});
+  const getLojasFn = useServerFn(listLojas);
+
+  useEffect(() => {
+    getLojasFn()
+      .then((data) => {
+        if (data && Array.isArray(data)) {
+          const map: Record<string, string> = {};
+          data.forEach((l) => {
+            const num = String(l.numero || "").trim();
+            const rz = String(l.razao_social || "").trim().toLowerCase();
+            const tp = String(l.tipo || "").trim();
+            if (num) map[num] = tp;
+            if (rz) map[rz] = tp;
+          });
+          setLojasMap(map);
+        }
+      })
+      .catch(() => {});
+  }, []);
+
+  // Determinar o Tipo de Loja (Franquia vs Própria)
+  const classifyTipoLoja = (r: any): "Franquia" | "Própria" | "Geral" => {
+    const lojaVal = String(r.Loja || r.loja || "").trim();
+    if (lojasMap[lojaVal]) {
+      const tp = lojasMap[lojaVal].toLowerCase();
+      if (tp.includes("propria") || tp.includes("própria")) return "Própria";
+      if (tp.includes("franquia")) return "Franquia";
+    }
+    const valUpper = lojaVal.toUpperCase();
+    if (valUpper.includes("PROPRIA") || valUpper.includes("PRÓPRIA")) return "Própria";
+    if (valUpper.includes("FRANQUIA") || valUpper.includes("FRANQ")) return "Franquia";
+
+    const tpCampo = String(r.tipo_loja || r["Tipo de Loja"] || "").toLowerCase();
+    if (tpCampo.includes("propria") || tpCampo.includes("própria")) return "Própria";
+    if (tpCampo.includes("franquia")) return "Franquia";
+
+    // Se a loja não for identificada como própria, padrão do sistema é Franquia
+    return "Franquia";
+  };
+
+  // Filtros da tabela de atividades
   const [query, setQuery] = useState("");
   const [cdFilter, setCdFilter] = useState<"Todos" | "ES" | "PB">("Todos");
   const [alertaFilter, setAlertaFilter] = useState<"todos" | "vencido" | "atencao" | "prazo">("todos");
@@ -73,10 +115,15 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
   const [lojaFilter, setLojaFilter] = useState<string>("Todas");
   const [editingId, setEditingId] = useState<string | null>(null);
 
+  // Estado do Modal de Pré-Lista (Drill-down dos gráficos)
+  const [isDrillOpen, setIsDrillOpen] = useState(false);
+  const [drillTitle, setDrillTitle] = useState("");
+  const [drillRows, setDrillRows] = useState<any[]>([]);
+  const [drillBusca, setDrillBusca] = useState("");
+
   // Refs para exportação de imagem dos gráficos
   const chart1Ref = useRef<HTMLDivElement>(null);
   const chart2Ref = useRef<HTMLDivElement>(null);
-  const chart3Ref = useRef<HTMLDivElement>(null);
 
   const handleExportChart = async (ref: React.RefObject<HTMLDivElement | null>, filename: string) => {
     if (!ref.current) return;
@@ -95,7 +142,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
     }
   };
 
-  // Dados processados para chamados em aberto
+  // Dados processados dos chamados em aberto
   const rows = useMemo(() => {
     const hoje = new Date();
     hoje.setHours(23, 59, 59, 999);
@@ -113,10 +160,13 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
         let alerta: "vencido" | "atencao" | "prazo" = "prazo";
         if (dias > SLA_LIMITE) alerta = "vencido";
         else if (dias >= SLA_ATENCAO) alerta = "atencao";
+        const tipoLoja = classifyTipoLoja(r);
+
         return {
           id: r.id || r._id || r.Chamado,
           chamado: r.Chamado,
           loja: r.Loja || "—",
+          tipoLoja,
           cd: siglaCD(r.CD),
           tipo: r.Tipo || "Falta/Sobra",
           tarefa: (String(r["Situação "] ?? r["Situação"] ?? r.situacao ?? "").trim()) || "Monitoramento",
@@ -128,7 +178,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
         };
       })
       .sort((a, b) => b.dias - a.dias);
-  }, [rawData]);
+  }, [rawData, lojasMap]);
 
   // Opções de seletores
   const statusOpts = useMemo(() => {
@@ -147,7 +197,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
     return ["Todas", ...Array.from(s).sort((a, b) => a.localeCompare(b, "pt-BR", { numeric: true }))];
   }, [rows]);
 
-  // Filtro de chamados
+  // Filtro principal de chamados
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     return rows.filter((r) => {
@@ -173,40 +223,13 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
     return c;
   }, [rows]);
 
-  // --- DADOS PARA OS 3 GRÁFICOS ---
-  // Gráfico 1: Controle de Eventos (Últimos 12 Meses)
+  // =========================================================================
+  // PROCESSAMENTO DOS 2 GRÁFICOS SOLICITADOS
+  // =========================================================================
+
+  // GRÁFICO 1: Controle de Eventos (Aberturas Mensais e Atrasos > 60 dias úteis)
   const controleEventosData = useMemo(() => {
-    const monthCounts: Record<string, { monthLabel: string; yearMonth: string; total: number }> = {};
-    const now = new Date();
-
-    // Inicializar últimos 12 meses
-    for (let i = 11; i >= 0; i--) {
-      const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-      const mStr = d.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "");
-      const label = `${mStr.charAt(0).toUpperCase() + mStr.slice(1)}/${String(d.getFullYear()).slice(2)}`;
-      const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-      monthCounts[key] = { monthLabel: label, yearMonth: key, total: 0 };
-    }
-
-    (rawData || []).forEach((r) => {
-      const dt = parseDataBR(r["Dt Abertura"]);
-      if (!dt) return;
-      const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`;
-      if (monthCounts[key]) {
-        monthCounts[key].total += 1;
-      }
-    });
-
-    return Object.values(monthCounts).map((item, idx) => ({
-      name: item.monthLabel,
-      total: item.total || (idx % 3 === 0 ? idx + 2 : idx + 1), // fallback de amostragem elegante se base pequena
-      fill: CHART_PALETTE[idx % CHART_PALETTE.length]
-    }));
-  }, [rawData]);
-
-  // Gráfico 2: Tarefas em Atraso (Visão Mensal)
-  const tarefasAtrasoData = useMemo(() => {
-    const monthCounts: Record<string, { monthLabel: string; total: number }> = {};
+    const monthCounts: Record<string, { monthLabel: string; yearMonth: string; total: number; vencidos: number }> = {};
     const now = new Date();
 
     for (let i = 11; i >= 0; i--) {
@@ -214,7 +237,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
       const mStr = d.toLocaleDateString("pt-BR", { month: "short" }).replace(".", "");
       const label = `${mStr.charAt(0).toUpperCase() + mStr.slice(1)}/${String(d.getFullYear()).slice(2)}`;
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
-      monthCounts[key] = { monthLabel: label, total: 0 };
+      monthCounts[key] = { monthLabel: label, yearMonth: key, total: 0, vencidos: 0 };
     }
 
     rows.forEach((r) => {
@@ -223,77 +246,110 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
       const key = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`;
       if (monthCounts[key]) {
         monthCounts[key].total += 1;
+        if (r.alerta === "vencido") {
+          monthCounts[key].vencidos += 1;
+        }
       }
     });
 
-    const list = Object.values(monthCounts).map((item, idx) => ({
+    return Object.values(monthCounts).map((item, idx) => ({
       name: item.monthLabel,
-      total: item.total || (idx === 8 ? 14 : (idx % 2 === 0 ? idx + 2 : idx + 1))
+      yearMonth: item.yearMonth,
+      total: item.total,
+      vencidos: item.vencidos,
+      fill: CHART_PALETTE[idx % CHART_PALETTE.length]
     }));
+  }, [rows]);
 
-    // Localizar valor máximo para destacar a barra de maior pico em preto (igual a referência)
-    const maxVal = Math.max(...list.map(l => l.total), 1);
+  // GRÁFICO 2: Chamados por Tipo de Loja (Franquia vs Própria)
+  const chamadosPorTipoLojaData = useMemo(() => {
+    let franquiaCount = 0;
+    let propriaCount = 0;
+    let geralCount = 0;
 
-    return list.map((item, idx) => ({
-      ...item,
-      isPeak: item.total === maxVal && maxVal > 3,
-      fill: (item.total === maxVal && maxVal > 3) ? "#0f172a" : CHART_PALETTE[(idx + 2) % CHART_PALETTE.length]
-    }));
-  }, [rawData, rows]);
-
-  // Gráfico 3: Chamados por Transportadora / Origem
-  const transpData = useMemo(() => {
-    const countsMap: Record<string, number> = {};
-    (rawData || []).forEach((r) => {
-      const transp = String(r.Transportadora || r.transportadora || r.Loja || "Outros").trim();
-      if (transp) {
-        countsMap[transp] = (countsMap[transp] || 0) + 1;
-      }
+    rows.forEach((r) => {
+      if (r.tipoLoja === "Franquia") franquiaCount++;
+      else if (r.tipoLoja === "Própria") propriaCount++;
+      else geralCount++;
     });
 
-    const entries = Object.entries(countsMap)
-      .sort((a, b) => b[1] - a[1])
-      .slice(0, 8);
+    return [
+      { name: "Franquias", categoryKey: "Franquia", total: franquiaCount, fill: "#06b6d4", icon: Store },
+      { name: "Lojas Próprias", categoryKey: "Própria", total: propriaCount, fill: "#a855f7", icon: Building2 },
+      ...(geralCount > 0 ? [{ name: "Outras / Geral", categoryKey: "Geral", total: geralCount, fill: "#64748b", icon: Layers }] : [])
+    ];
+  }, [rows]);
 
-    if (entries.length === 0) {
-      return [
-        { name: "BANDEIRANTES", total: 37, fill: "#a855f7" },
-        { name: "LEGAL CARROS", total: 10, fill: "#84cc16" },
-        { name: "OFICINA TEST", total: 10, fill: "#ea580c" },
-        { name: "JULIA CACIOU", total: 4, fill: "#38bdf8" },
-        { name: "AUTOMOTIVO F", total: 3, fill: "#facc15" },
-        { name: "CAIS B", total: 3, fill: "#0284c7" },
-        { name: "MERCESCAN", total: 2, fill: "#db2777" },
-        { name: "OFFICE CAR", total: 2, fill: "#16a34a" },
-      ];
-    }
+  // =========================================================================
+  // HANDLERS PARA DRILL-DOWN / CLIQUE NOS GRÁFICOS
+  // =========================================================================
+  const handleChart1Click = (data: any) => {
+    if (!data || !data.yearMonth) return;
+    const key = data.yearMonth;
+    const name = data.name;
 
-    return entries.map(([name, total], idx) => ({
-      name: name.length > 12 ? `${name.substring(0, 10)}...` : name.toUpperCase(),
-      fullName: name,
-      total,
-      fill: idx === 0 ? "#a855f7" : CHART_PALETTE[idx % CHART_PALETTE.length]
-    }));
-  }, [rawData]);
+    const list = rows.filter((r) => {
+      const dt = parseDataBR(r.dtAbertura);
+      if (!dt) return false;
+      const rKey = `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, "0")}`;
+      return rKey === key;
+    });
 
-  // Paginação da Tabela
+    setDrillTitle(`Chamados Abertos em ${name} (${list.length} chamados)`);
+    setDrillRows(list);
+    setDrillBusca("");
+    setIsDrillOpen(true);
+  };
+
+  const handleChart2Click = (data: any) => {
+    if (!data || !data.categoryKey) return;
+    const cat = data.categoryKey;
+    const name = data.name;
+
+    const list = rows.filter((r) => r.tipoLoja === cat || (cat === "Geral" && r.tipoLoja !== "Franquia" && r.tipoLoja !== "Própria"));
+
+    setDrillTitle(`Chamados de Lojas: ${name} (${list.length} chamados)`);
+    setDrillRows(list);
+    setDrillBusca("");
+    setIsDrillOpen(true);
+  };
+
+  // Filtragem interna da Pré-lista no modal
+  const filteredDrillRows = useMemo(() => {
+    const q = drillBusca.trim().toLowerCase();
+    if (!q) return drillRows;
+    return drillRows.filter(
+      (r) =>
+        String(r.chamado).toLowerCase().includes(q) ||
+        String(r.loja).toLowerCase().includes(q) ||
+        String(r.tarefa).toLowerCase().includes(q) ||
+        String(r.status).toLowerCase().includes(q) ||
+        String(r.tipo).toLowerCase().includes(q)
+    );
+  }, [drillRows, drillBusca]);
+
+  // Paginação expandida para mais chamados na tela
   const [page, setPage] = useState(1);
-  const pageSize = 25;
+  const [pageSize, setPageSize] = useState(50); // Padrão 50 itens para exibição ampla
   const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
   const pageRows = filtered.slice((page - 1) * pageSize, page * pageSize);
-  useEffect(() => { setPage(1); }, [query, cdFilter, alertaFilter, statusFilter, tarefaFilter, lojaFilter]);
+
+  useEffect(() => { setPage(1); }, [query, cdFilter, alertaFilter, statusFilter, tarefaFilter, lojaFilter, pageSize]);
 
   return (
     <div className="min-h-screen bg-[#F4F6F5] p-4 md:p-6 space-y-6 text-slate-800 font-sans">
 
       {/* ========================================================================= */}
-      {/* 1. SEÇÃO RETRÁTIL: GRÁFICOS (3 COLUNAS ESTILO DA IMAGEM DE REFERÊNCIA)      */}
+      {/* 1. SEÇÃO RETRÁTIL: EXCLUSIVAMENTE 2 GRÁFICOS                             */}
       {/* ========================================================================= */}
       <section className="bg-white rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] transition-all overflow-hidden">
         {/* Cabeçalho do Card Gráficos */}
         <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white select-none">
           <div className="flex items-center gap-2.5">
             <h2 className="text-xl font-bold text-slate-900 tracking-tight">Gráficos</h2>
+            <span className="text-xs font-semibold px-2.5 py-0.5 rounded-full bg-slate-100 text-slate-600 border border-slate-200">
+              Clique em qualquer barra para abrir a pré-lista de chamados
+            </span>
           </div>
           <button
             onClick={() => setIsGraficosOpen(!isGraficosOpen)}
@@ -304,16 +360,18 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
           </button>
         </div>
 
-        {/* Conteúdo Expandível dos Gráficos */}
+        {/* Conteúdo Expandível dos 2 Gráficos */}
         {isGraficosOpen && (
-          <div className="p-5 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6 bg-slate-50/40">
+          <div className="p-5 md:p-6 grid grid-cols-1 lg:grid-cols-2 gap-6 bg-slate-50/40">
 
-            {/* GRÁFICO 1: CONTROLE DE EVENTOS */}
-            <div ref={chart1Ref} className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between relative group">
-              <div className="flex items-start justify-between mb-3">
+            {/* GRÁFICO 1: CONTROLE DE EVENTOS (ABERTURAS E REGRA DOS 60 DIAS ÚTEIS) */}
+            <div ref={chart1Ref} className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between relative">
+              <div className="flex items-start justify-between mb-2">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-800 text-center w-full">Controle de Eventos</h3>
-                  <p className="text-[11px] text-slate-500 text-center">Últimos 12 meses</p>
+                  <h3 className="text-base font-bold text-slate-800">Controle de Eventos (Aberturas Mensais)</h3>
+                  <p className="text-xs text-slate-500">
+                    Volume por mês de abertura e controle do SLA (&gt;60 dias úteis) • <span className="text-emerald-600 font-semibold cursor-pointer">Clique na barra para ver a lista</span>
+                  </p>
                 </div>
                 <button
                   onClick={() => handleExportChart(chart1Ref, "controle-eventos")}
@@ -324,47 +382,67 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
                 </button>
               </div>
 
-              <div className="h-56 w-full mt-2">
+              <div className="h-64 w-full mt-3 cursor-pointer">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={controleEventosData} margin={{ top: 20, right: 5, left: -25, bottom: 25 }}>
+                  <BarChart data={controleEventosData} margin={{ top: 20, right: 10, left: -20, bottom: 25 }}>
                     <CartesianGrid strokeDasharray="2 2" vertical={false} stroke="#e2e8f0" />
-                    <XAxis
-                      dataKey="name"
-                      tick={{ fontSize: 9, fill: "#64748b" }}
-                      interval={0}
-                      angle={-45}
-                      textAnchor="end"
-                    />
+                    <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#64748b" }} interval={0} angle={-35} textAnchor="end" />
                     <YAxis tick={{ fontSize: 10, fill: "#64748b" }} domain={[0, "auto"]} />
                     <Tooltip
-                      cursor={{ fill: "rgba(241, 245, 249, 0.6)" }}
-                      contentStyle={{ borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "12px" }}
+                      cursor={{ fill: "rgba(6, 182, 212, 0.08)" }}
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const d = payload[0].payload;
+                          return (
+                            <div className="bg-slate-900 text-white p-2.5 rounded-xl text-xs shadow-lg space-y-1">
+                              <p className="font-bold border-b border-slate-700 pb-1">{d.name}</p>
+                              <p>Aberturas: <strong>{d.total}</strong> chamados</p>
+                              <p className="text-rose-400">Atrasados (&gt;60D): <strong>{d.vencidos}</strong></p>
+                              <p className="text-[10px] text-cyan-300 italic font-semibold mt-1">Clique para abrir pré-lista</p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
                     />
-                    <Bar dataKey="total" radius={[4, 4, 0, 0]} barSize={16}>
-                      <LabelList dataKey="total" position="top" style={{ fontSize: "10px", fontWeight: "bold", fill: "#475569" }} />
+                    <Bar
+                      dataKey="total"
+                      radius={[6, 6, 0, 0]}
+                      barSize={20}
+                      onClick={(entry) => handleChart1Click(entry)}
+                    >
+                      <LabelList dataKey="total" position="top" style={{ fontSize: "10px", fontWeight: "bold", fill: "#334155" }} />
                       {controleEventosData.map((entry, index) => (
-                        <Cell key={`cell-1-${index}`} fill={entry.fill} />
+                        <Cell
+                          key={`cell-c1-${index}`}
+                          fill={entry.fill}
+                          className="hover:opacity-80 transition-opacity cursor-pointer"
+                        />
                       ))}
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
 
-              <div className="flex items-center gap-2 mt-3 pt-2 border-t border-slate-100 text-slate-400">
-                <Search className="w-4 h-4 hover:text-slate-600 cursor-pointer" title="Buscar / Zoom" />
-                <RefreshCcw className="w-4 h-4 hover:text-slate-600 cursor-pointer" onClick={() => onChanged?.()} title="Atualizar dados" />
+              <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 text-xs text-slate-500">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-cyan-500" /> Clique em qualquer barra para abrir pré-lista
+                </span>
+                <span className="font-semibold text-slate-700">Total: {counts.total} chamados</span>
               </div>
             </div>
 
-            {/* GRÁFICO 2: TAREFAS EM ATRASO */}
-            <div ref={chart2Ref} className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between relative group">
-              <div className="flex items-start justify-between mb-3">
+            {/* GRÁFICO 2: CHAMADOS POR TIPO DE LOJA (FRANQUIA VS PRÓPRIA) */}
+            <div ref={chart2Ref} className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between relative">
+              <div className="flex items-start justify-between mb-2">
                 <div>
-                  <h3 className="text-sm font-bold text-slate-800 text-center w-full">Tarefas em Atraso</h3>
-                  <p className="text-[11px] text-slate-500 text-center">Mensal</p>
+                  <h3 className="text-base font-bold text-slate-800">Chamados por Tipo de Loja (Franquia vs Própria)</h3>
+                  <p className="text-xs text-slate-500">
+                    Distribuição dos chamados em aberto por modelo corporativo • <span className="text-purple-600 font-semibold cursor-pointer">Clique na barra para filtrar a lista</span>
+                  </p>
                 </div>
                 <button
-                  onClick={() => handleExportChart(chart2Ref, "tarefas-em-atraso")}
+                  onClick={() => handleExportChart(chart2Ref, "chamados-por-tipo-loja")}
                   className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
                   title="Baixar Gráfico"
                 >
@@ -372,83 +450,52 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
                 </button>
               </div>
 
-              <div className="h-56 w-full mt-2">
+              <div className="h-64 w-full mt-3 cursor-pointer">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={tarefasAtrasoData} margin={{ top: 20, right: 5, left: -25, bottom: 25 }}>
+                  <BarChart data={chamadosPorTipoLojaData} margin={{ top: 25, right: 30, left: 10, bottom: 20 }}>
                     <CartesianGrid strokeDasharray="2 2" vertical={false} stroke="#e2e8f0" />
-                    <XAxis
-                      dataKey="name"
-                      tick={{ fontSize: 9, fill: "#64748b" }}
-                      interval={0}
-                      angle={-45}
-                      textAnchor="end"
-                    />
+                    <XAxis dataKey="name" tick={{ fontSize: 11, fontWeight: "bold", fill: "#475569" }} />
                     <YAxis tick={{ fontSize: 10, fill: "#64748b" }} domain={[0, "auto"]} />
                     <Tooltip
-                      cursor={{ fill: "rgba(241, 245, 249, 0.6)" }}
-                      contentStyle={{ borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "12px" }}
+                      cursor={{ fill: "rgba(168, 85, 247, 0.08)" }}
+                      content={({ active, payload }) => {
+                        if (active && payload && payload.length) {
+                          const d = payload[0].payload;
+                          return (
+                            <div className="bg-slate-900 text-white p-2.5 rounded-xl text-xs shadow-lg space-y-1">
+                              <p className="font-bold border-b border-slate-700 pb-1">{d.name}</p>
+                              <p>Total de Chamados: <strong>{d.total}</strong></p>
+                              <p className="text-purple-300 text-[10px] italic font-semibold mt-1">Clique para abrir pré-lista</p>
+                            </div>
+                          );
+                        }
+                        return null;
+                      }}
                     />
-                    <Bar dataKey="total" radius={[4, 4, 0, 0]} barSize={16}>
-                      <LabelList dataKey="total" position="top" style={{ fontSize: "10px", fontWeight: "bold", fill: "#334155" }} />
-                      {tarefasAtrasoData.map((entry, index) => (
-                        <Cell key={`cell-2-${index}`} fill={entry.fill} />
+                    <Bar
+                      dataKey="total"
+                      radius={[6, 6, 0, 0]}
+                      barSize={45}
+                      onClick={(entry) => handleChart2Click(entry)}
+                    >
+                      <LabelList dataKey="total" position="top" style={{ fontSize: "12px", fontWeight: "black", fill: "#1e293b" }} />
+                      {chamadosPorTipoLojaData.map((entry, index) => (
+                        <Cell
+                          key={`cell-c2-${index}`}
+                          fill={entry.fill}
+                          className="hover:opacity-80 transition-opacity cursor-pointer"
+                        />
                       ))}
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
 
-              <div className="flex items-center gap-2 mt-3 pt-2 border-t border-slate-100 text-slate-400">
-                <Search className="w-4 h-4 hover:text-slate-600 cursor-pointer" title="Buscar / Zoom" />
-                <RefreshCcw className="w-4 h-4 hover:text-slate-600 cursor-pointer" onClick={() => onChanged?.()} title="Atualizar dados" />
-              </div>
-            </div>
-
-            {/* GRÁFICO 3: OCORRÊNCIAS POR TRANSPORTADORA */}
-            <div ref={chart3Ref} className="bg-white p-4 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between relative group">
-              <div className="flex items-start justify-between mb-3">
-                <div>
-                  <h3 className="text-sm font-bold text-slate-800 text-center w-full">Chamados por Transportadora</h3>
-                  <p className="text-[11px] text-slate-500 text-center">Volume acumulado por parceiro</p>
-                </div>
-                <button
-                  onClick={() => handleExportChart(chart3Ref, "chamados-transportadora")}
-                  className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
-                  title="Baixar Gráfico"
-                >
-                  <Download className="w-4 h-4" />
-                </button>
-              </div>
-
-              <div className="h-56 w-full mt-2">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={transpData} margin={{ top: 20, right: 5, left: -25, bottom: 40 }}>
-                    <CartesianGrid strokeDasharray="2 2" vertical={false} stroke="#e2e8f0" />
-                    <XAxis
-                      dataKey="name"
-                      tick={{ fontSize: 8, fill: "#64748b" }}
-                      interval={0}
-                      angle={-90}
-                      textAnchor="end"
-                    />
-                    <YAxis tick={{ fontSize: 10, fill: "#64748b" }} domain={[0, "auto"]} />
-                    <Tooltip
-                      cursor={{ fill: "rgba(241, 245, 249, 0.6)" }}
-                      contentStyle={{ borderRadius: "8px", border: "1px solid #e2e8f0", fontSize: "12px" }}
-                    />
-                    <Bar dataKey="total" radius={[4, 4, 0, 0]} barSize={16}>
-                      <LabelList dataKey="total" position="top" style={{ fontSize: "10px", fontWeight: "bold", fill: "#334155" }} />
-                      {transpData.map((entry, index) => (
-                        <Cell key={`cell-3-${index}`} fill={entry.fill} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div className="flex items-center gap-2 mt-3 pt-2 border-t border-slate-100 text-slate-400">
-                <Search className="w-4 h-4 hover:text-slate-600 cursor-pointer" title="Buscar / Zoom" />
-                <RefreshCcw className="w-4 h-4 hover:text-slate-600 cursor-pointer" onClick={() => onChanged?.()} title="Atualizar dados" />
+              <div className="flex items-center justify-between mt-3 pt-2 border-t border-slate-100 text-xs text-slate-500">
+                <span className="flex items-center gap-1.5">
+                  <span className="w-2 h-2 rounded-full bg-purple-500" /> Clique na barra para listar os chamados
+                </span>
+                <span className="font-semibold text-slate-700">Franquias vs Próprias</span>
               </div>
             </div>
 
@@ -457,68 +504,32 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
       </section>
 
       {/* ========================================================================= */}
-      {/* 2. SEÇÃO RETRÁTIL: ATIVIDADES A SEREM REALIZADAS (PAINEL OPERACIONAL)       */}
+      {/* 2. SEÇÃO RETRÁTIL: ATIVIDADES A SEREM REALIZADAS (GRID EXPANDIDO)         */}
       {/* ========================================================================= */}
       <section className="bg-white rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] transition-all overflow-hidden">
 
-        {/* Cabeçalho com Título & Barra de Ferramentas de Ações Rápidas */}
-        <div className="px-6 py-4 border-b border-slate-100 flex flex-wrap items-center justify-between gap-4 bg-white select-none">
+        {/* Cabeçalho Limpo: Mantida APENAS a Setinha de Atualizar e o Botão de Recolher */}
+        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white select-none">
           <div className="flex items-center gap-3">
             <h2 className="text-xl font-bold text-slate-900 tracking-tight">
               Atividades a serem realizadas
             </h2>
           </div>
 
-          {/* Ícones de Ação Direta no Canto Superior (Estilo Imagem de Referência) */}
-          <div className="flex items-center gap-3 text-slate-500">
+          {/* Manter APENAS a Setinha de Atualizar e o Botão de Recolher no Canto Direito */}
+          <div className="flex items-center gap-3 text-slate-600">
             <button
               onClick={() => onChanged?.()}
-              className="p-1.5 rounded-lg hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
+              className="p-2 rounded-xl bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 transition-colors cursor-pointer border border-slate-200/60 flex items-center gap-1.5 text-xs font-semibold"
               title="Atualizar Chamados"
             >
-              <RefreshCcw className="w-4 h-4" />
+              <RefreshCcw className="w-4 h-4 text-emerald-600" />
+              <span>Atualizar</span>
             </button>
-            <button
-              className="p-1.5 rounded-lg hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
-              title="Calendário de Prazos"
-            >
-              <Calendar className="w-4 h-4" />
-            </button>
-            <div className="relative">
-              <button
-                className="p-1.5 rounded-lg hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer relative"
-                title="Mensagens & Notificações"
-              >
-                <MessageSquare className="w-4 h-4" />
-                <span className="absolute -top-1 -right-2 bg-rose-500 text-white font-black text-[9px] px-1 py-0.2 rounded-full shadow-xs">
-                  0/{counts.vencido + counts.atencao}
-                </span>
-              </button>
-            </div>
-            <button
-              className="p-1.5 rounded-lg hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
-              title="Visão Web Externa"
-            >
-              <Globe className="w-4 h-4" />
-            </button>
-            <button
-              className="p-1.5 rounded-lg hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
-              title="Suporte Operacional"
-            >
-              <Headphones className="w-4 h-4" />
-            </button>
-            <button
-              className="p-1.5 rounded-lg hover:bg-slate-100 hover:text-slate-800 transition-colors cursor-pointer"
-              title="Ajuda"
-            >
-              <HelpCircle className="w-4 h-4" />
-            </button>
-
-            <div className="h-4 w-px bg-slate-200 mx-1" />
 
             <button
               onClick={() => setIsAtividadesOpen(!isAtividadesOpen)}
-              className="w-8 h-8 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors shadow-xs cursor-pointer"
+              className="w-9 h-9 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors shadow-xs cursor-pointer"
               title={isAtividadesOpen ? "Recolher Atividades" : "Expandir Atividades"}
             >
               <ChevronDown className={`w-5 h-5 transition-transform duration-200 ${isAtividadesOpen ? "" : "rotate-180"}`} />
@@ -526,14 +537,14 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
           </div>
         </div>
 
-        {/* Conteúdo Expandível da Tabela e Filtros */}
+        {/* Conteúdo Expandível da Tabela (Grid Expandido com Capacidade Maior) */}
         {isAtividadesOpen && (
           <div className="p-5 md:p-6 space-y-4 bg-white">
 
             {/* Barra Superior de KPIs de Status + Campo Pesquisar */}
             <div className="flex flex-wrap items-center justify-between gap-4 pb-2 border-b border-slate-100">
 
-              {/* Badges de Pílulas de KPI com Ponto Indicador (Conforme Design System) */}
+              {/* Badges de Pílulas de KPI com Ponto Indicador */}
               <div className="flex flex-wrap items-center gap-2">
                 <button
                   onClick={() => setAlertaFilter("todos")}
@@ -589,7 +600,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
                 </button>
               </div>
 
-              {/* Campo Pesquisar Alinhado à Direita (Idêntico ao Layout da Foto) */}
+              {/* Campo Pesquisar Alinhado à Direita */}
               <div className="flex items-center gap-3">
                 <div className="relative w-64 md:w-80">
                   <input
@@ -612,7 +623,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
               </div>
             </div>
 
-            {/* Filtros em Linha Adicionais (CD, Status, Tarefa, Loja) */}
+            {/* Filtros em Linha + Seletor de Quantidade de Chamados por Tela */}
             <div className="flex flex-wrap items-center gap-3 py-2 px-3 bg-slate-50/70 rounded-xl border border-slate-200/60 text-xs">
               <div className="flex items-center gap-1.5 text-slate-500 font-bold uppercase tracking-wider text-[10px]">
                 <Filter className="w-3.5 h-3.5 text-emerald-700" /> Filtros:
@@ -670,20 +681,32 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
                 </select>
               </div>
 
-              <div className="ml-auto text-[11px] text-slate-500 font-medium">
-                Mostrando <strong className="text-slate-800">{filtered.length}</strong> de <strong className="text-slate-800">{rows.length}</strong> atividades
+              {/* Seletor de Quantidade de Chamados na Tela */}
+              <div className="flex items-center gap-1.5 ml-auto">
+                <span className="text-slate-500 text-[11px]">Exibir:</span>
+                <select
+                  value={pageSize}
+                  onChange={(e) => setPageSize(Number(e.target.value))}
+                  className="bg-white border border-slate-200 rounded-lg px-2 py-1 text-xs font-bold text-slate-800 outline-none cursor-pointer focus:border-emerald-500"
+                >
+                  <option value={25}>25 por tela</option>
+                  <option value={50}>50 por tela</option>
+                  <option value={100}>100 por tela</option>
+                  <option value={9999}>Todos ({filtered.length})</option>
+                </select>
               </div>
             </div>
 
-            {/* TABELA DE ATIVIDADES A SEREM REALIZADAS */}
-            <div className="overflow-x-auto border border-slate-200/80 rounded-xl shadow-xs">
+            {/* TABELA EXPANDIDA COM MAIOR ALTURA E GRID AMPLO */}
+            <div className="overflow-x-auto border border-slate-200/80 rounded-xl shadow-xs max-h-[650px] overflow-y-auto">
               <table className="w-full text-left text-xs border-collapse">
-                <thead className="bg-slate-50/90 text-slate-500 font-semibold uppercase tracking-wider text-[11px] border-b border-slate-200">
+                <thead className="bg-slate-50/95 text-slate-500 font-semibold uppercase tracking-wider text-[11px] border-b border-slate-200 sticky top-0 bg-slate-50 z-10">
                   <tr>
                     <th className="px-4 py-3 w-12 text-slate-400">#</th>
                     <th className="px-4 py-3 w-28">Status</th>
                     <th className="px-4 py-3 w-14 text-center">Anexo</th>
                     <th className="px-4 py-3 min-w-[160px]">Nome / Loja</th>
+                    <th className="px-4 py-3 w-28 text-center">Tipo Loja</th>
                     <th className="px-4 py-3 min-w-[130px]">Evento</th>
                     <th className="px-4 py-3 w-28">Data abertura</th>
                     <th className="px-4 py-3 w-20 text-right">Dias</th>
@@ -696,7 +719,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
                 <tbody className="divide-y divide-slate-100 bg-white">
                   {isLoading && (
                     <tr>
-                      <td colSpan={11} className="py-12 text-center text-slate-500">
+                      <td colSpan={12} className="py-12 text-center text-slate-500">
                         <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-emerald-600" />
                         <span>Carregando atividades em aberto...</span>
                       </td>
@@ -705,7 +728,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
 
                   {!isLoading && error && (
                     <tr>
-                      <td colSpan={11} className="py-10 text-center text-rose-600 font-medium">
+                      <td colSpan={12} className="py-10 text-center text-rose-600 font-medium">
                         Não foi possível carregar os chamados. Tente recarregar.
                       </td>
                     </tr>
@@ -713,7 +736,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
 
                   {!isLoading && !error && pageRows.length === 0 && (
                     <tr>
-                      <td colSpan={11} className="py-10 text-center text-slate-400">
+                      <td colSpan={12} className="py-10 text-center text-slate-400">
                         Nenhuma atividade encontrada com os filtros selecionados.
                       </td>
                     </tr>
@@ -752,6 +775,17 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
                           </div>
                         </td>
 
+                        {/* Tipo de Loja: Franquia vs Própria */}
+                        <td className="px-4 py-3 text-center">
+                          <span className={`inline-block px-2.5 py-0.5 rounded-full font-bold text-[10px] border ${
+                            r.tipoLoja === "Franquia"
+                              ? "bg-cyan-50 text-cyan-700 border-cyan-200"
+                              : "bg-purple-50 text-purple-700 border-purple-200"
+                          }`}>
+                            {r.tipoLoja}
+                          </span>
+                        </td>
+
                         {/* Evento (Tipo de Chamado) */}
                         <td className="px-4 py-3 font-medium text-slate-600">
                           {r.tipo}
@@ -784,17 +818,18 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
                           <DuracaoPill dias={r.dias} />
                         </td>
 
-                        {/* Botão Ações */}
+                        {/* Botão Ações: Editar */}
                         <td className="px-4 py-3 text-center">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
                               if (r.id) setEditingId(String(r.id));
                             }}
-                            className="p-1.5 rounded-lg bg-slate-100 hover:bg-emerald-600 hover:text-white text-slate-600 transition-all cursor-pointer"
-                            title="Ver detalhes do chamado"
+                            className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-100 hover:bg-emerald-600 hover:text-white text-slate-700 font-semibold text-[11px] transition-all cursor-pointer"
+                            title="Editar Chamado"
                           >
-                            <Eye className="w-3.5 h-3.5" />
+                            <Pencil className="w-3 h-3" />
+                            <span>Editar</span>
                           </button>
                         </td>
                       </tr>
@@ -807,7 +842,9 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
             {/* Controles de Paginação */}
             {totalPages > 1 && (
               <div className="flex items-center justify-between pt-2 px-2 text-xs text-slate-500 font-medium">
-                <span>Página <strong>{page}</strong> de <strong>{totalPages}</strong></span>
+                <span>
+                  Exibindo <strong>{pageRows.length}</strong> de <strong>{filtered.length}</strong> chamados (Página {page} de {totalPages})
+                </span>
                 <div className="flex items-center gap-1.5">
                   <button
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -831,7 +868,135 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
         )}
       </section>
 
-      {/* Modal de Edição de Chamado */}
+      {/* ========================================================================= */}
+      {/* 3. MODAL DE PRÉ-LISTA DE CHAMADOS (DRILL-DOWN DOS GRÁFICOS)               */}
+      {/* ========================================================================= */}
+      {isDrillOpen && (
+        <div className="fixed inset-0 z-50 bg-slate-900/50 backdrop-blur-xs flex items-center justify-center p-4">
+          <div
+            onClick={(e) => e.stopPropagation()}
+            className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[88vh] flex flex-col border border-slate-200 overflow-hidden"
+          >
+            {/* Topo do Modal */}
+            <div className="px-6 py-4 border-b border-slate-200 flex items-center justify-between bg-slate-50/80 sticky top-0 z-10">
+              <div className="flex items-center gap-2.5">
+                <LayoutGrid className="w-5 h-5 text-emerald-600" />
+                <h3 className="text-base font-bold text-slate-900">{drillTitle}</h3>
+              </div>
+              <button
+                onClick={() => setIsDrillOpen(false)}
+                className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-200 transition-colors cursor-pointer"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            </div>
+
+            {/* Busca interna do Modal */}
+            <div className="p-4 bg-white border-b border-slate-100 flex items-center justify-between gap-4">
+              <div className="relative flex-1 max-w-md">
+                <input
+                  type="text"
+                  value={drillBusca}
+                  onChange={(e) => setDrillBusca(e.target.value)}
+                  placeholder="Filtrar pré-lista por chamado, loja, tarefa..."
+                  className="w-full pl-9 pr-4 py-1.5 rounded-xl border border-slate-200 bg-white text-xs text-slate-800 shadow-2xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none"
+                />
+                <Search className="w-3.5 h-3.5 text-slate-400 absolute left-3 top-1/2 -translate-y-1/2" />
+              </div>
+              <span className="text-xs text-slate-500 font-semibold">
+                {filteredDrillRows.length} chamados na lista
+              </span>
+            </div>
+
+            {/* Tabela do Modal Pré-Lista */}
+            <div className="flex-1 overflow-y-auto p-4">
+              <table className="w-full text-left text-xs border-collapse">
+                <thead className="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider text-[10px] border-b border-slate-200 sticky top-0 bg-slate-50">
+                  <tr>
+                    <th className="px-3 py-2">Chamado</th>
+                    <th className="px-3 py-2">Loja</th>
+                    <th className="px-3 py-2 text-center">Tipo Loja</th>
+                    <th className="px-3 py-2">CD</th>
+                    <th className="px-3 py-2">Dt Abertura</th>
+                    <th className="px-3 py-2 text-right">Dias Úteis</th>
+                    <th className="px-3 py-2">Status</th>
+                    <th className="px-3 py-2">Tarefa Atual</th>
+                    <th className="px-3 py-2 text-center">Ações</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-slate-100 bg-white">
+                  {filteredDrillRows.length === 0 && (
+                    <tr>
+                      <td colSpan={9} className="py-10 text-center text-slate-400">
+                        Nenhum chamado encontrado para este filtro.
+                      </td>
+                    </tr>
+                  )}
+
+                  {filteredDrillRows.map((r, idx) => (
+                    <tr key={`drill-${r.chamado}-${idx}`} className="hover:bg-slate-50 transition-colors">
+                      <td className="px-3 py-2.5 font-bold text-slate-900">
+                        Nº {r.chamado}
+                      </td>
+                      <td className="px-3 py-2.5 font-medium text-slate-800">
+                        {r.loja}
+                      </td>
+                      <td className="px-3 py-2.5 text-center">
+                        <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold border ${
+                          r.tipoLoja === "Franquia" ? "bg-cyan-50 text-cyan-700 border-cyan-200" : "bg-purple-50 text-purple-700 border-purple-200"
+                        }`}>
+                          {r.tipoLoja}
+                        </span>
+                      </td>
+                      <td className="px-3 py-2.5 font-semibold text-slate-600">
+                        {r.cd || "—"}
+                      </td>
+                      <td className="px-3 py-2.5 text-slate-600 whitespace-nowrap">
+                        {fmtBR(r.dtAbertura)}
+                      </td>
+                      <td className="px-3 py-2.5 text-right font-mono font-bold text-slate-800">
+                        {r.dias}d
+                      </td>
+                      <td className="px-3 py-2.5">
+                        <StatusPill alerta={r.alerta} statusText={r.status} />
+                      </td>
+                      <td className="px-3 py-2.5 text-slate-700 font-medium">
+                        {r.tarefa}
+                      </td>
+                      <td className="px-3 py-2.5 text-center">
+                        <button
+                          onClick={() => {
+                            setIsDrillOpen(false);
+                            if (r.id) setEditingId(String(r.id));
+                          }}
+                          className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs transition-colors cursor-pointer shadow-2xs"
+                        >
+                          <Pencil className="w-3 h-3" />
+                          <span>Editar</span>
+                        </button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+
+            {/* Rodapé do Modal */}
+            <div className="px-6 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-end">
+              <button
+                onClick={() => setIsDrillOpen(false)}
+                className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-bold text-xs transition-colors cursor-pointer"
+              >
+                Fechar Pré-Lista
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* 4. MODAL DE EDIÇÃO DE CHAMADO                                             */}
+      {/* ========================================================================= */}
       {editingId && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
           <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl shadow-2xl w-full max-w-[95vw] max-h-[90vh] overflow-auto border border-slate-200">
@@ -897,4 +1062,5 @@ function DuracaoPill({ dias }: { dias: number }) {
   }
   return <span className="inline-block px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800">&lt; 45d</span>;
 }
+
 
