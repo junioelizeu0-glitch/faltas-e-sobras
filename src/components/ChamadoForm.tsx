@@ -526,22 +526,12 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
             <button
               type="button"
               onClick={handleResetParaNovo}
-              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 rounded-lg transition-all cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 rounded-xl transition-all shadow-xs cursor-pointer"
               title="Iniciar o cadastro de um novo chamado"
             >
               <Plus className="w-3.5 h-3.5" />
               Incluir Novo Chamado
             </button>
-            {(onCancel || onClose) && (
-              <button
-                type="button"
-                onClick={() => (onCancel ? onCancel() : onClose?.())}
-                className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-lg transition-colors cursor-pointer"
-                title="Fechar (X)"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            )}
           </div>
         )}
 
