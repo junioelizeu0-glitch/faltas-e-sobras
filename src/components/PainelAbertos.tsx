@@ -780,13 +780,12 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
               </div>
             </div>
 
-            {/* TABELA DE ATIVIDADES AMPLIADA COM AS COLUNAS EXATAS SOLICITADAS */}
+            {/* TABELA DE ATIVIDADES RESTRITA A APENAS AS COLUNAS SOLICITADAS */}
             <div className="w-full overflow-auto min-h-[500px] max-h-[780px] border border-slate-200/80 rounded-xl bg-white shadow-xs">
               <table className="w-full text-left text-xs border-collapse">
                 <thead className="sticky top-0 z-20 bg-slate-100 shadow-2xs">
                   <tr className="bg-slate-100">
-                    <th className="sticky top-0 z-20 bg-slate-100 px-3 py-3 w-14 text-center text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Anexo</th>
-                    <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 min-w-[170px] text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Número / Loja</th>
+                    <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 min-w-[130px] text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Número</th>
                     <th className="sticky top-0 z-20 bg-slate-100 px-3 py-3 w-28 text-center text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Tipo</th>
                     <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 min-w-[130px] text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Evento</th>
                     <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 w-28 text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Data abertura</th>
@@ -799,7 +798,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
                 <tbody className="divide-y divide-slate-100 bg-white">
                   {isLoading && (
                     <tr>
-                      <td colSpan={9} className="py-12 text-center text-slate-500">
+                      <td colSpan={8} className="py-12 text-center text-slate-500">
                         <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-emerald-600" />
                         <span>Carregando atividades em aberto...</span>
                       </td>
@@ -808,7 +807,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
 
                   {!isLoading && error && (
                     <tr>
-                      <td colSpan={9} className="py-10 text-center text-rose-600 font-medium">
+                      <td colSpan={8} className="py-10 text-center text-rose-600 font-medium">
                         Não foi possível carregar os chamados. Tente recarregar.
                       </td>
                     </tr>
@@ -816,7 +815,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
 
                   {!isLoading && !error && pageRows.length === 0 && (
                     <tr>
-                      <td colSpan={9} className="py-10 text-center text-slate-400">
+                      <td colSpan={8} className="py-10 text-center text-slate-400">
                         Nenhuma atividade encontrada com os filtros selecionados.
                       </td>
                     </tr>
@@ -829,22 +828,12 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
                         onClick={() => r.id && setEditingId(String(r.id))}
                         className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
                       >
-                        {/* 1. Anexo Ícone */}
-                        <td className="px-3 py-2.5 text-center">
-                          <div className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-slate-400 group-hover:text-emerald-700 group-hover:bg-emerald-50 transition-colors">
-                            <Paperclip className="w-3.5 h-3.5" />
-                          </div>
-                        </td>
-
-                        {/* 2. Número / Loja */}
+                        {/* 1. Número */}
                         <td className="px-4 py-2.5 font-bold text-slate-800 group-hover:text-emerald-700 transition-colors">
-                          <div className="flex flex-col">
-                            <span>{r.loja}</span>
-                            <span className="text-[10px] text-slate-400 font-normal">Nº {r.chamado}</span>
-                          </div>
+                          <span>Nº {r.chamado}</span>
                         </td>
 
-                        {/* 3. Tipo (Franquia vs Própria) */}
+                        {/* 2. Tipo (Franquia vs Própria) */}
                         <td className="px-3 py-2.5 text-center">
                           <span className={`inline-block px-2.5 py-0.5 rounded-full font-bold text-[10px] border ${
                             r.tipoLoja === "Franquia"
@@ -855,31 +844,31 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
                           </span>
                         </td>
 
-                        {/* 4. Evento (Falta, Sobra, Gato, etc.) */}
+                        {/* 3. Evento (Falta, Sobra, Gato, etc.) */}
                         <td className="px-4 py-2.5 font-semibold text-slate-700">
                           <span className="inline-block px-2 py-0.5 rounded bg-slate-100 text-slate-800 font-bold text-[11px]">
                             {r.tipo}
                           </span>
                         </td>
 
-                        {/* 5. Data Abertura */}
+                        {/* 4. Data Abertura */}
                         <td className="px-4 py-2.5 font-medium text-slate-600 whitespace-nowrap">
                           {fmtBR(r.dtAbertura)}
                         </td>
 
-                        {/* 6. CD */}
+                        {/* 5. CD */}
                         <td className="px-3 py-2.5 text-center">
                           <span className="inline-block px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold text-[11px] border border-slate-200/60">
                             {r.cd || "Geral"}
                           </span>
                         </td>
 
-                        {/* 7. Tarefa Atual */}
+                        {/* 6. Tarefa Atual */}
                         <td className="px-4 py-2.5 font-medium text-slate-700">
                           {r.tarefa}
                         </td>
 
-                        {/* 8. Duração em Dias Úteis */}
+                        {/* 7. Duração em Dias Úteis */}
                         <td className="px-4 py-2.5 text-center">
                           <div className="inline-flex items-center justify-center gap-1.5 font-mono font-bold text-slate-800">
                             <span>{r.dias}d úteis</span>
@@ -887,7 +876,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
                           </div>
                         </td>
 
-                        {/* 9. Ações */}
+                        {/* 8. Ações */}
                         <td className="px-4 py-2.5 text-center">
                           <button
                             onClick={(e) => {
