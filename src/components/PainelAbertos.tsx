@@ -780,10 +780,10 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
               </div>
             </div>
 
-            {/* TABELA DE ATIVIDADES EXPANDIDA E SEM RESTRIÇÃO DE ALTURA QUE CORTA AS LINHAS */}
-            <div className="w-full overflow-x-auto border border-slate-200/80 rounded-xl bg-white shadow-xs">
+            {/* TABELA DE ATIVIDADES COM BARRA DE ROLAGEM INTERNA E CABEÇALHO FIXO */}
+            <div className="w-full overflow-auto max-h-[520px] border border-slate-200/80 rounded-xl bg-white shadow-xs">
               <table className="w-full text-left text-xs border-collapse">
-                <thead className="bg-slate-50 text-slate-500 font-semibold uppercase tracking-wider text-[11px] border-b border-slate-200">
+                <thead className="bg-slate-50/95 text-slate-600 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200 sticky top-0 bg-slate-50 z-10 shadow-2xs">
                   <tr>
                     <th className="px-4 py-3 w-12 text-slate-400">#</th>
                     <th className="px-4 py-3 w-28">Status</th>
