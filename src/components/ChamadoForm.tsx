@@ -279,8 +279,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     if (!form.Loja) return "Loja é obrigatória";
     if (!form.Tipo) return "Tipo é obrigatório";
     if (!form.CD) return "CD é obrigatório";
-    if (!form["Status Chamado"]) return "Status do chamado é obrigatório";
-    if (!form["Situação "]) return "Situação (tarefa atual) é obrigatória";
+    if (!form["Status Chamado"]) return "Status do chamado é ob,,tória";
     if (!form["Dt Abertura"]) return "Data de abertura é obrigatória";
     if (!partial) {
       const refsOk = (refs || []).some((r) => (r.referencia || "").trim() !== "");
@@ -483,7 +482,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   };
 
 
-  if (loading) return <div className="flex items-center justify-center p-10 text-slate-500"><Loader2 className="w-5 h-5 animate-spin mr-2"/>Carregando...</div>;
+  if (loading) return <div className="flex items-center justify-center p-10 text-slate-500"><Loader2 className="w-5 h-5 animate-spin mr-2" />Carregando...</div>;
 
   return (
     <div className={compact ? "h-full flex flex-col" : "flex-1 overflow-auto bg-slate-50 p-4"}>
@@ -526,18 +525,28 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
             <button
               type="button"
               onClick={handleResetParaNovo}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 rounded-xl transition-all shadow-xs cursor-pointer"
+              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 rounded-lg transition-all cursor-pointer"
               title="Iniciar o cadastro de um novo chamado"
             >
               <Plus className="w-3.5 h-3.5" />
               Incluir Novo Chamado
             </button>
+            {(onCancel || onClose) && (
+              <button
+                type="button"
+                onClick={() => (onCancel ? onCancel() : onClose?.())}
+                className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-lg transition-colors cursor-pointer"
+                title="Fechar (X)"
+              >
+                <X className="w-5 h-5" />
+              </button>
+            )}
           </div>
         )}
 
         {feedback && (
           <div className={`mb-3 flex items-start gap-2 rounded-md border px-3 py-2 text-sm ${feedback.type === "ok" ? "border-green-300 bg-green-50 text-green-800" : "border-red-200 bg-red-50 text-red-700"}`}>
-            {feedback.type === "ok" ? <CheckCircle2 className="w-4 h-4 mt-0.5"/> : <AlertCircle className="w-4 h-4 mt-0.5"/>}
+            {feedback.type === "ok" ? <CheckCircle2 className="w-4 h-4 mt-0.5" /> : <AlertCircle className="w-4 h-4 mt-0.5" />}
             <span>{feedback.msg}</span>
             <button onClick={() => setFeedback(null)} className="ml-auto text-xs opacity-60">✕</button>
           </div>
@@ -592,7 +601,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
                     }}
                     className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100"
                   >
-                    <Trash2 className="w-4 h-4"/>Excluir chamado
+                    <Trash2 className="w-4 h-4" />Excluir chamado
                   </button>
                 )}
               </div>
@@ -603,7 +612,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
                   className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200/80 rounded-md hover:bg-emerald-100 cursor-pointer transition-colors"
                   title="Registrar resultado do monitoramento"
                 >
-                  <ClipboardCheck className="w-4 h-4 text-emerald-600"/>Resultado do monitoramento
+                  <ClipboardCheck className="w-4 h-4 text-emerald-600" />Resultado do monitoramento
                 </button>
               )}
               <div className="flex items-center gap-2">
@@ -633,7 +642,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
                   type="button" onClick={() => submit()} disabled={submitting}
                   className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold disabled:opacity-50 cursor-pointer"
                 >
-                  {submitting ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4"/>}
+                  {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                   {mode === "editar" ? "Salvar alterações" : "Incluir chamado"}
                 </button>
               </div>
@@ -652,7 +661,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
                 {manage === "conf" && "Cadastro de Conferentes"}
                 {manage === "motivo" && "Cadastro de Motivos"}
               </h3>
-              <button onClick={() => { setManage(null); loadListas(); }} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5"/></button>
+              <button onClick={() => { setManage(null); loadListas(); }} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5" /></button>
             </div>
             <div className="flex-1 overflow-auto">
               {manage === "transp" && (
@@ -675,7 +684,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
           <div className="bg-white rounded-xl shadow-2xl w-full max-w-[98vw] h-[96vh] overflow-hidden flex flex-col">
             <div className="flex items-center justify-between px-4 py-3 border-b bg-slate-50">
               <h3 className="font-semibold text-slate-800">Cadastro de Lojas</h3>
-              <button onClick={() => setLojaOpen(false)} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5"/></button>
+              <button onClick={() => setLojaOpen(false)} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5" /></button>
             </div>
             <div className="flex-1 overflow-auto">
               <CadastroLojas buscaInicial={form.Loja || ""} />
@@ -690,11 +699,11 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100">
             <div className="px-6 py-6 text-center">
               <div className="w-12 h-12 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center mx-auto mb-3 text-emerald-600">
-                <ClipboardCheck className="w-6 h-6"/>
+                <ClipboardCheck className="w-6 h-6" />
               </div>
               <h3 className="text-lg font-bold text-slate-800">Resultado do Monitoramento</h3>
               <p className="text-xs text-slate-500 mt-1">A falta reportada neste chamado foi aprovada?</p>
-              
+
               <div className="mt-4 p-3 bg-slate-50 rounded-xl border border-slate-200/60 text-xs text-slate-600 text-left space-y-1">
                 <div><span className="font-semibold text-slate-700">Transportadora:</span> {form.Transportadora || "—"}</div>
                 <div><span className="font-semibold text-slate-700">Conferente:</span> {form.Conferente || "—"}</div>
@@ -729,7 +738,7 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
   const ManageBtn = ({ onClick, title }: { onClick: () => void; title: string }) => (
     <button type="button" onClick={onClick} title={title}
       className="inline-flex items-center justify-center p-0.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded">
-      <Pencil className="w-3 h-3"/>
+      <Pencil className="w-3 h-3" />
     </button>
   );
   return (
@@ -799,7 +808,7 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
           <span className="text-[10px] font-normal text-slate-400 normal-case">(somente leitura)</span>
           <button type="button" onClick={onEditLoja} title="Abrir cadastro de lojas para alterar"
             className="inline-flex items-center justify-center p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded">
-            <Pencil className="w-3.5 h-3.5"/>
+            <Pencil className="w-3.5 h-3.5" />
           </button>
         </h2>
         {!form.Loja ? (
@@ -839,16 +848,16 @@ function ItemEditModal({ title, onClose, onAdd, children }: { title: string; onC
       <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-2xl w-full max-w-2xl">
         <div className="flex items-center justify-between px-4 py-3 border-b">
           <h3 className="font-semibold text-slate-800">{title}</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5"/></button>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5" /></button>
         </div>
         <div className="p-4">{children}</div>
         <div className="flex justify-between items-center px-4 py-3 border-t bg-slate-50">
           {onAdd ? (
             <button onClick={() => { onAdd(); onClose(); }} className="inline-flex items-center gap-1 px-3 py-2 text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 rounded-md">
-              <Plus className="w-4 h-4"/>Adicionar novo
+              <Plus className="w-4 h-4" />Adicionar novo
             </button>
-          ) : <span/>}
-          <button onClick={onClose} className="inline-flex items-center gap-1 px-3 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-md"><Save className="w-4 h-4"/>Concluir</button>
+          ) : <span />}
+          <button onClick={onClose} className="inline-flex items-center gap-1 px-3 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-md"><Save className="w-4 h-4" />Concluir</button>
         </div>
       </div>
     </div>
@@ -863,10 +872,10 @@ function ReferenciasTab({ refs, setRef, addRef, rmRef, buscar, onSalvarParcial, 
         <p className="text-xs text-slate-500">Adicione uma ou mais referências. Digite a referência e clique em buscar para auto-preencher descrição e fornecedor.</p>
         <div className="flex items-center gap-2">
           <button type="button" onClick={addRef} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md">
-            <Plus className="w-3.5 h-3.5"/>Adicionar
+            <Plus className="w-3.5 h-3.5" />Adicionar
           </button>
           <button type="button" onClick={onSalvarParcial} disabled={salvando} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-md disabled:opacity-50">
-            {salvando ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <Save className="w-3.5 h-3.5"/>}Salvar referências
+            {salvando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}Salvar referências
           </button>
         </div>
       </div>
@@ -890,7 +899,7 @@ function ReferenciasTab({ refs, setRef, addRef, rmRef, buscar, onSalvarParcial, 
                   onBlur={() => { if ((r.referencia || "").trim() && !r.descricao) buscar(idx); }}
                   className={inputCls}
                 />
-                <button type="button" onClick={() => buscar(idx)} title="Buscar produto" className="px-2 border border-slate-300 rounded-md hover:bg-slate-100"><Search className="w-4 h-4 text-slate-600"/></button>
+                <button type="button" onClick={() => buscar(idx)} title="Buscar produto" className="px-2 border border-slate-300 rounded-md hover:bg-slate-100"><Search className="w-4 h-4 text-slate-600" /></button>
               </div>
             </Field>
             <Field label="Cor"><input value={r.cor} onChange={(e) => setRef(idx, { cor: e.target.value })} className={inputCls} /></Field>
@@ -899,8 +908,8 @@ function ReferenciasTab({ refs, setRef, addRef, rmRef, buscar, onSalvarParcial, 
             <Field label="Tam."><input value={r.tamanho} onChange={(e) => setRef(idx, { tamanho: e.target.value })} className={inputCls} /></Field>
             <Field label="Qtd"><input type="number" value={r.quantidade} onChange={(e) => setRef(idx, { quantidade: e.target.value })} className={inputCls} /></Field>
             <div className="flex items-center gap-1 pb-0.5">
-              <button type="button" onClick={() => setEditIdx(idx)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-md" title="Editar"><Pencil className="w-4 h-4"/></button>
-              <button type="button" onClick={() => rmRef(idx)} className="p-2 text-red-500 hover:bg-red-50 rounded-md" title="Remover"><Trash2 className="w-4 h-4"/></button>
+              <button type="button" onClick={() => setEditIdx(idx)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-md" title="Editar"><Pencil className="w-4 h-4" /></button>
+              <button type="button" onClick={() => rmRef(idx)} className="p-2 text-red-500 hover:bg-red-50 rounded-md" title="Remover"><Trash2 className="w-4 h-4" /></button>
             </div>
           </div>
         ))}
@@ -908,12 +917,12 @@ function ReferenciasTab({ refs, setRef, addRef, rmRef, buscar, onSalvarParcial, 
       {editIdx != null && refs[editIdx] && (
         <ItemEditModal title={`Editar referência ${refs[editIdx].referencia || `#${editIdx + 1}`}`} onClose={() => setEditIdx(null)} onAdd={addRef}>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Referência"><input value={refs[editIdx].referencia} onChange={(e) => setRef(editIdx, { referencia: e.target.value })} className={inputCls}/></Field>
-            <Field label="Cor"><input value={refs[editIdx].cor} onChange={(e) => setRef(editIdx, { cor: e.target.value })} className={inputCls}/></Field>
-            <Field label="Descrição" className="col-span-2"><input value={refs[editIdx].descricao} onChange={(e) => setRef(editIdx, { descricao: e.target.value })} className={inputCls}/></Field>
-            <Field label="Fornecedor" className="col-span-2"><input value={refs[editIdx].fornecedor} onChange={(e) => setRef(editIdx, { fornecedor: e.target.value })} className={inputCls}/></Field>
-            <Field label="Tamanho"><input value={refs[editIdx].tamanho} onChange={(e) => setRef(editIdx, { tamanho: e.target.value })} className={inputCls}/></Field>
-            <Field label="Quantidade"><input type="number" value={refs[editIdx].quantidade} onChange={(e) => setRef(editIdx, { quantidade: e.target.value })} className={inputCls}/></Field>
+            <Field label="Referência"><input value={refs[editIdx].referencia} onChange={(e) => setRef(editIdx, { referencia: e.target.value })} className={inputCls} /></Field>
+            <Field label="Cor"><input value={refs[editIdx].cor} onChange={(e) => setRef(editIdx, { cor: e.target.value })} className={inputCls} /></Field>
+            <Field label="Descrição" className="col-span-2"><input value={refs[editIdx].descricao} onChange={(e) => setRef(editIdx, { descricao: e.target.value })} className={inputCls} /></Field>
+            <Field label="Fornecedor" className="col-span-2"><input value={refs[editIdx].fornecedor} onChange={(e) => setRef(editIdx, { fornecedor: e.target.value })} className={inputCls} /></Field>
+            <Field label="Tamanho"><input value={refs[editIdx].tamanho} onChange={(e) => setRef(editIdx, { tamanho: e.target.value })} className={inputCls} /></Field>
+            <Field label="Quantidade"><input type="number" value={refs[editIdx].quantidade} onChange={(e) => setRef(editIdx, { quantidade: e.target.value })} className={inputCls} /></Field>
           </div>
         </ItemEditModal>
       )}
@@ -942,10 +951,10 @@ function EtapasTab({ etapas, setEt, addEtapa, rmEtapa, tarefas, onSalvarParcial,
         <p className="text-xs text-slate-500">Etapas do fluxo. Data prevista e SLA são calculados automaticamente em dias úteis.</p>
         <div className="flex items-center gap-2">
           <button type="button" onClick={addEtapa} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md">
-            <Plus className="w-3.5 h-3.5"/>Adicionar
+            <Plus className="w-3.5 h-3.5" />Adicionar
           </button>
           <button type="button" onClick={onSalvarParcial} disabled={salvando} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-md disabled:opacity-50">
-            {salvando ? <Loader2 className="w-3.5 h-3.5 animate-spin"/> : <Save className="w-3.5 h-3.5"/>}Salvar etapas
+            {salvando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}Salvar etapas
           </button>
         </div>
       </div>
@@ -982,8 +991,8 @@ function EtapasTab({ etapas, setEt, addEtapa, rmEtapa, tarefas, onSalvarParcial,
               <Field label="Finalizado"><input type="date" value={e.dt_fim} onChange={(ev) => setEt(idx, { dt_fim: ev.target.value })} className={inputCls} /></Field>
               <div className="flex items-center gap-1 pb-0.5">
                 {sla && <span className={`text-[10px] px-1.5 py-0.5 rounded font-semibold whitespace-nowrap ${sla.cor}`}>{sla.texto}</span>}
-                <button type="button" onClick={() => setEditIdx(idx)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-md" title="Editar"><Pencil className="w-4 h-4"/></button>
-                <button type="button" onClick={() => rmEtapa(idx)} className="p-2 text-red-500 hover:bg-red-50 rounded-md" title="Remover"><Trash2 className="w-4 h-4"/></button>
+                <button type="button" onClick={() => setEditIdx(idx)} className="p-2 text-blue-600 hover:bg-blue-50 rounded-md" title="Editar"><Pencil className="w-4 h-4" /></button>
+                <button type="button" onClick={() => rmEtapa(idx)} className="p-2 text-red-500 hover:bg-red-50 rounded-md" title="Remover"><Trash2 className="w-4 h-4" /></button>
               </div>
             </div>
           );
@@ -1006,10 +1015,10 @@ function EtapasTab({ etapas, setEt, addEtapa, rmEtapa, tarefas, onSalvarParcial,
                 {tarefas.map((t: any) => <option key={t.id} value={t.nome}>{t.nome}</option>)}
               </select>
             </Field>
-            <Field label="SLA (dias úteis)"><input type="number" min={0} value={etapas[editIdx].dias_uteis_previsto ?? ""} onChange={(ev) => setEt(editIdx, { dias_uteis_previsto: ev.target.value === "" ? null : Number(ev.target.value) })} className={inputCls}/></Field>
-            <Field label="Data prevista"><input value={fmtBR(calcDataPrevista(etapas[editIdx].dt_inicio, etapas[editIdx].dias_uteis_previsto)) || "—"} readOnly className={inputCls + " bg-slate-50 text-slate-500"}/></Field>
-            <Field label="Início"><input type="date" value={etapas[editIdx].dt_inicio} onChange={(ev) => setEt(editIdx, { dt_inicio: ev.target.value })} className={inputCls}/></Field>
-            <Field label="Finalizado"><input type="date" value={etapas[editIdx].dt_fim} onChange={(ev) => setEt(editIdx, { dt_fim: ev.target.value })} className={inputCls}/></Field>
+            <Field label="SLA (dias úteis)"><input type="number" min={0} value={etapas[editIdx].dias_uteis_previsto ?? ""} onChange={(ev) => setEt(editIdx, { dias_uteis_previsto: ev.target.value === "" ? null : Number(ev.target.value) })} className={inputCls} /></Field>
+            <Field label="Data prevista"><input value={fmtBR(calcDataPrevista(etapas[editIdx].dt_inicio, etapas[editIdx].dias_uteis_previsto)) || "—"} readOnly className={inputCls + " bg-slate-50 text-slate-500"} /></Field>
+            <Field label="Início"><input type="date" value={etapas[editIdx].dt_inicio} onChange={(ev) => setEt(editIdx, { dt_inicio: ev.target.value })} className={inputCls} /></Field>
+            <Field label="Finalizado"><input type="date" value={etapas[editIdx].dt_fim} onChange={(ev) => setEt(editIdx, { dt_fim: ev.target.value })} className={inputCls} /></Field>
           </div>
         </ItemEditModal>
       )}
