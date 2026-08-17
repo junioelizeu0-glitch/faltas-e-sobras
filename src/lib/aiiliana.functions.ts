@@ -53,8 +53,7 @@ export const askAiiliana = createServerFn({ method: "POST" })
     const apiKey =
       process.env.GEMINI_API_KEY ||
       process.env.GOOGLE_GENERATIVE_AI_API_KEY ||
-      process.env.GOOGLE_API_KEY ||
-      process.env.LOVABLE_API_KEY;
+      process.env.GOOGLE_API_KEY;
 
     const { generateText, tool, stepCountIs } = await import("ai");
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
