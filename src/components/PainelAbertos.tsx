@@ -780,8 +780,8 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
               </div>
             </div>
 
-            {/* TABELA DE ATIVIDADES COM BARRA DE ROLAGEM INTERNA E CABEÇALHO FIXO 100% OPACO */}
-            <div className="w-full overflow-auto max-h-[550px] border border-slate-200/80 rounded-xl bg-white shadow-xs">
+            {/* TABELA DE ATIVIDADES AMPLIADA COM MAIOR ALTURA E CABEÇALHO FIXO */}
+            <div className="w-full overflow-auto min-h-[500px] max-h-[780px] border border-slate-200/80 rounded-xl bg-white shadow-xs">
               <table className="w-full text-left text-xs border-collapse">
                 <thead className="sticky top-0 z-20 bg-slate-100 shadow-2xs">
                   <tr className="bg-slate-100">
@@ -834,24 +834,24 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
                         className="hover:bg-slate-50/80 transition-colors cursor-pointer group"
                       >
                         {/* # Index / ID */}
-                        <td className="px-4 py-3.5 font-semibold text-slate-400 text-[11px]">
+                        <td className="px-4 py-2.5 font-semibold text-slate-400 text-[11px]">
                           {rowIdx}
                         </td>
 
                         {/* Status Badge estilo Pílula com Ponto Indicador */}
-                        <td className="px-4 py-3.5">
+                        <td className="px-4 py-2.5">
                           <StatusPill alerta={r.alerta} statusText={r.status} />
                         </td>
 
                         {/* Anexo Ícone */}
-                        <td className="px-4 py-3.5 text-center">
+                        <td className="px-4 py-2.5 text-center">
                           <div className="inline-flex items-center justify-center w-7 h-7 rounded-lg text-slate-400 group-hover:text-emerald-700 group-hover:bg-emerald-50 transition-colors">
                             <Paperclip className="w-3.5 h-3.5" />
                           </div>
                         </td>
 
                         {/* Nome / Loja */}
-                        <td className="px-4 py-3.5 font-bold text-slate-800 group-hover:text-emerald-700 transition-colors">
+                        <td className="px-4 py-2.5 font-bold text-slate-800 group-hover:text-emerald-700 transition-colors">
                           <div className="flex flex-col">
                             <span>{r.loja}</span>
                             <span className="text-[10px] text-slate-400 font-normal">Nº {r.chamado}</span>
@@ -859,7 +859,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
                         </td>
 
                         {/* Tipo de Loja: Franquia vs Própria */}
-                        <td className="px-4 py-3.5 text-center">
+                        <td className="px-4 py-2.5 text-center">
                           <span className={`inline-block px-2.5 py-0.5 rounded-full font-bold text-[10px] border ${
                             r.tipoLoja === "Franquia"
                               ? "bg-cyan-50 text-cyan-700 border-cyan-200"
@@ -870,39 +870,39 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
                         </td>
 
                         {/* Evento (Tipo de Chamado) */}
-                        <td className="px-4 py-3.5 font-medium text-slate-600">
+                        <td className="px-4 py-2.5 font-medium text-slate-600">
                           {r.tipo}
                         </td>
 
                         {/* Data Abertura */}
-                        <td className="px-4 py-3.5 font-medium text-slate-600 whitespace-nowrap">
+                        <td className="px-4 py-2.5 font-medium text-slate-600 whitespace-nowrap">
                           {fmtBR(r.dtAbertura)}
                         </td>
 
                         {/* Dias decorridos (SLA) */}
-                        <td className="px-4 py-3.5 text-right font-mono font-bold text-slate-800">
+                        <td className="px-4 py-2.5 text-right font-mono font-bold text-slate-800">
                           {r.dias}d
                         </td>
 
                         {/* Cobertura (CD) */}
-                        <td className="px-4 py-3.5 text-center">
+                        <td className="px-4 py-2.5 text-center">
                           <span className="inline-block px-2.5 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold text-[11px] border border-slate-200/60">
                             {r.cd || "Geral"}
                           </span>
                         </td>
 
                         {/* Tarefa Atual */}
-                        <td className="px-4 py-3.5 font-medium text-slate-700">
+                        <td className="px-4 py-2.5 font-medium text-slate-700">
                           {r.tarefa}
                         </td>
 
                         {/* Duração / SLA Pill */}
-                        <td className="px-4 py-3.5 text-center">
+                        <td className="px-4 py-2.5 text-center">
                           <DuracaoPill dias={r.dias} />
                         </td>
 
                         {/* Botão Ações: Editar */}
-                        <td className="px-4 py-3.5 text-center">
+                        <td className="px-4 py-2.5 text-center">
                           <button
                             onClick={(e) => {
                               e.stopPropagation();
