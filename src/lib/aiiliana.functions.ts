@@ -74,7 +74,7 @@ export const askAiiliana = createServerFn({ method: "POST" })
     const runSql = tool({
       description:
         "Executa uma consulta SELECT (ou WITH) somente-leitura no banco e retorna as linhas como JSON. Use isso para responder qualquer pergunta sobre dados.",
-      inputSchema: z.object({
+      parameters: z.object({
         sql: z.string().describe("Consulta SQL Postgres (apenas SELECT/WITH, sem ponto-e-vírgula extra)."),
       }),
       execute: async ({ sql }) => {
