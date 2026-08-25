@@ -561,7 +561,6 @@ export const deleteChamado = createServerFn({ method: "POST" })
     }
 
     return { ok: true, count: ids.length };
-  });ount: ids.length };
   });
 
 
