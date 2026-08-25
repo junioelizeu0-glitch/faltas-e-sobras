@@ -207,6 +207,15 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     }
   }, [initialChamado, mode]);
 
+  // Helper para normalizar o tipo de loja do cadastro (Franquia / Própria)
+  const normalizeTipoLoja = (tipo: string | null | undefined) => {
+    if (!tipo) return "";
+    const s = tipo.trim().toLowerCase().normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    if (s === "franquia") return "Franquia";
+    if (s === "propria") return "Própria";
+    return tipo.trim();
+  };
+
   // Busca dados da loja e auto-preenche a Franquia (Tipo) caso exista no cadastro
   useEffect(() => {
     const numero = String(form.Loja || "").trim();
@@ -219,12 +228,15 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
           const loja = (r as Loja | null) || null;
           setLojaInfo(loja);
           if (loja && loja.tipo) {
-            // Regra: Puxa o Tipo (Franquia / Própria) automaticamente do Cadastro de Lojas
-            setForm((p) => (p.Tipo !== loja.tipo ? { ...p, Tipo: loja.tipo || p.Tipo } : p));
+            const tipoAuto = normalizeTipoLoja(loja.tipo);
+            if (tipoAuto) {
+              // Regra: Puxa o Tipo (Franquia / Própria) automaticamente do Cadastro de Lojas
+              setForm((p) => (p.Tipo !== tipoAuto ? { ...p, Tipo: tipoAuto } : p));
+            }
           }
         }
       } catch { if (!cancelled) setLojaInfo(null); }
-    }, 300);
+    }, 150);
     return () => { cancelled = true; clearTimeout(t); };
   }, [form.Loja, lojaOpen]);
 
@@ -531,16 +543,6 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
               <Plus className="w-3.5 h-3.5" />
               Incluir Novo Chamado
             </button>
-            {(onCancel || onClose) && (
-              <button
-                type="button"
-                onClick={() => (onCancel ? onCancel() : onClose?.())}
-                className="p-1 text-slate-400 hover:text-slate-700 hover:bg-slate-200/60 rounded-lg transition-colors cursor-pointer"
-                title="Fechar (X)"
-              >
-                <X className="w-5 h-5" />
-              </button>
-            )}
           </div>
         )}
 
@@ -802,38 +804,81 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
           </div>
         </div>
       </section>
-      <section>
-        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center gap-2">
-          Dados Bancários da Loja
-          <span className="text-[10px] font-normal text-slate-400 normal-case">(somente leitura)</span>
-          <button type="button" onClick={onEditLoja} title="Abrir cadastro de lojas para alterar"
-            className="inline-flex items-center justify-center p-1 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded">
+      <section className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 shadow-2xs">
+        <div className="flex items-center justify-between mb-3.5">
+          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
+            <span>Dados Bancários da Loja</span>
+            <span className="text-[10px] font-normal text-slate-400 normal-case">(somente leitura)</span>
+          </h2>
+          <button
+            type="button"
+            onClick={onEditLoja}
+            title="Abrir cadastro de lojas para alterar"
+            className="inline-flex items-center gap-1.5 px-2.5 py-1 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 rounded-xl transition-all cursor-pointer"
+          >
             <Pencil className="w-3.5 h-3.5" />
+            <span>Editar Loja</span>
           </button>
-        </h2>
+        </div>
+
         {!form.Loja ? (
-          <div className="text-xs text-slate-400 border border-dashed border-slate-200 rounded-md p-3">Informe o número da loja para exibir os dados bancários.</div>
+          <div className="text-xs text-slate-400 border border-dashed border-slate-200 bg-white rounded-xl p-4 text-center w-full">
+            Informe o número da loja para carregar os dados bancários.
+          </div>
         ) : !lojaInfo ? (
-          <div className="text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded-md p-3 flex items-center justify-between gap-2">
-            <span>Loja <b>{form.Loja}</b> não cadastrada. Clique no lápis acima para cadastrar.</span>
+          <div className="text-xs text-amber-700 bg-amber-50/80 border border-amber-200/80 rounded-xl p-3.5 flex items-center justify-between gap-2 w-full">
+            <span>Loja <b>{form.Loja}</b> não cadastrada. Clique no botão "Editar Loja" acima para cadastrar no sistema.</span>
           </div>
         ) : (
-          <div className="flex flex-wrap gap-3">
-            {[
-              ["Razão Social", lojaInfo.razao_social, "w-[260px]"],
-              ["CNPJ", lojaInfo.cnpj, "w-[160px]"],
-              ["Tipo", lojaInfo.tipo, "w-[110px]"],
-              ["Banco", lojaInfo.banco, "w-[180px]"],
-              ["Agência", lojaInfo.agencia || null, "w-[100px]"],
-              ["Dígito Ag.", lojaInfo.agencia_dig || null, "w-[80px]"],
-              ["Conta", lojaInfo.conta || null, "w-[130px]"],
-              ["Dígito Cta.", lojaInfo.conta_dig || null, "w-[80px]"],
-            ].map(([label, val, w]) => (
-              <div key={label as string} className={w as string}>
-                <div className="text-[10px] font-semibold text-slate-500 uppercase">{label}</div>
-                <div className="mt-1 rounded-md bg-slate-50 border border-slate-200 px-2.5 py-1.5 text-sm text-slate-700 min-h-[34px]">{val || "—"}</div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-12 gap-3 w-full">
+            <div className="lg:col-span-3 flex flex-col">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Razão Social</span>
+              <div className="mt-1 rounded-xl bg-white border border-slate-200/90 px-3 py-2 text-xs font-semibold text-slate-800 min-h-[38px] flex items-center shadow-2xs truncate">
+                {lojaInfo.razao_social || "—"}
               </div>
-            ))}
+            </div>
+            <div className="lg:col-span-2 flex flex-col">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">CNPJ</span>
+              <div className="mt-1 rounded-xl bg-white border border-slate-200/90 px-3 py-2 text-xs font-semibold text-slate-800 min-h-[38px] flex items-center shadow-2xs">
+                {lojaInfo.cnpj || "—"}
+              </div>
+            </div>
+            <div className="lg:col-span-1 flex flex-col">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tipo</span>
+              <div className="mt-1 rounded-xl bg-white border border-slate-200/90 px-3 py-2 text-xs font-semibold text-slate-800 min-h-[38px] flex items-center shadow-2xs">
+                {lojaInfo.tipo || "—"}
+              </div>
+            </div>
+            <div className="lg:col-span-2 flex flex-col">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Banco</span>
+              <div className="mt-1 rounded-xl bg-white border border-slate-200/90 px-3 py-2 text-xs font-semibold text-slate-800 min-h-[38px] flex items-center shadow-2xs">
+                {lojaInfo.banco || "—"}
+              </div>
+            </div>
+            <div className="lg:col-span-1 flex flex-col">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Agência</span>
+              <div className="mt-1 rounded-xl bg-white border border-slate-200/90 px-3 py-2 text-xs font-semibold text-slate-800 min-h-[38px] flex items-center shadow-2xs">
+                {lojaInfo.agencia || "—"}
+              </div>
+            </div>
+            <div className="lg:col-span-1 flex flex-col">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Díg. Ag.</span>
+              <div className="mt-1 rounded-xl bg-white border border-slate-200/90 px-3 py-2 text-xs font-semibold text-slate-800 min-h-[38px] flex items-center shadow-2xs">
+                {lojaInfo.agencia_dig || "—"}
+              </div>
+            </div>
+            <div className="lg:col-span-1 flex flex-col">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Conta</span>
+              <div className="mt-1 rounded-xl bg-white border border-slate-200/90 px-3 py-2 text-xs font-semibold text-slate-800 min-h-[38px] flex items-center shadow-2xs">
+                {lojaInfo.conta || "—"}
+              </div>
+            </div>
+            <div className="lg:col-span-1 flex flex-col">
+              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Díg. Cta.</span>
+              <div className="mt-1 rounded-xl bg-white border border-slate-200/90 px-3 py-2 text-xs font-semibold text-slate-800 min-h-[38px] flex items-center shadow-2xs">
+                {lojaInfo.conta_dig || "—"}
+              </div>
+            </div>
           </div>
         )}
       </section>
