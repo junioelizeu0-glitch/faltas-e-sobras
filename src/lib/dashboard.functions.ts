@@ -30,7 +30,7 @@ function toApiShape(row: any) {
 }
 
 export const fetchDashboardData = createServerFn({ method: "GET" })
-  .inputValidator((data?: { tabela?: "faltas" | "recall" }) => data ?? {})
+  .validator((data?: { tabela?: "faltas" | "recall" }) => data ?? {})
   .handler(
     async ({ data: inputData }) => {
       const { requireUnlockedSession } = await import("@/lib/gate.server"); await requireUnlockedSession();
@@ -147,7 +147,7 @@ async function mirrorToAppsScript(
 }
 
 export const createChamado = createServerFn({ method: "POST" })
-  .inputValidator((data: NovoChamadoPayload) => data)
+  .validator((data: NovoChamadoPayload) => data)
   .handler(async ({ data }) => {
     if (data.aba !== "FALTAS") {
       throw new Error(
@@ -195,7 +195,7 @@ export const createChamado = createServerFn({ method: "POST" })
   });
 
 export const updateChamado = createServerFn({ method: "POST" })
-  .inputValidator((data: { id: string } & Partial<NovoChamadoPayload>) => data)
+  .validator((data: { id: string } & Partial<NovoChamadoPayload>) => data)
   .handler(async ({ data }) => {
     const { requireUnlockedSession } = await import("@/lib/gate.server");
     await requireUnlockedSession();

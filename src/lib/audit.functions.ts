@@ -6,7 +6,7 @@ async function getSupabase() {
 }
 
 export const listAuditLog = createServerFn({ method: "GET" })
-  .inputValidator((data: { table?: string; chamado?: string; action?: string; limit?: number } | undefined) => data ?? {})
+  .validator((data: { table?: string; chamado?: string; action?: string; limit?: number } | undefined) => data ?? {})
   .handler(async ({ data }) => {
     const { requireUnlockedSession } = await import("@/lib/gate.server");
     await requireUnlockedSession();

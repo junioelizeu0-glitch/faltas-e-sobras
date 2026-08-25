@@ -23,7 +23,7 @@ export const listLojas = createServerFn({ method: "GET" }).handler(async () => {
 });
 
 export const getLojaByNumero = createServerFn({ method: "GET" })
-  .inputValidator((d: { numero: string }) => d)
+  .validator((d: { numero: string }) => d)
   .handler(async ({ data }) => {
     const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
     const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
@@ -33,7 +33,7 @@ export const getLojaByNumero = createServerFn({ method: "GET" })
   });
 
 export const upsertLoja = createServerFn({ method: "POST" })
-  .inputValidator((d: Partial<Loja> & { numero: string }) => d)
+  .validator((d: Partial<Loja> & { numero: string }) => d)
   .handler(async ({ data }) => {
     const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
     const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
@@ -78,7 +78,7 @@ export const upsertLoja = createServerFn({ method: "POST" })
   });
 
 export const deleteLoja = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string }) => d)
+  .validator((d: { id: string }) => d)
   .handler(async ({ data }) => {
     const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
     const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();

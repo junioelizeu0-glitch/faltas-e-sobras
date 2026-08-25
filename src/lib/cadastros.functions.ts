@@ -13,7 +13,7 @@ export type Produto = {
 };
 
 export const listProdutos = createServerFn({ method: "GET" })
-  .inputValidator((data: { search?: string; limit?: number; offset?: number } | undefined) => data ?? {})
+  .validator((data: { search?: string; limit?: number; offset?: number } | undefined) => data ?? {})
   .handler(async ({ data }) => {
     const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
     const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
@@ -32,7 +32,7 @@ export const listProdutos = createServerFn({ method: "GET" })
 
 /** Busca ref+cor para autocomplete no formulário. */
 export const searchProdutos = createServerFn({ method: "GET" })
-  .inputValidator((data: { q: string }) => data)
+  .validator((data: { q: string }) => data)
   .handler(async ({ data }) => {
     const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
     const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
@@ -49,7 +49,7 @@ export const searchProdutos = createServerFn({ method: "GET" })
   });
 
 export const upsertProduto = createServerFn({ method: "POST" })
-  .inputValidator((data: { id?: string; referencia: string; cor: string; descricao?: string; nome_parceiro?: string }) => data)
+  .validator((data: { id?: string; referencia: string; cor: string; descricao?: string; nome_parceiro?: string }) => data)
   .handler(async ({ data }) => {
     const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
     const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
@@ -75,7 +75,7 @@ export const upsertProduto = createServerFn({ method: "POST" })
   });
 
 export const deleteProduto = createServerFn({ method: "POST" })
-  .inputValidator((data: { id: string }) => data)
+  .validator((data: { id: string }) => data)
   .handler(async ({ data }) => {
     const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
     const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
@@ -86,7 +86,7 @@ export const deleteProduto = createServerFn({ method: "POST" })
 
 /** Bulk insert (import de planilha). Insere APENAS itens que ainda não existem (mesma referência+cor). */
 export const bulkUpsertProdutos = createServerFn({ method: "POST" })
-  .inputValidator((data: {
+  .validator((data: {
     rows: Array<{ referencia: string; cor?: string; descricao?: string; nome_parceiro?: string }>;
   }) => data)
   .handler(async ({ data }) => {
@@ -172,7 +172,7 @@ export const listTransportadoras = createServerFn({ method: "GET" }).handler(asy
   return (data || []) as Array<{ id: string; nome: string }>;
 });
 export const upsertTransportadora = createServerFn({ method: "POST" })
-  .inputValidator((d: { id?: string; nome: string }) => d)
+  .validator((d: { id?: string; nome: string }) => d)
   .handler(async ({ data }) => {
     const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
     const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
@@ -188,7 +188,7 @@ export const upsertTransportadora = createServerFn({ method: "POST" })
     return { ok: true, id: ins.id };
   });
 export const deleteTransportadora = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string }) => d)
+  .validator((d: { id: string }) => d)
   .handler(async ({ data }) => {
     const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
     const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
@@ -206,7 +206,7 @@ export const listConferentes = createServerFn({ method: "GET" }).handler(async (
   return (data || []) as Array<{ id: string; nome: string; cd: string | null }>;
 });
 export const upsertConferente = createServerFn({ method: "POST" })
-  .inputValidator((d: { id?: string; nome: string; cd?: string | null }) => d)
+  .validator((d: { id?: string; nome: string; cd?: string | null }) => d)
   .handler(async ({ data }) => {
     const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
     const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
@@ -224,7 +224,7 @@ export const upsertConferente = createServerFn({ method: "POST" })
     return { ok: true, id: ins.id };
   });
 export const deleteConferente = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string }) => d)
+  .validator((d: { id: string }) => d)
   .handler(async ({ data }) => {
     const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
     const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
@@ -243,7 +243,7 @@ export const listMotivos = createServerFn({ method: "GET" }).handler(async () =>
   return (data || []) as Array<{ id: string; nome: string }>;
 });
 export const upsertMotivo = createServerFn({ method: "POST" })
-  .inputValidator((d: { id?: string; nome: string }) => d)
+  .validator((d: { id?: string; nome: string }) => d)
   .handler(async ({ data }) => {
     const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
     const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
@@ -259,7 +259,7 @@ export const upsertMotivo = createServerFn({ method: "POST" })
     return { ok: true, id: ins.id };
   });
 export const deleteMotivo = createServerFn({ method: "POST" })
-  .inputValidator((d: { id: string }) => d)
+  .validator((d: { id: string }) => d)
   .handler(async ({ data }) => {
     const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
     const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();

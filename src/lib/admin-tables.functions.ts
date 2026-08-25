@@ -10,7 +10,7 @@ async function getSupabase() {
 }
 
 export const fetchTableRows = createServerFn({ method: "GET" })
-  .inputValidator((data: { table: string; limit?: number; search?: string }) => {
+  .validator((data: { table: string; limit?: number; search?: string }) => {
     if (!ADMIN_TABLES.includes(data.table as AdminTable)) {
       throw new Error(`Tabela não permitida: ${data.table}`);
     }

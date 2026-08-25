@@ -90,7 +90,7 @@ export type EtapaInput = {
 
 // ===== Tarefas catálogo =====
 export const listTarefas = createServerFn({ method: "GET" })
-  .inputValidator((data: { tipo?: "FALTAS" | "SOBRAS" | "TODAS" } | undefined) => data ?? {})
+  .validator((data: { tipo?: "FALTAS" | "SOBRAS" | "TODAS" } | undefined) => data ?? {})
   .handler(async ({ data }) => {
     const { requireUnlockedSession } = await import("@/lib/gate.server");
     await requireUnlockedSession();
@@ -118,7 +118,7 @@ export const listAllTarefas = createServerFn({ method: "GET" }).handler(async ()
 });
 
 export const upsertTarefa = createServerFn({ method: "POST" })
-  .inputValidator((data: {
+  .validator((data: {
     id?: string;
     nome: string;
     dias_uteis: number;
@@ -150,7 +150,7 @@ export const upsertTarefa = createServerFn({ method: "POST" })
   });
 
 export const deleteTarefa = createServerFn({ method: "POST" })
-  .inputValidator((data: { id: string }) => data)
+  .validator((data: { id: string }) => data)
   .handler(async ({ data }) => {
     const { requireUnlockedSession } = await import("@/lib/gate.server");
     await requireUnlockedSession();
@@ -161,7 +161,7 @@ export const deleteTarefa = createServerFn({ method: "POST" })
   });
 // ===== Chamado completo =====
 export const createChamadoCompleto = createServerFn({ method: "POST" })
-  .inputValidator((data: {
+  .validator((data: {
     chamado: any; // mesmo formato do createChamado atual (NovoChamadoPayload sem aba)
     referencias: ReferenciaInput[];
     etapas: EtapaInput[];
@@ -325,7 +325,7 @@ export const createChamadoCompleto = createServerFn({ method: "POST" })
 
 // ===== Ler chamado completo =====
 export const getChamadoCompleto = createServerFn({ method: "GET" })
-  .inputValidator((data: { id: string; tabela?: "faltas" | "recall" }) => data)
+  .validator((data: { id: string; tabela?: "faltas" | "recall" }) => data)
   .handler(async ({ data }) => {
     const { requireUnlockedSession } = await import("@/lib/gate.server");
     await requireUnlockedSession();
@@ -393,7 +393,7 @@ export const getChamadoCompleto = createServerFn({ method: "GET" })
 
 // ===== Atualizar chamado completo (substitui refs e etapas) =====
 export const updateChamadoCompleto = createServerFn({ method: "POST" })
-  .inputValidator((data: {
+  .validator((data: {
     id: string;
     chamado: any;
     referencias: any[];
@@ -529,7 +529,7 @@ export const updateChamadoCompleto = createServerFn({ method: "POST" })
 
 // ===== Excluir chamado(s) =====
 export const deleteChamado = createServerFn({ method: "POST" })
-  .inputValidator((data: { ids: string[]; tabela?: "faltas" | "recall" }) => data)
+  .validator((data: { ids: string[]; tabela?: "faltas" | "recall" }) => data)
   .handler(async ({ data }) => {
     const { requireUnlockedSession } = await import("@/lib/gate.server");
     await requireUnlockedSession();

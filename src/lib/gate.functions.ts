@@ -7,7 +7,7 @@ export const checkUnlocked = createServerFn({ method: "GET" }).handler(
 );
 
 export const unlockSite = createServerFn({ method: "POST" })
-  .inputValidator((data: { username: string; password: string }) => data)
+  .validator((data: { username: string; password: string }) => data)
   .handler(async ({ data }) => {
     const { getGateSession, safeEq } = await import("./gate.server");
     const expectedUser = process.env.SITE_USERNAME || "admin";
