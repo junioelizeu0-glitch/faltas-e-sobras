@@ -48,9 +48,9 @@ function tarefaAtual(r: any) {
   return String(r.situacao || r["Situação "] || "").trim() || "—";
 }
 
-type Props = { rawData: any[] | undefined; onChanged?: () => void };
+type Props = { rawData: any[] | undefined; onChanged?: () => void; tabela?: "faltas" | "recall" };
 
-export default function ConsultaChamados({ rawData, onChanged }: Props) {
+export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas" }: Props) {
   const [busca, setBusca] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("Todos");
   const [filtroTarefa, setFiltroTarefa] = useState("Todas");
@@ -127,7 +127,7 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
     if (!ids.length) return;
     if (!confirm(`Excluir ${ids.length} chamado(s)? Esta ação não pode ser desfeita.`)) return;
     try {
-      const res: any = await delFn({ data: { ids } });
+      const res: any = await delFn({ data: { ids, tabela } });
       toast.success(`${res?.count ?? ids.length} chamado(s) excluído(s)`);
       setSelected(new Set());
       onChanged?.();
@@ -297,7 +297,7 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
             </div>
             <div className="flex-1 min-h-0 p-3 overflow-hidden">
               <ChamadoForm
-                mode="editar" chamadoId={String(editingId)} compact
+                mode="editar" chamadoId={String(editingId)} compact tabela={tabela}
                 onSaved={() => { onChanged?.(); }}
                 onCancel={() => setEditingId(null)}
                 onDeleted={() => { setEditingId(null); onChanged?.(); }}
@@ -316,7 +316,7 @@ export default function ConsultaChamados({ rawData, onChanged }: Props) {
             </div>
             <div className="flex-1 min-h-0 p-3 overflow-hidden">
               <ChamadoForm
-                mode="novo" compact
+                mode="novo" compact tabela={tabela}
                 onSaved={() => { setCreating(false); onChanged?.(); }}
                 onCancel={() => setCreating(false)}
               />

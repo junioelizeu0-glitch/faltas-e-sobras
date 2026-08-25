@@ -171,7 +171,7 @@ export function isSemRetorno(item: any): boolean {
   return dtFin !== null;
 }
 
-export function useDashboardData(filters?: FilterState) {
+export function useDashboardData(filters?: FilterState, tabela: "faltas" | "recall" = "faltas") {
   const [rawData, setRawData] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isRefetching, setIsRefetching] = useState(false);
@@ -188,7 +188,7 @@ export function useDashboardData(filters?: FilterState) {
       }
       setError(null);
       try {
-        const json = await fetchDataFn();
+        const json = await fetchDataFn({ data: { tabela } });
         setRawData(json);
       } catch (err: any) {
         setError(err.message);
@@ -200,7 +200,7 @@ export function useDashboardData(filters?: FilterState) {
         }
       }
     },
-    [fetchDataFn],
+    [fetchDataFn, tabela],
   );
 
   useEffect(() => {

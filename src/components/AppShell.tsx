@@ -38,7 +38,14 @@ export default function AppShell({
 }: AppShellProps) {
   const [menuAberto, setMenuAberto] = useState(false);
   const [openFaltas, setOpenFaltas] = useState(false);
+  const [openRecall, setOpenRecall] = useState(false);
   const [openCadastros, setOpenCadastros] = useState(false);
+
+  useEffect(() => {
+    if (selectedSubmenu && ["novo", "consulta", "relatorio"].includes(selectedSubmenu)) setOpenFaltas(true);
+    if (selectedSubmenu && ["recall_novo", "recall_consulta", "recall_relatorio"].includes(selectedSubmenu)) setOpenRecall(true);
+    if (selectedSubmenu && selectedSubmenu.startsWith("cad_")) setOpenCadastros(true);
+  }, [selectedSubmenu]);
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     if (typeof document !== "undefined") {
       const attr = document.documentElement.getAttribute("data-theme");
@@ -126,6 +133,42 @@ export default function AppShell({
                       { k: "novo", label: "Novo Chamado", icon: Plus },
                       { k: "consulta", label: "Consulta", icon: Search },
                       { k: "relatorio", label: "Relatório", icon: BarChart2 },
+                    ].map((item) => {
+                      const Icon = item.icon;
+                      const active = selectedSubmenu === item.k;
+                      return (
+                        <button
+                          key={item.k}
+                          onClick={() => { setSelectedSubmenu(item.k); setMenuAberto(false); }}
+                          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${active ? "bg-blue-50 text-blue-600" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"} cursor-pointer`}
+                        >
+                          <Icon className="w-4 h-4 shrink-0" />
+                          <span>{item.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* Grupo Recall */}
+              <div>
+                <button
+                  type="button"
+                  onClick={() => setOpenRecall((v) => !v)}
+                  className={`w-full px-3 py-1 text-xs font-bold uppercase tracking-wider flex items-center justify-between transition-colors hover:text-slate-700 cursor-pointer ${
+                    selectedSubmenu && ["recall_novo","recall_consulta","recall_relatorio"].includes(selectedSubmenu) ? "text-blue-600" : "text-slate-400"
+                  }`}
+                >
+                  <span>Recall</span>
+                  {openRecall ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
+                </button>
+                {openRecall && (
+                  <div className="mt-2 space-y-1">
+                    {[
+                      { k: "recall_novo", label: "Novo Chamado", icon: Plus },
+                      { k: "recall_consulta", label: "Consulta", icon: Search },
+                      { k: "recall_relatorio", label: "Relatório", icon: BarChart2 },
                     ].map((item) => {
                       const Icon = item.icon;
                       const active = selectedSubmenu === item.k;

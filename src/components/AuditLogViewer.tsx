@@ -3,13 +3,16 @@ import { useServerFn } from "@tanstack/react-start";
 import { Loader2, RefreshCcw, Search } from "lucide-react";
 import { listAuditLog } from "@/lib/audit.functions";
 
-const TABLES = ["", "chamados_faltas", "chamados_etapas", "chamados_referencias", "lojas", "transportadoras", "conferentes", "motivos", "tarefas_catalogo"];
+const TABLES = ["", "chamados_faltas", "chamados_etapas", "chamados_referencias", "chamados_recall", "chamados_recall_etapas", "chamados_recall_referencias", "lojas", "transportadoras", "conferentes", "motivos", "tarefas_catalogo"];
 const ACTIONS = ["", "INSERT", "UPDATE", "DELETE"];
 
 const TABLE_LABELS: Record<string, string> = {
-  chamados_faltas: "Chamado",
-  chamados_etapas: "Etapa do chamado",
-  chamados_referencias: "Referência do chamado",
+  chamados_faltas: "Chamado (Faltas)",
+  chamados_etapas: "Etapa do chamado (Faltas)",
+  chamados_referencias: "Referência do chamado (Faltas)",
+  chamados_recall: "Chamado (Recall)",
+  chamados_recall_etapas: "Etapa do chamado (Recall)",
+  chamados_recall_referencias: "Referência do chamado (Recall)",
   lojas: "Loja",
   transportadoras: "Transportadora",
   conferentes: "Conferente",

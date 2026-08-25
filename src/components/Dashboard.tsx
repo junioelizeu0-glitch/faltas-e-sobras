@@ -37,6 +37,24 @@ import AppShell from '@/components/AppShell';
 import { toPng } from 'html-to-image';
 import { exportToExcel } from '@/lib/excel-export';
 
+function RecallContainer({ selectedSubmenu, setSelectedSubmenu }: { selectedSubmenu: string; setSelectedSubmenu: (val: string | null) => void }) {
+  const { isLoading, error, refetch, rawData } = useDashboardData(undefined, "recall");
+
+  if (selectedSubmenu === "recall_novo") {
+    return <NovoChamadoForm rawData={rawData} onCreated={() => refetch()} onClose={() => setSelectedSubmenu(null)} tabela="recall" />;
+  }
+
+  if (selectedSubmenu === "recall_consulta") {
+    return <ConsultaChamados rawData={rawData} onChanged={() => refetch()} tabela="recall" />;
+  }
+
+  if (selectedSubmenu === "recall_relatorio") {
+    return <PainelAbertos rawData={rawData} isLoading={isLoading} error={error} onChanged={() => refetch()} tabela="recall" />;
+  }
+
+  return null;
+}
+
 // --- MOCK DATA ---
 const evolucaoMensal = [
   { name: 'Jan', abertos: 420, aprovados: 180, recusados: 200, pendentes: 40, valAberto: 70000, valAprovado: 35000, valPago: 30000, valPendente: 5000, valRecusado: 25000, valPendenteAnalise: 10000 },
@@ -2069,6 +2087,10 @@ export default function Dashboard() {
 
         {selectedSubmenu === 'consulta' && (
           <ConsultaChamados rawData={rawData} onChanged={() => refetch()} />
+        )}
+
+        {selectedSubmenu && ['recall_novo', 'recall_consulta', 'recall_relatorio'].includes(selectedSubmenu) && (
+          <RecallContainer selectedSubmenu={selectedSubmenu} setSelectedSubmenu={setSelectedSubmenu} />
         )}
 
         {selectedSubmenu === 'cad_produtos' && <CadastroProdutos />}

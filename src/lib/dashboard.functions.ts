@@ -29,39 +29,42 @@ function toApiShape(row: any) {
   };
 }
 
-export const fetchDashboardData = createServerFn({ method: "GET" }).handler(
-  async () => {
-    const { requireUnlockedSession } = await import("@/lib/gate.server"); await requireUnlockedSession();
-    const supabase = await getSupabase();
-    const all: any[] = [];
-    let from = 0;
-    const pageSize = 1000;
-    try {
-      while (true) {
-        const { data, error } = await supabase
-          .from("chamados_faltas")
-          .select("*")
-          .order("dt_abertura", { ascending: false })
-          .range(from, from + pageSize - 1);
-        if (error) throw new Error(error.message);
-        if (!data || data.length === 0) break;
-        all.push(...data);
-        if (data.length < pageSize) break;
-        from += pageSize;
+export const fetchDashboardData = createServerFn({ method: "GET" })
+  .inputValidator((data?: { tabela?: "faltas" | "recall" }) => data ?? {})
+  .handler(
+    async ({ data: inputData }) => {
+      const { requireUnlockedSession } = await import("@/lib/gate.server"); await requireUnlockedSession();
+      const supabase = await getSupabase();
+      const targetTable = inputData?.tabela === "recall" ? "chamados_recall" : "chamados_faltas";
+      const all: any[] = [];
+      let from = 0;
+      const pageSize = 1000;
+      try {
+        while (true) {
+          const { data, error } = await supabase
+            .from(targetTable)
+            .select("*")
+            .order("dt_abertura", { ascending: false })
+            .range(from, from + pageSize - 1);
+          if (error) throw new Error(error.message);
+          if (!data || data.length === 0) break;
+          all.push(...data);
+          if (data.length < pageSize) break;
+          from += pageSize;
+        }
+        return all.map(toApiShape);
+      } catch (err: any) {
+        console.warn("[fetchDashboardData] Standard query error, attempting SQL fallback:", err?.message);
+        const { data: rpcData, error: rpcError } = await supabase.rpc("aiiliana_run_sql", {
+          sql: `SELECT * FROM ${targetTable} ORDER BY dt_abertura DESC NULLS LAST`
+        });
+        if (!rpcError && Array.isArray(rpcData)) {
+          return rpcData.map(toApiShape);
+        }
+        throw err;
       }
-      return all.map(toApiShape);
-    } catch (err: any) {
-      console.warn("[fetchDashboardData] Standard query error, attempting SQL fallback:", err?.message);
-      const { data: rpcData, error: rpcError } = await supabase.rpc("aiiliana_run_sql", {
-        sql: "SELECT * FROM chamados_faltas ORDER BY dt_abertura DESC NULLS LAST"
-      });
-      if (!rpcError && Array.isArray(rpcData)) {
-        return rpcData.map(toApiShape);
-      }
-      throw err;
-    }
-  },
-);
+    },
+  );
 
 export type NovoChamadoPayload = {
   aba: "FALTAS" | "SOBRA" | "RECALL" | "GATO";

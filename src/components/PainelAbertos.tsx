@@ -18,6 +18,7 @@ type Props = {
   isLoading?: boolean;
   error?: string | null;
   onChanged?: () => void;
+  tabela?: "faltas" | "recall";
 };
 
 const SLA_LIMITE = 60; // dias úteis
@@ -61,7 +62,7 @@ const CHART_PALETTE = [
   "#64748b", // slate
 ];
 
-export default function PainelAbertos({ rawData, isLoading, error, onChanged }: Props) {
+export default function PainelAbertos({ rawData, isLoading, error, onChanged, tabela = "faltas" }: Props) {
   // Estados dos painéis retráteis
   const [isGraficosOpen, setIsGraficosOpen] = useState(true);
   const [isAtividadesOpen, setIsAtividadesOpen] = useState(true);
@@ -1060,6 +1061,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged }: 
                 mode="editar"
                 chamadoId={editingId}
                 compact
+                tabela={tabela}
                 onSaved={() => { onChanged?.(); }}
                 onCancel={() => setEditingId(null)}
                 onDeleted={() => { setEditingId(null); onChanged?.(); }}

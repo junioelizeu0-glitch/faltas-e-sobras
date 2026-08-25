@@ -159,18 +159,22 @@ export const deleteTarefa = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
-
 // ===== Chamado completo =====
 export const createChamadoCompleto = createServerFn({ method: "POST" })
   .inputValidator((data: {
     chamado: any; // mesmo formato do createChamado atual (NovoChamadoPayload sem aba)
     referencias: ReferenciaInput[];
     etapas: EtapaInput[];
+    tabela?: "faltas" | "recall";
   }) => data)
   .handler(async ({ data }) => {
     const { requireUnlockedSession } = await import("@/lib/gate.server");
     await requireUnlockedSession();
     const supabase = await getSupabase();
+
+    const tblMain = data.tabela === "recall" ? "chamados_recall" : "chamados_faltas";
+    const tblRefs = data.tabela === "recall" ? "chamados_recall_referencias" : "chamados_referencias";
+    const tblEtapas = data.tabela === "recall" ? "chamados_recall_etapas" : "chamados_etapas";
 
     const c = data.chamado;
     const nullIfEmpty = (v: any) => {
@@ -218,12 +222,12 @@ export const createChamadoCompleto = createServerFn({ method: "POST" })
     // Regra: número do chamado não pode duplicar
     if (chamadoRow.chamado) {
       const { data: dup } = await supabase
-        .from("chamados_faltas").select("id").eq("chamado", chamadoRow.chamado).limit(1).maybeSingle();
+        .from(tblMain).select("id").eq("chamado", chamadoRow.chamado).limit(1).maybeSingle();
       if (dup) throw new Error(`Já existe um chamado com o número ${chamadoRow.chamado}.`);
     }
 
     const { data: inserted, error: e1 } = await supabase
-      .from("chamados_faltas")
+      .from(tblMain)
       .insert(chamadoRow)
       .select()
       .single();
@@ -231,8 +235,6 @@ export const createChamadoCompleto = createServerFn({ method: "POST" })
     const chamado_id = inserted.id;
     await upsertConferenteCD(supabase, chamadoRow.conferente, chamadoRow.cd);
     await upsertTransportadora(supabase, chamadoRow.transportadora);
-
-
 
     // Referências
     const refs = (data.referencias || [])
@@ -247,7 +249,7 @@ export const createChamadoCompleto = createServerFn({ method: "POST" })
       } as any))
       .filter((r: any) => r.referencia || r.cor || r.tamanho || r.fornecedor || r.descricao);
     if (refs.length > 0) {
-      const { error: e2 } = await supabase.from("chamados_referencias").insert(refs);
+      const { error: e2 } = await supabase.from(tblRefs).insert(refs);
       if (e2) throw new Error("Erro nas referências: " + e2.message);
     }
 
@@ -301,33 +303,37 @@ export const createChamadoCompleto = createServerFn({ method: "POST" })
     }
 
     if (etapas.length > 0) {
-      const { error: e3 } = await supabase.from("chamados_etapas").insert(etapas);
+      const { error: e3 } = await supabase.from(tblEtapas).insert(etapas);
       if (e3) throw new Error("Erro nas etapas: " + e3.message);
     }
 
-    // Sync com planilha (fire-and-forget)
-    try {
-      const { syncToAppsScript, buildChamadoRow } = await import("@/lib/apps-script.server");
-      await syncToAppsScript({
-        action: "insert",
-        chamado: buildChamadoRow(chamadoRow),
-        referencias: refs,
-        etapas,
-      });
-    } catch (e) { console.error("[sync] insert:", e); }
+    // Sync com planilha (fire-and-forget, apenas faltas por enquanto)
+    if (data.tabela !== "recall") {
+      try {
+        const { syncToAppsScript, buildChamadoRow } = await import("@/lib/apps-script.server");
+        await syncToAppsScript({
+          action: "insert",
+          chamado: buildChamadoRow(chamadoRow),
+          referencias: refs,
+          etapas,
+        });
+      } catch (e) { console.error("[sync] insert:", e); }
+    }
 
     return { ok: true, id: chamado_id };
   });
 
-
-
 // ===== Ler chamado completo =====
 export const getChamadoCompleto = createServerFn({ method: "GET" })
-  .inputValidator((data: { id: string }) => data)
+  .inputValidator((data: { id: string; tabela?: "faltas" | "recall" }) => data)
   .handler(async ({ data }) => {
     const { requireUnlockedSession } = await import("@/lib/gate.server");
     await requireUnlockedSession();
     const supabase = await getSupabase();
+
+    const tblMain = data.tabela === "recall" ? "chamados_recall" : "chamados_faltas";
+    const tblRefs = data.tabela === "recall" ? "chamados_recall_referencias" : "chamados_referencias";
+    const tblEtapas = data.tabela === "recall" ? "chamados_recall_etapas" : "chamados_etapas";
 
     let chamado: any = null;
     let refs: any[] = [];
@@ -336,7 +342,7 @@ export const getChamadoCompleto = createServerFn({ method: "GET" })
     // 1. Chamado principal
     try {
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(data.id);
-      let query = supabase.from("chamados_faltas").select("*");
+      let query = supabase.from(tblMain).select("*");
       if (isUuid) {
         query = query.eq("id", data.id);
       } else {
@@ -349,7 +355,7 @@ export const getChamadoCompleto = createServerFn({ method: "GET" })
       const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(data.id);
       const whereClause = isUuid ? `id = '${data.id}'` : `chamado = '${data.id}'`;
       const { data: rpcRes } = await supabase.rpc("aiiliana_run_sql", {
-        sql: `SELECT * FROM chamados_faltas WHERE ${whereClause} LIMIT 1`
+        sql: `SELECT * FROM ${tblMain} WHERE ${whereClause} LIMIT 1`
       });
       if (Array.isArray(rpcRes) && rpcRes.length > 0) chamado = rpcRes[0];
     }
@@ -360,24 +366,24 @@ export const getChamadoCompleto = createServerFn({ method: "GET" })
 
     // 2. Referencias
     try {
-      const { data: res, error: e2 } = await supabase.from("chamados_referencias").select("*").eq("chamado_id", cId);
+      const { data: res, error: e2 } = await supabase.from(tblRefs).select("*").eq("chamado_id", cId);
       if (e2) throw new Error(e2.message);
       refs = res || [];
     } catch {
       const { data: rpcRes } = await supabase.rpc("aiiliana_run_sql", {
-        sql: `SELECT * FROM chamados_referencias WHERE chamado_id = '${cId}'`
+        sql: `SELECT * FROM ${tblRefs} WHERE chamado_id = '${cId}'`
       });
       if (Array.isArray(rpcRes)) refs = rpcRes;
     }
 
     // 3. Etapas
     try {
-      const { data: res, error: e3 } = await supabase.from("chamados_etapas").select("*").eq("chamado_id", cId).order("ordem");
+      const { data: res, error: e3 } = await supabase.from(tblEtapas).select("*").eq("chamado_id", cId).order("ordem");
       if (e3) throw new Error(e3.message);
       etapas = res || [];
     } catch {
       const { data: rpcRes } = await supabase.rpc("aiiliana_run_sql", {
-        sql: `SELECT * FROM chamados_etapas WHERE chamado_id = '${cId}' ORDER BY ordem ASC`
+        sql: `SELECT * FROM ${tblEtapas} WHERE chamado_id = '${cId}' ORDER BY ordem ASC`
       });
       if (Array.isArray(rpcRes)) etapas = rpcRes;
     }
@@ -392,11 +398,16 @@ export const updateChamadoCompleto = createServerFn({ method: "POST" })
     chamado: any;
     referencias: any[];
     etapas: EtapaInput[];
+    tabela?: "faltas" | "recall";
   }) => data)
   .handler(async ({ data }) => {
     const { requireUnlockedSession } = await import("@/lib/gate.server");
     await requireUnlockedSession();
     const supabase = await getSupabase();
+
+    const tblMain = data.tabela === "recall" ? "chamados_recall" : "chamados_faltas";
+    const tblRefs = data.tabela === "recall" ? "chamados_recall_referencias" : "chamados_referencias";
+    const tblEtapas = data.tabela === "recall" ? "chamados_recall_etapas" : "chamados_etapas";
 
     const c = data.chamado;
     const nullIfEmpty = (v: any) => {
@@ -443,17 +454,16 @@ export const updateChamadoCompleto = createServerFn({ method: "POST" })
     // Regra: número do chamado não pode duplicar (exceto o próprio)
     if (row.chamado) {
       const { data: dup } = await supabase
-        .from("chamados_faltas").select("id").eq("chamado", row.chamado).neq("id", data.id).limit(1).maybeSingle();
+        .from(tblMain).select("id").eq("chamado", row.chamado).neq("id", data.id).limit(1).maybeSingle();
       if (dup) throw new Error(`Já existe outro chamado com o número ${row.chamado}.`);
     }
-    const { error: eu } = await supabase.from("chamados_faltas").update(row).eq("id", data.id);
+    const { error: eu } = await supabase.from(tblMain).update(row).eq("id", data.id);
     if (eu) throw new Error(eu.message);
     await upsertConferenteCD(supabase, row.conferente, row.cd);
     await upsertTransportadora(supabase, row.transportadora);
 
-
     // refs: delete + reinsert
-    await supabase.from("chamados_referencias").delete().eq("chamado_id", data.id);
+    await supabase.from(tblRefs).delete().eq("chamado_id", data.id);
     const refs = (data.referencias || [])
       .map((r: any) => ({
         chamado_id: data.id,
@@ -466,12 +476,12 @@ export const updateChamadoCompleto = createServerFn({ method: "POST" })
       } as any))
       .filter((r: any) => r.referencia || r.cor || r.tamanho || r.fornecedor || r.descricao);
     if (refs.length > 0) {
-      const { error } = await (supabase.from("chamados_referencias") as any).insert(refs);
+      const { error } = await (supabase.from(tblRefs) as any).insert(refs);
       if (error) throw new Error("Erro nas referências: " + error.message);
     }
 
     // etapas: delete + reinsert
-    await supabase.from("chamados_etapas").delete().eq("chamado_id", data.id);
+    await supabase.from(tblEtapas).delete().eq("chamado_id", data.id);
     const etapas = (data.etapas || []).map((et, idx) => {
       const inicio = parseISO(et.dt_inicio ?? null);
       const fim = parseISO(et.dt_fim ?? null);
@@ -498,50 +508,60 @@ export const updateChamadoCompleto = createServerFn({ method: "POST" })
       };
     }).filter((e) => e.nome_tarefa);
     if (etapas.length > 0) {
-      const { error } = await supabase.from("chamados_etapas").insert(etapas);
+      const { error } = await supabase.from(tblEtapas).insert(etapas);
       if (error) throw new Error("Erro nas etapas: " + error.message);
     }
-    // Sync com planilha (fire-and-forget)
-    try {
-      const { syncToAppsScript, buildChamadoRow } = await import("@/lib/apps-script.server");
-      await syncToAppsScript({
-        action: "update",
-        chamado: buildChamadoRow(row),
-        referencias: refs,
-        etapas,
-      });
-    } catch (e) { console.error("[sync] update:", e); }
+    // Sync com planilha (fire-and-forget, apenas faltas por enquanto)
+    if (data.tabela !== "recall") {
+      try {
+        const { syncToAppsScript, buildChamadoRow } = await import("@/lib/apps-script.server");
+        await syncToAppsScript({
+          action: "update",
+          chamado: buildChamadoRow(row),
+          referencias: refs,
+          etapas,
+        });
+      } catch (e) { console.error("[sync] update:", e); }
+    }
 
     return { ok: true, id: data.id };
   });
 
 // ===== Excluir chamado(s) =====
 export const deleteChamado = createServerFn({ method: "POST" })
-  .inputValidator((data: { ids: string[] }) => data)
+  .inputValidator((data: { ids: string[]; tabela?: "faltas" | "recall" }) => data)
   .handler(async ({ data }) => {
     const { requireUnlockedSession } = await import("@/lib/gate.server");
     await requireUnlockedSession();
     const supabase = await getSupabase();
+
+    const tblMain = data.tabela === "recall" ? "chamados_recall" : "chamados_faltas";
+    const tblRefs = data.tabela === "recall" ? "chamados_recall_referencias" : "chamados_referencias";
+    const tblEtapas = data.tabela === "recall" ? "chamados_recall_etapas" : "chamados_etapas";
+
     const ids = (data.ids || []).filter(Boolean);
     if (!ids.length) return { ok: true, count: 0 };
 
     // Pega os números dos chamados antes de deletar (para sincronizar com a planilha)
     const { data: chamadosRows } = await supabase
-      .from("chamados_faltas").select("chamado").in("id", ids);
+      .from(tblMain).select("chamado").in("id", ids);
     const chamadoNums = (chamadosRows || []).map((r: any) => String(r.chamado)).filter(Boolean);
 
-    await supabase.from("chamados_etapas").delete().in("chamado_id", ids);
-    await supabase.from("chamados_referencias").delete().in("chamado_id", ids);
-    const { error } = await supabase.from("chamados_faltas").delete().in("id", ids);
+    await supabase.from(tblEtapas).delete().in("chamado_id", ids);
+    await supabase.from(tblRefs).delete().in("chamado_id", ids);
+    const { error } = await supabase.from(tblMain).delete().in("id", ids);
     if (error) throw new Error(error.message);
 
-    // Sync com planilha
-    try {
-      const { syncToAppsScript } = await import("@/lib/apps-script.server");
-      await syncToAppsScript({ action: "delete", ids: chamadoNums });
-    } catch (e) { console.error("[sync] delete:", e); }
+    // Sync com planilha (apenas se for faltas)
+    if (data.tabela !== "recall") {
+      try {
+        const { syncToAppsScript } = await import("@/lib/apps-script.server");
+        await syncToAppsScript({ action: "delete", ids: chamadoNums });
+      } catch (e) { console.error("[sync] delete:", e); }
+    }
 
     return { ok: true, count: ids.length };
+  });ount: ids.length };
   });
 
 

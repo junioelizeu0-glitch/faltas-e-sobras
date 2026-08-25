@@ -60,9 +60,10 @@ type Props = {
   onClose?: () => void;
   onDeleted?: () => void;
   compact?: boolean; // se true, sem cabeçalho externo (uso em modal)
+  tabela?: "faltas" | "recall";
 };
 
-export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, initialChamado, onSaved, onCancel, onClose, onDeleted, compact }: Props) {
+export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, initialChamado, onSaved, onCancel, onClose, onDeleted, compact, tabela = "faltas" }: Props) {
   // Estado interno para transição automática de "novo" -> "editar" após primeiro save
   const [mode, setMode] = useState<"novo" | "editar">(modeProp);
   const [chamadoId, setChamadoId] = useState<string | undefined>(chamadoIdProp);
@@ -125,7 +126,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     (async () => {
       setLoading(true);
       try {
-        const res: any = await getFn({ data: { id: chamadoId } });
+        const res: any = await getFn({ data: { id: chamadoId, tabela } });
         const c = res.chamado || {};
         // Sincroniza a ref ANTES do setForm para evitar que o auto-fill de status
         // sobrescreva a Situação carregada do banco.
@@ -353,9 +354,9 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     try {
       const isEdit = mode === "editar" && chamadoId;
       if (isEdit) {
-        await updateFn({ data: { id: chamadoId!, ...payload } });
+        await updateFn({ data: { id: chamadoId!, ...payload, tabela } });
       } else {
-        const res: any = await createFn({ data: payload });
+        const res: any = await createFn({ data: { ...payload, tabela } });
         if (res?.id) { setChamadoId(res.id); setMode("editar"); }
       }
       const msg = successMsg || (isEdit ? "Chamado salvo" : "Chamado incluído");
@@ -475,9 +476,9 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
         })),
       };
       if (mode === "editar" && chamadoId) {
-        await updateFn({ data: { id: chamadoId, ...payload } });
+        await updateFn({ data: { id: chamadoId, ...payload, tabela } });
       } else {
-        const res: any = await createFn({ data: payload });
+        const res: any = await createFn({ data: { ...payload, tabela } });
         if (res?.id) { setChamadoId(res.id); setMode("editar"); }
       }
       toast.success(aprovado ? "Falta aprovada" : "Falta recusada");
@@ -503,7 +504,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
           <header className="mb-4 flex items-center justify-between">
             <div>
               <h1 className="text-xl font-bold text-slate-800 tracking-tight">
-                {mode === "editar" ? `Editar Chamado nº ${form.Chamado}` : "Novo Chamado — Faltas"}
+                {mode === "editar" ? `Editar Chamado nº ${form.Chamado}` : `Novo Chamado — ${tabela === "recall" ? "Recall" : "Faltas"}`}
               </h1>
               <p className="text-xs text-slate-500 mt-0.5">
                 {mode === "editar" ? "Altere ou consulte as informações do chamado" : "Preencha os dados abaixo para registrar um novo chamado"}
@@ -596,7 +597,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
                     onClick={async () => {
                       if (!confirm("Excluir este chamado? Esta ação não pode ser desfeita.")) return;
                       try {
-                        await delFn({ data: { ids: [chamadoId] } });
+                        await delFn({ data: { ids: [chamadoId], tabela } });
                         toast.success("Chamado excluído");
                         onDeleted?.();
                       } catch (e: any) { toast.error(e?.message || "Erro ao excluir chamado"); }
