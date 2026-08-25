@@ -300,15 +300,17 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
       const etapasOk = (etapas || []).some((e) => (e.nome_tarefa || "").trim() !== "");
       if (!etapasOk) return "Inclua ao menos uma Etapa (aba Etapas)";
     }
-    if (precisaTranspConf && (!form.Transportadora || !form.Conferente))
-      return "Preencha Transportadora e Conferente antes de salvar (obrigatórios para " + statusChamado + ").";
-    if (precisaMotivo && !form.Motivo) return "Preencha o Motivo antes de salvar (obrigatório para Aprovado).";
-    if (podeMonitorar && (!form.Transportadora?.trim() || !form.Conferente?.trim() || !form.Motivo?.trim())) {
-      const faltantes: string[] = [];
-      if (!form.Transportadora?.trim()) faltantes.push("Transportadora");
-      if (!form.Conferente?.trim()) faltantes.push("Conferente");
-      if (!form.Motivo?.trim()) faltantes.push("Motivo");
-      return `Para registrar o resultado do monitoramento, é obrigatório preencher: ${faltantes.join(", ")}.`;
+    if (tabela !== "recall") {
+      if (precisaTranspConf && (!form.Transportadora || !form.Conferente))
+        return "Preencha Transportadora e Conferente antes de salvar (obrigatórios para " + statusChamado + ").";
+      if (precisaMotivo && !form.Motivo) return "Preencha o Motivo antes de salvar (obrigatório para Aprovado).";
+      if (podeMonitorar && (!form.Transportadora?.trim() || !form.Conferente?.trim() || !form.Motivo?.trim())) {
+        const faltantes: string[] = [];
+        if (!form.Transportadora?.trim()) faltantes.push("Transportadora");
+        if (!form.Conferente?.trim()) faltantes.push("Conferente");
+        if (!form.Motivo?.trim()) faltantes.push("Motivo");
+        return `Para registrar o resultado do monitoramento, é obrigatório preencher: ${faltantes.join(", ")}.`;
+      }
     }
     if (precisaDadosNF) {
       const faltando: string[] = [];
@@ -774,37 +776,39 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
           <Field label="SLA (auto, dias úteis)" className="w-[150px]"><input value={sla || "—"} readOnly className={inputCls + " bg-slate-50 text-slate-500"} /></Field>
         </div>
       </section>
-      <section>
-        <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center justify-between">
-          <span>Responsáveis</span>
-          <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-full">
-            * Transportadora, Conferente e Motivo são obrigatórios para o resultado do monitoramento
-          </span>
-        </h2>
-        <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
-              Transportadora {precisaTranspConf ? "*" : ""}
-              <ManageBtn onClick={() => onManage("transp")} title="Cadastrar transportadoras" />
+      {tabela !== "recall" && (
+        <section>
+          <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3 flex items-center justify-between">
+            <span>Responsáveis</span>
+            <span className="text-[11px] font-medium text-emerald-700 bg-emerald-50 border border-emerald-200/60 px-2 py-0.5 rounded-full">
+              * Transportadora, Conferente e Motivo são obrigatórios para o resultado do monitoramento
             </span>
-            <Combobox value={form.Transportadora} onChange={(v) => setField("Transportadora", v)} options={transp} uppercase />
+          </h2>
+          <div className="grid gap-3 grid-cols-1 md:grid-cols-2 lg:grid-cols-4">
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                Transportadora {precisaTranspConf ? "*" : ""}
+                <ManageBtn onClick={() => onManage("transp")} title="Cadastrar transportadoras" />
+              </span>
+              <Combobox value={form.Transportadora} onChange={(v) => setField("Transportadora", v)} options={transp} uppercase />
+            </div>
+            <div className="flex flex-col gap-1">
+              <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                Conferente {precisaTranspConf ? "*" : ""}
+                <ManageBtn onClick={() => onManage("conf")} title="Cadastrar conferentes" />
+              </span>
+              <Combobox value={form.Conferente} onChange={(v) => setField("Conferente", v)} options={confs} uppercase />
+            </div>
+            <div className="flex flex-col gap-1 lg:col-span-2">
+              <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                Motivo {precisaMotivo ? "*" : ""}
+                <ManageBtn onClick={() => onManage("motivo")} title="Cadastrar motivos" />
+              </span>
+              <Combobox value={form.Motivo} onChange={(v) => setField("Motivo", v)} options={motivos} />
+            </div>
           </div>
-          <div className="flex flex-col gap-1">
-            <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
-              Conferente {precisaTranspConf ? "*" : ""}
-              <ManageBtn onClick={() => onManage("conf")} title="Cadastrar conferentes" />
-            </span>
-            <Combobox value={form.Conferente} onChange={(v) => setField("Conferente", v)} options={confs} uppercase />
-          </div>
-          <div className="flex flex-col gap-1 lg:col-span-2">
-            <span className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
-              Motivo {precisaMotivo ? "*" : ""}
-              <ManageBtn onClick={() => onManage("motivo")} title="Cadastrar motivos" />
-            </span>
-            <Combobox value={form.Motivo} onChange={(v) => setField("Motivo", v)} options={motivos} />
-          </div>
-        </div>
-      </section>
+        </section>
+      )}
       <section className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 shadow-2xs">
         <div className="flex items-center justify-between mb-3.5">
           <h2 className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
