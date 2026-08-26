@@ -327,6 +327,7 @@ export const createChamadoCompleto = createServerFn({ method: "POST" })
 export const getChamadoCompleto = createServerFn({ method: "GET" })
   .validator((data: { id: string; tabela?: "faltas" | "recall" }) => data)
   .handler(async ({ data }) => {
+    if (!data?.id) return { chamado: null, referencias: [], etapas: [] };
     const { requireUnlockedSession } = await import("@/lib/gate.server");
     await requireUnlockedSession();
     const supabase = await getSupabase();
@@ -348,7 +349,7 @@ export const getChamadoCompleto = createServerFn({ method: "GET" })
       } else {
         query = query.eq("chamado", data.id);
       }
-      const { data: res, error: e1 } = await query.maybeSingle();
+      const { data: res, error: e1 } = await query.limit(1).maybeSingle();
       if (e1) throw new Error(e1.message);
       chamado = res;
     } catch {

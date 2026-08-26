@@ -111,10 +111,10 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
         listTarefasFn({ data: { tipo: "FALTAS" } }),
         listTFn(), listCFn(), listMFn(),
       ]);
-      setTarefas((ta as any[]).map((t) => ({ id: t.id, nome: t.nome, dias_uteis: t.dias_uteis })));
-      setTransp((tr as any[]).map((x) => x.nome));
-      setConfs((cf as any[]).map((x) => x.nome));
-      setMotivos((mo as any[]).map((x) => x.nome));
+      if (Array.isArray(ta)) setTarefas(ta.map((t) => ({ id: t.id, nome: t.nome, dias_uteis: t.dias_uteis })));
+      if (Array.isArray(tr)) setTransp(tr.map((x) => x.nome));
+      if (Array.isArray(cf)) setConfs(cf.map((x) => x.nome));
+      if (Array.isArray(mo)) setMotivos(mo.map((x) => x.nome));
     } catch (e) { /* silent */ }
   };
   useEffect(() => { loadListas(); }, []);
@@ -292,7 +292,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     if (!form.Loja) return "Loja é obrigatória";
     if (!form.Tipo) return "Tipo é obrigatório";
     if (!form.CD) return "CD é obrigatório";
-    if (!form["Status Chamado"]) return "Status do chamado é ob,,tória";
+    if (!form["Status Chamado"]) return "Status do chamado é obrigatório";
     if (!form["Dt Abertura"]) return "Data de abertura é obrigatória";
     if (!partial) {
       const refsOk = (refs || []).some((r) => (r.referencia || "").trim() !== "");
