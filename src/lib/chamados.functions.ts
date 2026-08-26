@@ -231,7 +231,12 @@ export const createChamadoCompleto = createServerFn({ method: "POST" })
       .insert(chamadoRow)
       .select()
       .single();
-    if (e1) throw new Error(e1.message);
+    if (e1) {
+      const msg = e1.message.includes("does not exist")
+        ? `A tabela '${tblMain}' não existe no Supabase. Por favor, rode o script SQL '20260825133500_create_chamados_recall.sql' no Supabase.`
+        : e1.message;
+      throw new Error(msg);
+    }
     const chamado_id = inserted.id;
     await upsertConferenteCD(supabase, chamadoRow.conferente, chamadoRow.cd);
     await upsertTransportadora(supabase, chamadoRow.transportadora);

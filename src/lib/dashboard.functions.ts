@@ -61,7 +61,7 @@ export const fetchDashboardData = createServerFn({ method: "GET" })
         if (!rpcError && Array.isArray(rpcData)) {
           return rpcData.map(toApiShape);
         }
-        throw err;
+        return [];
       }
     },
   );
