@@ -577,7 +577,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
               <CadastroTab form={form} setField={setField} statusPagamento={statusPagamento} sla={slaCalc}
                 transp={transp} confs={confs} motivos={motivos} precisaTranspConf={precisaTranspConf} precisaMotivo={precisaMotivo}
                 statusChamado={statusChamado} onManage={setManage}
-                lojaInfo={lojaInfo} onEditLoja={() => setLojaOpen(true)}
+                lojaInfo={lojaInfo} onEditLoja={() => setLojaOpen(true)} tabela={tabela}
               />
             )}
             {tab === "referencias" && (
@@ -739,7 +739,7 @@ function Field({ label, children, className = "", style }: { label: string; chil
 }
 
 
-function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, motivos, precisaTranspConf, precisaMotivo, statusChamado, onManage, lojaInfo, onEditLoja }: any) {
+function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, motivos, precisaTranspConf, precisaMotivo, statusChamado, onManage, lojaInfo, onEditLoja, tabela }: any) {
   const ManageBtn = ({ onClick, title }: { onClick: () => void; title: string }) => (
     <button type="button" onClick={onClick} title={title}
       className="inline-flex items-center justify-center p-0.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded">

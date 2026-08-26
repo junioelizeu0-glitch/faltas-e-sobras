@@ -34,6 +34,7 @@ import { useQuery } from '@tanstack/react-query';
 
 import DrillDownModal from '@/components/DrillDownModal';
 import AppShell from '@/components/AppShell';
+import ErrorBoundary from '@/components/ErrorBoundary';
 import { toPng } from 'html-to-image';
 import { exportToExcel } from '@/lib/excel-export';
 
@@ -2082,15 +2083,21 @@ export default function Dashboard() {
 
 
         {selectedSubmenu === 'novo' && (
-          <NovoChamadoForm rawData={rawData} onCreated={() => refetch()} onClose={() => setSelectedSubmenu(null)} />
+          <ErrorBoundary fallbackTitle="Erro ao carregar formulário de Novo Chamado">
+            <NovoChamadoForm rawData={rawData} onCreated={() => refetch()} onClose={() => setSelectedSubmenu(null)} />
+          </ErrorBoundary>
         )}
 
         {selectedSubmenu === 'consulta' && (
-          <ConsultaChamados rawData={rawData} onChanged={() => refetch()} />
+          <ErrorBoundary fallbackTitle="Erro ao carregar consulta de chamados">
+            <ConsultaChamados rawData={rawData} onChanged={() => refetch()} />
+          </ErrorBoundary>
         )}
 
         {selectedSubmenu && ['recall_novo', 'recall_consulta', 'recall_relatorio'].includes(selectedSubmenu) && (
-          <RecallContainer selectedSubmenu={selectedSubmenu} setSelectedSubmenu={setSelectedSubmenu} />
+          <ErrorBoundary fallbackTitle="Erro ao carregar módulo Recall">
+            <RecallContainer selectedSubmenu={selectedSubmenu} setSelectedSubmenu={setSelectedSubmenu} />
+          </ErrorBoundary>
         )}
 
         {selectedSubmenu === 'cad_produtos' && <CadastroProdutos />}

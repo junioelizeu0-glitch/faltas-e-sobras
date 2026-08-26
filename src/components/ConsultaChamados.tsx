@@ -6,6 +6,7 @@ import { parseDataBR } from "@/lib/data-processing";
 import { deleteChamado } from "@/lib/chamados.functions";
 import { pullFromAppsScript, pushToAppsScript } from "@/lib/sync.functions";
 import ChamadoForm from "./ChamadoForm";
+import ErrorBoundary from "./ErrorBoundary";
 import Pagination from "./Pagination";
 
 const PAGE_SIZE = 30;
@@ -296,12 +297,14 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
               <button onClick={() => setEditingId(null)} className="text-slate-400 hover:text-slate-700 p-1 hover:bg-slate-100 rounded-lg"><X className="w-5 h-5"/></button>
             </div>
             <div className="flex-1 min-h-0 p-3 overflow-hidden">
-              <ChamadoForm
-                mode="editar" chamadoId={String(editingId)} compact tabela={tabela}
-                onSaved={() => { onChanged?.(); }}
-                onCancel={() => setEditingId(null)}
-                onDeleted={() => { setEditingId(null); onChanged?.(); }}
-              />
+              <ErrorBoundary fallbackTitle="Erro ao carregar o formulário de edição">
+                <ChamadoForm
+                  mode="editar" chamadoId={String(editingId)} compact tabela={tabela}
+                  onSaved={() => { onChanged?.(); }}
+                  onCancel={() => setEditingId(null)}
+                  onDeleted={() => { setEditingId(null); onChanged?.(); }}
+                />
+              </ErrorBoundary>
             </div>
           </div>
         </div>
@@ -315,11 +318,13 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
               <button onClick={() => setCreating(false)} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5"/></button>
             </div>
             <div className="flex-1 min-h-0 p-3 overflow-hidden">
-              <ChamadoForm
-                mode="novo" compact tabela={tabela}
-                onSaved={() => { setCreating(false); onChanged?.(); }}
-                onCancel={() => setCreating(false)}
-              />
+              <ErrorBoundary fallbackTitle="Erro ao carregar o formulário de inclusão">
+                <ChamadoForm
+                  mode="novo" compact tabela={tabela}
+                  onSaved={() => { setCreating(false); onChanged?.(); }}
+                  onCancel={() => setCreating(false)}
+                />
+              </ErrorBoundary>
             </div>
           </div>
         </div>

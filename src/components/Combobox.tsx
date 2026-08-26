@@ -27,7 +27,7 @@ export default function Combobox({ value, onChange, options, placeholder, classN
     return () => document.removeEventListener("mousedown", onDoc);
   }, [open]);
 
-  const filtered = options.filter((o) => o && o.toLowerCase().includes((query || "").toLowerCase()));
+  const filtered = (options || []).filter((o) => o && typeof o === "string" && o.toLowerCase().includes((query || "").toLowerCase()));
 
   const commit = (v: string) => {
     const val = uppercase ? v.toUpperCase() : v;

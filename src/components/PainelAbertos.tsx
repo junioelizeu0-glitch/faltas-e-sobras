@@ -9,6 +9,7 @@ import {
 } from "recharts";
 import { parseDataBR, getBusinessDays } from "@/lib/data-processing";
 import ChamadoForm from "./ChamadoForm";
+import ErrorBoundary from "./ErrorBoundary";
 import { listLojas, type Loja } from "@/lib/lojas.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { toPng } from "html-to-image";
@@ -1057,15 +1058,17 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
               </button>
             </div>
             <div className="p-5 md:p-6">
-              <ChamadoForm
-                mode="editar"
-                chamadoId={editingId}
-                compact
-                tabela={tabela}
-                onSaved={() => { onChanged?.(); }}
-                onCancel={() => setEditingId(null)}
-                onDeleted={() => { setEditingId(null); onChanged?.(); }}
-              />
+              <ErrorBoundary fallbackTitle="Erro ao carregar o formulário de edição">
+                <ChamadoForm
+                  mode="editar"
+                  chamadoId={editingId}
+                  compact
+                  tabela={tabela}
+                  onSaved={() => { onChanged?.(); }}
+                  onCancel={() => setEditingId(null)}
+                  onDeleted={() => { setEditingId(null); onChanged?.(); }}
+                />
+              </ErrorBoundary>
             </div>
           </div>
         </div>
