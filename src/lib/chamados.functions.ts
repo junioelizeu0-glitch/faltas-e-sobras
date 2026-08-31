@@ -89,6 +89,17 @@ export type EtapaInput = {
   ordem?: number;
 };
 
+// Garante que a coluna aplica_recall existe na tabela tarefas_catalogo no Supabase
+async function ensureRecallColumn(supabase: any) {
+  try {
+    await supabase.rpc("aiiliana_run_sql", {
+      sql: "ALTER TABLE public.tarefas_catalogo ADD COLUMN IF NOT EXISTS aplica_recall boolean NOT NULL DEFAULT false;",
+    });
+  } catch (e) {
+    /* silent */
+  }
+}
+
 // ===== Tarefas catálogo =====
 export const listTarefas = createServerFn({ method: "GET" })
   .validator((data: { tipo?: "FALTAS" | "SOBRAS" | "RECALL" | "TODAS" } | undefined) => data ?? {})
@@ -96,6 +107,7 @@ export const listTarefas = createServerFn({ method: "GET" })
     const { requireUnlockedSession } = await import("@/lib/gate.server");
     await requireUnlockedSession();
     const supabase = await getSupabase();
+    await ensureRecallColumn(supabase);
     let q = supabase.from("tarefas_catalogo").select("*").eq("ativo", true).order("ordem", { ascending: true });
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
@@ -114,6 +126,7 @@ export const listAllTarefas = createServerFn({ method: "GET" }).handler(async ()
   const { requireUnlockedSession } = await import("@/lib/gate.server");
   await requireUnlockedSession();
   const supabase = await getSupabase();
+  await ensureRecallColumn(supabase);
   const { data, error } = await supabase.from("tarefas_catalogo").select("*").order("ordem", { ascending: true });
   if (error) throw new Error(error.message);
   return (data ?? []) as TarefaCatalogo[];
@@ -134,6 +147,7 @@ export const upsertTarefa = createServerFn({ method: "POST" })
     const { requireUnlockedSession } = await import("@/lib/gate.server");
     await requireUnlockedSession();
     const supabase = await getSupabase();
+    await ensureRecallColumn(supabase);
     const rowFull: any = {
       nome: data.nome.trim(),
       dias_uteis: Number(data.dias_uteis) || 1,
