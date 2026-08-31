@@ -110,8 +110,9 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   // Carrega listas + dados quando edita
   const loadListas = async () => {
     try {
+      const tipoTarefas = tabela === "recall" ? "RECALL" : "FALTAS";
       const [ta, tr, cf, mo] = await Promise.all([
-        listTarefasFn({ data: { tipo: "FALTAS" } }),
+        listTarefasFn({ data: { tipo: tipoTarefas } }),
         listTFn(), listCFn(), listMFn(),
       ]);
       if (Array.isArray(ta)) setTarefas(ta.map((t) => ({ id: t.id, nome: t.nome, dias_uteis: t.dias_uteis })));
@@ -120,7 +121,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
       if (Array.isArray(mo)) setMotivos(mo.map((x) => x.nome));
     } catch (e) { /* silent */ }
   };
-  useEffect(() => { loadListas(); }, []);
+  useEffect(() => { loadListas(); }, [tabela]);
 
   const prevStatusRef = useRef<string>("");
 

@@ -356,6 +356,7 @@ export type Database = {
         Row: {
           aplica_faltas: boolean
           aplica_sobras: boolean
+          aplica_recall?: boolean
           ativo: boolean
           created_at: string
           dias_uteis: number
@@ -367,6 +368,7 @@ export type Database = {
         Insert: {
           aplica_faltas?: boolean
           aplica_sobras?: boolean
+          aplica_recall?: boolean
           ativo?: boolean
           created_at?: string
           dias_uteis?: number
@@ -378,6 +380,7 @@ export type Database = {
         Update: {
           aplica_faltas?: boolean
           aplica_sobras?: boolean
+          aplica_recall?: boolean
           ativo?: boolean
           created_at?: string
           dias_uteis?: number

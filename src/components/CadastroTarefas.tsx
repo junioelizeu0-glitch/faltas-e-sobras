@@ -6,7 +6,7 @@ import Pagination from "./Pagination";
 
 const PAGE_SIZE = 30;
 
-type T = { id: string; nome: string; dias_uteis: number; aplica_faltas: boolean; aplica_sobras: boolean; ativo: boolean; ordem: number };
+type T = { id: string; nome: string; dias_uteis: number; aplica_faltas: boolean; aplica_sobras: boolean; aplica_recall?: boolean; ativo: boolean; ordem: number };
 
 export default function CadastroTarefas() {
   const list = useServerFn(listAllTarefas);
@@ -28,6 +28,7 @@ export default function CadastroTarefas() {
     await up({ data: {
       id: editing.id, nome: editing.nome, dias_uteis: Number(editing.dias_uteis) || 1,
       aplica_faltas: !!editing.aplica_faltas, aplica_sobras: !!editing.aplica_sobras,
+      aplica_recall: !!editing.aplica_recall,
       ativo: editing.ativo !== false, ordem: Number(editing.ordem) || 0,
     }});
     setEditing(null); await load();
@@ -46,7 +47,7 @@ export default function CadastroTarefas() {
             <p className="text-xs text-slate-500 mt-1">Define nome, SLA em dias úteis e a qual tipo de chamado se aplica.</p>
           </div>
           <button
-            onClick={() => setEditing({ ativo: true, aplica_faltas: true })}
+            onClick={() => setEditing({ ativo: true, aplica_faltas: true, aplica_recall: true })}
             className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl cursor-pointer shadow-xs transition-colors"
           >
             <Plus className="w-4 h-4"/>
@@ -69,6 +70,7 @@ export default function CadastroTarefas() {
                   <th className="px-4 py-3">SLA</th>
                   <th className="px-4 py-3">Faltas</th>
                   <th className="px-4 py-3">Sobras</th>
+                  <th className="px-4 py-3">Recall</th>
                   <th className="px-4 py-3">Ativo</th>
                   <th className="px-4 py-3 text-right">Ações</th>
                 </tr>
@@ -81,6 +83,7 @@ export default function CadastroTarefas() {
                     <td className="px-4 py-3 text-slate-700 font-medium">{r.dias_uteis} dias úteis</td>
                     <td className="px-4 py-3">{r.aplica_faltas ? <span className="text-emerald-600 font-bold">✓</span> : <span className="text-slate-300">—</span>}</td>
                     <td className="px-4 py-3">{r.aplica_sobras ? <span className="text-emerald-600 font-bold">✓</span> : <span className="text-slate-300">—</span>}</td>
+                    <td className="px-4 py-3">{r.aplica_recall ? <span className="text-emerald-600 font-bold">✓</span> : <span className="text-slate-300">—</span>}</td>
                     <td className="px-4 py-3">{r.ativo ? <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60">Sim</span> : <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500">Não</span>}</td>
                     <td className="px-4 py-3 text-right space-x-1">
                       <button onClick={() => setEditing(r)} title="Editar" className="inline-flex items-center p-1.5 text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer">
@@ -94,7 +97,7 @@ export default function CadastroTarefas() {
                 ))}
                 {rows.length === 0 && (
                   <tr>
-                    <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
+                    <td colSpan={8} className="px-4 py-8 text-center text-slate-400">
                       Nenhuma tarefa cadastrada.
                     </td>
                   </tr>
@@ -130,7 +133,7 @@ export default function CadastroTarefas() {
                   <input type="number" value={editing.ordem ?? ""} onChange={(e) => setEditing({ ...editing, ordem: e.target.value === "" ? undefined : Number(e.target.value) })} className="mt-1.5 w-full text-sm rounded-xl border border-slate-200 px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white font-medium"/>
                 </label>
               </div>
-              <div className="flex gap-4 text-xs pt-2">
+              <div className="flex gap-4 text-xs pt-2 flex-wrap">
                 <label className="inline-flex items-center gap-2 cursor-pointer font-medium text-slate-700">
                   <input type="checkbox" checked={!!editing.aplica_faltas} onChange={(e) => setEditing({ ...editing, aplica_faltas: e.target.checked })} className="rounded text-emerald-600 focus:ring-emerald-500"/>
                   Faltas
@@ -138,6 +141,10 @@ export default function CadastroTarefas() {
                 <label className="inline-flex items-center gap-2 cursor-pointer font-medium text-slate-700">
                   <input type="checkbox" checked={!!editing.aplica_sobras} onChange={(e) => setEditing({ ...editing, aplica_sobras: e.target.checked })} className="rounded text-emerald-600 focus:ring-emerald-500"/>
                   Sobras
+                </label>
+                <label className="inline-flex items-center gap-2 cursor-pointer font-medium text-slate-700">
+                  <input type="checkbox" checked={!!editing.aplica_recall} onChange={(e) => setEditing({ ...editing, aplica_recall: e.target.checked })} className="rounded text-emerald-600 focus:ring-emerald-500"/>
+                  Recall
                 </label>
                 <label className="inline-flex items-center gap-2 cursor-pointer font-medium text-slate-700">
                   <input type="checkbox" checked={editing.ativo !== false} onChange={(e) => setEditing({ ...editing, ativo: e.target.checked })} className="rounded text-emerald-600 focus:ring-emerald-500"/>

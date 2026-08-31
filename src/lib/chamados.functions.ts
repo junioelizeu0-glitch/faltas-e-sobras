@@ -66,6 +66,7 @@ export type TarefaCatalogo = {
   dias_uteis: number;
   aplica_faltas: boolean;
   aplica_sobras: boolean;
+  aplica_recall?: boolean;
   ativo: boolean;
   ordem: number;
 };
@@ -90,7 +91,7 @@ export type EtapaInput = {
 
 // ===== Tarefas catálogo =====
 export const listTarefas = createServerFn({ method: "GET" })
-  .validator((data: { tipo?: "FALTAS" | "SOBRAS" | "TODAS" } | undefined) => data ?? {})
+  .validator((data: { tipo?: "FALTAS" | "SOBRAS" | "RECALL" | "TODAS" } | undefined) => data ?? {})
   .handler(async ({ data }) => {
     const { requireUnlockedSession } = await import("@/lib/gate.server");
     await requireUnlockedSession();
@@ -101,8 +102,9 @@ export const listTarefas = createServerFn({ method: "GET" })
     const tipo = data?.tipo;
     const filtered = (rows ?? []).filter((r: any) => {
       if (!tipo || tipo === "TODAS") return true;
-      if (tipo === "FALTAS") return r.aplica_faltas;
-      if (tipo === "SOBRAS") return r.aplica_sobras;
+      if (tipo === "FALTAS") return r.aplica_faltas !== false;
+      if (tipo === "SOBRAS") return r.aplica_sobras !== false;
+      if (tipo === "RECALL") return r.aplica_recall !== undefined ? !!r.aplica_recall : (r.aplica_faltas !== false);
       return true;
     });
     return filtered as TarefaCatalogo[];
@@ -124,6 +126,7 @@ export const upsertTarefa = createServerFn({ method: "POST" })
     dias_uteis: number;
     aplica_faltas: boolean;
     aplica_sobras: boolean;
+    aplica_recall?: boolean;
     ativo?: boolean;
     ordem?: number;
   }) => data)
@@ -131,11 +134,12 @@ export const upsertTarefa = createServerFn({ method: "POST" })
     const { requireUnlockedSession } = await import("@/lib/gate.server");
     await requireUnlockedSession();
     const supabase = await getSupabase();
-    const row = {
+    const row: any = {
       nome: data.nome.trim(),
       dias_uteis: Number(data.dias_uteis) || 1,
       aplica_faltas: !!data.aplica_faltas,
       aplica_sobras: !!data.aplica_sobras,
+      aplica_recall: !!data.aplica_recall,
       ativo: data.ativo !== false,
       ordem: Number(data.ordem) || 0,
     };
