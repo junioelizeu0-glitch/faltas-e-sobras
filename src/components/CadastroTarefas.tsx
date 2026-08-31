@@ -16,6 +16,7 @@ export default function CadastroTarefas() {
   const [rows, setRows] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [feedback, setFeedback] = useState<{ type: "ok" | "err"; msg: string } | null>(null);
   const [editing, setEditing] = useState<Partial<T> | null>(null);
   const [page, setPage] = useState(0);
 
@@ -26,8 +27,11 @@ export default function CadastroTarefas() {
   useEffect(() => { setPage(0); }, [rows.length]);
 
   const save = async () => {
+    setFeedback(null);
     if (!editing?.nome?.trim()) {
-      toast.error("O nome da tarefa é obrigatório.");
+      const msg = "O nome da tarefa é obrigatório.";
+      setFeedback({ type: "err", msg });
+      toast.error(msg);
       return;
     }
     setSaving(true);
@@ -38,11 +42,15 @@ export default function CadastroTarefas() {
         aplica_recall: !!editing.aplica_recall,
         ativo: editing.ativo !== false, ordem: Number(editing.ordem) || 0,
       }});
-      toast.success(editing.id ? "Tarefa atualizada com sucesso!" : "Tarefa criada com sucesso!");
-      setEditing(null);
+      const msg = editing.id ? "Tarefa atualizada com sucesso no banco de dados!" : "Tarefa criada com sucesso no banco de dados!";
+      setFeedback({ type: "ok", msg });
+      toast.success(msg);
       await load();
+      setTimeout(() => { setEditing(null); }, 700);
     } catch (e: any) {
-      toast.error(e?.message || "Erro ao salvar tarefa");
+      const msg = e?.message || "Erro ao salvar tarefa no banco de dados";
+      setFeedback({ type: "err", msg });
+      toast.error(msg);
     } finally {
       setSaving(false);
     }
@@ -139,6 +147,12 @@ export default function CadastroTarefas() {
               </button>
             </div>
             <div className="p-6 space-y-4 text-xs">
+              {feedback && (
+                <div className={`p-3 rounded-xl border flex items-center justify-between text-xs font-semibold ${feedback.type === "ok" ? "bg-emerald-50 text-emerald-800 border-emerald-200" : "bg-rose-50 text-rose-800 border-rose-200"}`}>
+                  <span>{feedback.msg}</span>
+                  <button onClick={() => setFeedback(null)} className="text-xs opacity-60 hover:opacity-100">✕</button>
+                </div>
+              )}
               <label className="block">
                 <span className="font-semibold text-slate-600">Nome *</span>
                 <input autoFocus value={editing.nome || ""} onChange={(e) => setEditing({ ...editing, nome: e.target.value })} placeholder="Ex.: Validação NF Espelho" className="mt-1.5 w-full text-sm rounded-xl border border-slate-200 px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white font-medium"/>
