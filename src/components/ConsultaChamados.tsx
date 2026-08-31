@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Search, X, Pencil, Trash2, DownloadCloud, UploadCloud, Loader2, Plus, FileText } from "lucide-react";
-import { parseDataBR } from "@/lib/data-processing";
+import { Search, X, Pencil, Trash2, DownloadCloud, UploadCloud, Loader2, Plus, FileText, RotateCcw, DollarSign } from "lucide-react";
+import { parseDataBR, parseValorNumeric, formatarMoedaBR } from "@/lib/data-processing";
 import { deleteChamado } from "@/lib/chamados.functions";
 import { pullFromAppsScript, pushToAppsScript } from "@/lib/sync.functions";
 import ChamadoForm from "./ChamadoForm";
@@ -53,6 +53,9 @@ type Props = { rawData: any[] | undefined; onChanged?: () => void; tabela?: "fal
 
 export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas" }: Props) {
   const [busca, setBusca] = useState("");
+  const [filtroLoja, setFiltroLoja] = useState("Todas");
+  const [filtroChamado, setFiltroChamado] = useState("");
+  const [filtroNF, setFiltroNF] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("Todos");
   const [filtroTarefa, setFiltroTarefa] = useState("Todas");
   const [editingId, setEditingId] = useState<string | null>(null);
@@ -93,21 +96,54 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [rawData]);
 
+  const lojas = useMemo(() => {
+    const set = new Set<string>();
+    (rawData || []).forEach((r: any) => {
+      const l = String(r.Loja || r.loja || "").trim();
+      if (l && l !== "—" && l !== "Sem informação") set.add(l);
+    });
+    return Array.from(set).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
+  }, [rawData]);
+
   const linhas = useMemo(() => {
-    const f = busca.trim().toLowerCase();
+    const fGlobal = busca.trim().toLowerCase();
+    const fChamado = filtroChamado.trim().toLowerCase();
+    const fNF = filtroNF.trim().toLowerCase();
+
     return (rawData || [])
       .filter((r: any) => {
         if (filtroStatus !== "Todos" && String(r["Status Chamado"] || "") !== filtroStatus) return false;
+        
         const t = tarefaAtual(r);
         if (filtroTarefa !== "Todas" && t !== filtroTarefa) return false;
-        if (!f) return true;
+
+        if (filtroLoja !== "Todas") {
+          const l = String(r.Loja || r.loja || "").trim();
+          if (l !== filtroLoja) return false;
+        }
+
+        if (fChamado) {
+          const cham = String(r.Chamado || r["Chamados"] || r.chamadoId || "").toLowerCase();
+          if (!cham.includes(fChamado)) return false;
+        }
+
+        if (fNF) {
+          const nf = String(r.NF || r["Nº Nfe"] || r.nfe || "").toLowerCase();
+          if (!nf.includes(fNF)) return false;
+        }
+
+        if (!fGlobal) return true;
         return [r.Chamado, r.Loja, r.NF, r.CD, r.Transportadora, r.Conferente, t]
-          .map((v) => String(v ?? "").toLowerCase()).some((s) => s.includes(f));
+          .map((v) => String(v ?? "").toLowerCase()).some((s) => s.includes(fGlobal));
       })
       .sort((a: any, b: any) => (parseDataBR(b["Dt Abertura"])?.getTime() ?? 0) - (parseDataBR(a["Dt Abertura"])?.getTime() ?? 0));
-  }, [rawData, busca, filtroStatus, filtroTarefa]);
+  }, [rawData, busca, filtroStatus, filtroTarefa, filtroLoja, filtroChamado, filtroNF]);
 
-  useEffect(() => { setPage(0); }, [busca, filtroStatus, filtroTarefa]);
+  const valorTotalFiltrado = useMemo(() => {
+    return linhas.reduce((acc, r) => acc + parseValorNumeric(r[" Valor "] || r.valor || r.Valor), 0);
+  }, [linhas]);
+
+  useEffect(() => { setPage(0); }, [busca, filtroStatus, filtroTarefa, filtroLoja, filtroChamado, filtroNF]);
   const totalPages = Math.max(1, Math.ceil(linhas.length / PAGE_SIZE));
   const paginadas = useMemo(() => linhas.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE), [linhas, page]);
 
@@ -122,6 +158,16 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
     const next = new Set(selected);
     if (next.has(id)) next.delete(id); else next.add(id);
     setSelected(next);
+  };
+
+  const temFiltroAtivo = Boolean(busca || filtroStatus !== "Todos" || filtroTarefa !== "Todas" || filtroLoja !== "Todas" || filtroChamado || filtroNF);
+  const limparFiltros = () => {
+    setBusca("");
+    setFiltroStatus("Todos");
+    setFiltroTarefa("Todas");
+    setFiltroLoja("Todas");
+    setFiltroChamado("");
+    setFiltroNF("");
   };
 
   const excluirIds = async (ids: string[]) => {
@@ -147,9 +193,14 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
         <header className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-100">
           <div>
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">Consulta de Chamados</h1>
-            <p className="text-xs text-slate-500 mt-1">
-              {selected.size > 0 ? `${selected.size} selecionado(s) de ${linhas.length}` : `Clique em um chamado para abrir os detalhes e editar. Total: ${linhas.length} chamados`}
-            </p>
+            <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-slate-500">
+              <span>{selected.size > 0 ? `${selected.size} selecionado(s) de ${linhas.length}` : `Exibindo ${linhas.length} chamado(s)`}</span>
+              <span className="text-slate-300">•</span>
+              <span className="inline-flex items-center gap-1 font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
+                <DollarSign className="w-3.5 h-3.5" />
+                Valor Total: {formatarMoedaBR(valorTotalFiltrado, { showZero: true })}
+              </span>
+            </div>
           </div>
           <div className="flex items-center gap-2">
             <button
@@ -197,41 +248,87 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
           </div>
         </header>
 
-        <div className="flex flex-wrap gap-4 bg-slate-50/70 border border-slate-200/60 rounded-xl p-3.5 items-end text-xs">
-          <div className="relative w-[260px] min-w-[180px]">
-            <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Buscar chamado</label>
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
-              <input
-                value={busca}
-                onChange={(e) => setBusca(e.target.value)}
-                placeholder="Chamado, loja, NF..."
-                className="w-full pl-9 pr-3 py-2 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium"
-              />
-            </div>
+        {/* Filtros Avançados */}
+        <div className="flex flex-wrap gap-3 bg-slate-50/70 border border-slate-200/60 rounded-xl p-3.5 items-end text-xs">
+          <div className="flex flex-col min-w-[140px] flex-1 max-w-[180px]">
+            <label className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Nº Chamado</label>
+            <input
+              value={filtroChamado}
+              onChange={(e) => setFiltroChamado(e.target.value)}
+              placeholder="Ex: 12345"
+              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium"
+            />
           </div>
-          <div className="flex flex-col min-w-[160px]">
-            <label className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Status chamado</label>
+
+          <div className="flex flex-col min-w-[180px] flex-1 max-w-[220px]">
+            <label className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Loja</label>
+            <select
+              value={filtroLoja}
+              onChange={(e) => setFiltroLoja(e.target.value)}
+              className="text-xs border border-slate-200 rounded-xl px-3 py-2 bg-white cursor-pointer font-semibold outline-none focus:border-emerald-500"
+            >
+              <option value="Todas">Todas as Lojas</option>
+              {lojas.map((l) => <option key={l} value={l}>{l}</option>)}
+            </select>
+          </div>
+
+          <div className="flex flex-col min-w-[140px] flex-1 max-w-[180px]">
+            <label className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Nº NF</label>
+            <input
+              value={filtroNF}
+              onChange={(e) => setFiltroNF(e.target.value)}
+              placeholder="Ex: 98765"
+              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium"
+            />
+          </div>
+
+          <div className="flex flex-col min-w-[160px] flex-1 max-w-[200px]">
+            <label className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Status Chamado</label>
             <select
               value={filtroStatus}
               onChange={(e) => setFiltroStatus(e.target.value)}
               className="text-xs border border-slate-200 rounded-xl px-3 py-2 bg-white cursor-pointer font-semibold outline-none focus:border-emerald-500"
             >
-              <option>Todos</option>
-              {STATUS_CHAMADO_OPCOES.map((s) => <option key={s}>{s}</option>)}
+              <option value="Todos">Todos os Status</option>
+              {STATUS_CHAMADO_OPCOES.map((s) => <option key={s} value={s}>{s}</option>)}
             </select>
           </div>
-          <div className="flex flex-col min-w-[200px] flex-1 max-w-md">
-            <label className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Tarefa atual</label>
+
+          <div className="flex flex-col min-w-[180px] flex-1 max-w-[240px]">
+            <label className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Tarefa Atual</label>
             <select
               value={filtroTarefa}
               onChange={(e) => setFiltroTarefa(e.target.value)}
               className="text-xs border border-slate-200 rounded-xl px-3 py-2 bg-white cursor-pointer font-semibold outline-none focus:border-emerald-500"
             >
-              <option>Todas</option>
-              {tarefas.map((t) => <option key={t}>{t}</option>)}
+              <option value="Todas">Todas as Tarefas</option>
+              {tarefas.map((t) => <option key={t} value={t}>{t}</option>)}
             </select>
           </div>
+
+          <div className="relative min-w-[200px] flex-1">
+            <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Busca Geral</label>
+            <div className="relative">
+              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+              <input
+                value={busca}
+                onChange={(e) => setBusca(e.target.value)}
+                placeholder="Busca por CD, Conferente, Transportadora..."
+                className="w-full pl-9 pr-3 py-2 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium"
+              />
+            </div>
+          </div>
+
+          {temFiltroAtivo && (
+            <button
+              onClick={limparFiltros}
+              className="inline-flex items-center gap-1 px-3 py-2 text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200/60 rounded-xl hover:bg-rose-100 transition-colors cursor-pointer"
+              title="Limpar todos os filtros"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Limpar</span>
+            </button>
+          )}
         </div>
 
         <div className="bg-white border border-slate-200/80 rounded-xl shadow-xs overflow-hidden">
@@ -242,42 +339,49 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
                   <th className="sticky top-0 z-20 bg-slate-100 w-8 px-3 py-3"><input type="checkbox" checked={allSelected} onChange={toggleAll} className="cursor-pointer"/></th>
                   <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 font-bold">Chamado</th>
                   <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 font-bold">Loja</th>
+                  <th className="text-left px-3 py-2 font-semibold">NF</th>
                   <th className="text-left px-3 py-2 font-semibold">CD</th>
                   <th className="text-left px-3 py-2 font-semibold">Abertura</th>
                   <th className="text-left px-3 py-2 font-semibold">Tarefa Atual</th>
                   <th className="text-left px-3 py-2 font-semibold">Status</th>
-                  <th className="text-left px-3 py-2 font-semibold">SLA (dias úteis)</th>
+                  <th className="text-left px-3 py-2 font-semibold">SLA</th>
+                  <th className="text-right px-3 py-2 font-semibold">Valor</th>
                   <th className="text-right px-3 py-2 font-semibold">Ações</th>
                 </tr>
               </thead>
               <tbody>
                 {paginadas.map((r: any) => {
                   const idStr = r.id != null ? String(r.id) : "";
+                  const nfVal = r.NF || r["Nº Nfe"] || r.nfe || "—";
+                  const valFmt = formatarMoedaBR(r[" Valor "] || r.valor || r.Valor, { showZero: true });
+
                   return (
                     <tr
                       key={idStr || r.Chamado}
                       onClick={() => idStr && setEditingId(idStr)}
                       onDoubleClick={() => idStr && setEditingId(idStr)}
-                      className={`border-b border-slate-100 hover:bg-blue-50/60 cursor-pointer select-none transition-colors ${idStr && selected.has(idStr) ? "bg-blue-50/80" : ""}`}
+                      className={`border-b border-slate-100 hover:bg-slate-50 transition-colors cursor-pointer select-none ${idStr && selected.has(idStr) ? "bg-emerald-50/50" : ""}`}
                     >
                       <td className="px-2 py-2" onClick={(e) => e.stopPropagation()}>
                         <input type="checkbox" checked={idStr ? selected.has(idStr) : false} onChange={() => idStr && toggleOne(idStr)} className="cursor-pointer"/>
                       </td>
-                      <td className="px-3 py-2 font-semibold text-slate-800 whitespace-nowrap">{r.Chamado || "—"}</td>
-                      <td className="px-3 py-2 whitespace-nowrap">{r.Loja || "—"}</td>
+                      <td className="px-3 py-2 font-bold text-slate-900 whitespace-nowrap">{r.Chamado || "—"}</td>
+                      <td className="px-3 py-2 whitespace-nowrap font-medium text-slate-800">{r.Loja || "—"}</td>
+                      <td className="px-3 py-2 whitespace-nowrap font-medium text-slate-700">{nfVal}</td>
                       <td className="px-3 py-2 whitespace-nowrap">{r.CD || "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap">{fmtBR(r["Dt Abertura"])}</td>
-                      <td className="px-3 py-2 max-w-[240px] truncate" title={tarefaAtual(r)}>{tarefaAtual(r)}</td>
+                      <td className="px-3 py-2 max-w-[220px] truncate" title={tarefaAtual(r)}>{tarefaAtual(r)}</td>
                       <td className="px-3 py-2 whitespace-nowrap">{statusBadge(r["Status Chamado"])}</td>
                       <td className="px-3 py-2 whitespace-nowrap">{slaBadge(r["Dt Abertura"], r["Dt Finalização"])}</td>
+                      <td className="px-3 py-2 text-right whitespace-nowrap font-bold text-emerald-700 font-mono">{valFmt}</td>
                       <td className="px-3 py-2 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-                        <button onClick={() => idStr && setEditingId(idStr)} title="Editar" className="inline-flex items-center p-1.5 text-blue-600 hover:bg-blue-50 rounded"><Pencil className="w-3.5 h-3.5"/></button>
-                        <button onClick={() => idStr && excluirIds([idStr])} title="Excluir" className="inline-flex items-center p-1.5 text-red-500 hover:bg-red-50 rounded ml-0.5"><Trash2 className="w-3.5 h-3.5"/></button>
+                        <button onClick={() => idStr && setEditingId(idStr)} title="Editar" className="inline-flex items-center p-1.5 text-slate-600 hover:text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors"><Pencil className="w-3.5 h-3.5"/></button>
+                        <button onClick={() => idStr && excluirIds([idStr])} title="Excluir" className="inline-flex items-center p-1.5 text-slate-400 hover:text-rose-600 hover:bg-rose-50 rounded-lg ml-0.5 transition-colors"><Trash2 className="w-3.5 h-3.5"/></button>
                       </td>
                     </tr>
                   );
                 })}
-                {linhas.length === 0 && <tr><td colSpan={9} className="px-4 py-8 text-center text-slate-400">Nenhum chamado encontrado.</td></tr>}
+                {linhas.length === 0 && <tr><td colSpan={11} className="px-4 py-8 text-center text-slate-400">Nenhum chamado encontrado para os filtros selecionados.</td></tr>}
               </tbody>
             </table>
           </div>

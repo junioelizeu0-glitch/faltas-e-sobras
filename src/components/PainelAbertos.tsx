@@ -7,7 +7,7 @@ import {
 import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Cell, LabelList
 } from "recharts";
-import { parseDataBR, getBusinessDays } from "@/lib/data-processing";
+import { parseDataBR, getBusinessDays, parseValorNumeric, formatarMoedaBR } from "@/lib/data-processing";
 import ChamadoForm from "./ChamadoForm";
 import ErrorBoundary from "./ErrorBoundary";
 import { listLojas, type Loja } from "@/lib/lojas.functions";
@@ -178,6 +178,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
           dtAbertura: r["Dt Abertura"],
           dias,
           alerta,
+          valor: parseValorNumeric(r[" Valor "] || r.valor || r.Valor),
           raw: r
         };
       })
@@ -969,13 +970,14 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
                     <th className="sticky top-0 z-20 bg-slate-100 px-3 py-2 text-right text-slate-700 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200">Dias Úteis</th>
                     <th className="sticky top-0 z-20 bg-slate-100 px-3 py-2 text-slate-700 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200">Status</th>
                     <th className="sticky top-0 z-20 bg-slate-100 px-3 py-2 text-slate-700 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200">Tarefa Atual</th>
+                    <th className="sticky top-0 z-20 bg-slate-100 px-3 py-2 text-right text-slate-700 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200">Valor</th>
                     <th className="sticky top-0 z-20 bg-slate-100 px-3 py-2 text-center text-slate-700 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200">Ações</th>
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 bg-white">
                   {filteredDrillRows.length === 0 && (
                     <tr>
-                      <td colSpan={9} className="py-10 text-center text-slate-400">
+                      <td colSpan={10} className="py-10 text-center text-slate-400">
                         Nenhum chamado encontrado para este filtro.
                       </td>
                     </tr>
@@ -1010,6 +1012,9 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
                       </td>
                       <td className="px-3 py-2.5 text-slate-700 font-medium">
                         {r.tarefa}
+                      </td>
+                      <td className="px-3 py-2.5 text-right font-bold text-emerald-700 font-mono whitespace-nowrap">
+                        {formatarMoedaBR(r.valor, { showZero: true })}
                       </td>
                       <td className="px-3 py-2.5 text-center">
                         <button

@@ -10,7 +10,7 @@ import {
   ArrowDown,
   FileText,
 } from "lucide-react";
-import { getTarefaAtual, parseDataBR, formatarDataBR } from "@/lib/data-processing";
+import { getTarefaAtual, parseDataBR, formatarDataBR, parseValorNumeric, formatarMoedaBR } from "@/lib/data-processing";
 import { exportToExcel } from "@/lib/excel-export";
 
 interface DrillDownModalProps {
@@ -73,7 +73,7 @@ export default function DrillDownModal({
           );
         }
         if (col === "Status") return row["Status Chamado"] || row["status"] || "";
-        if (col === "Valor") return Number(row[" Valor "] || row["valor"] || 0);
+        if (col === "Valor") return parseValorNumeric(row[" Valor "] || row["valor"] || row["Valor"] || row.valor);
         if (col === "SLA") return row["SLA por chamado (60dias)"] || row["sla"] || "";
         if (col === "Tarefa Atual") {
           return getTarefaAtual(row);
@@ -137,7 +137,7 @@ export default function DrillDownModal({
         } else if (col === "Status") {
           val = row["Status Chamado"] || row["status"] || "";
         } else if (col === "Valor") {
-          val = Number(row[" Valor "] || row["valor"] || 0);
+          val = parseValorNumeric(row[" Valor "] || row["valor"] || row["Valor"] || row.valor);
         } else if (col === "SLA") {
           val = row["SLA por chamado (60dias)"] || row["sla"] || "";
         } else if (col === "Tarefa Atual") {
@@ -300,12 +300,9 @@ export default function DrillDownModal({
                       );
                     }
                     if (col === "Valor") {
-                      val = Number(row[" Valor "] || row["valor"] || 0).toLocaleString("pt-BR", {
-                        style: "currency",
-                        currency: "BRL",
-                      });
+                      val = formatarMoedaBR(row[" Valor "] || row["valor"] || row["Valor"] || row.valor, { showZero: true });
                       return (
-                        <td key={col} className="p-3 text-slate-700 font-medium">
+                        <td key={col} className="p-3 text-emerald-700 font-bold font-mono">
                           {val}
                         </td>
                       );

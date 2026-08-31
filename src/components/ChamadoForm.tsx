@@ -93,9 +93,12 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   const getLojaFn = useServerFn(getLojaByNumero);
 
   const [form, setForm] = useState<Record<string, string>>(() => ({
-    Chamado: initialChamado?.Chamado ? String(initialChamado.Chamado) : "", Loja: "", Tipo: "", NF: "",
-    "Dt Emissão": "", CD: "ES", "Situação ": "Aguardando monitoramento",
-    "Dt Abertura": hojeISO(), "Dt Finalização": "", "Dt Pagamento": "",
+    Chamado: modeProp === "novo" ? "" : (initialChamado?.Chamado ? String(initialChamado.Chamado) : ""),
+    Loja: "", Tipo: "", NF: "",
+    "Dt Emissão": "", CD: modeProp === "novo" ? "" : (initialChamado?.CD || ""),
+    "Situação ": "Aguardando monitoramento",
+    "Dt Abertura": modeProp === "novo" ? "" : (initialChamado?.["Dt Abertura"] || ""),
+    "Dt Finalização": "", "Dt Pagamento": "",
     "Status Chamado": "Pendente Monitoramento",
     Motivo: "", Transportadora: "", Conferente: "",
     _valor: "",
@@ -137,7 +140,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
           Tipo: c.tipo || "Franquia",
           NF: String(c.nf ?? ""),
           "Dt Emissão": c.dt_emissao || "",
-          CD: c.cd || "ES",
+          CD: c.cd || "",
           "Situação ": c.situacao || "Aguardando monitoramento",
           "Dt Abertura": c.dt_abertura || "",
           "Dt Finalização": c.dt_finalizacao || "",
@@ -201,9 +204,10 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
 
 
 
-  // Sugestão de número do chamado quando initialChamado muda ou em modo novo
+  // Sugestão de número do chamado quando initialChamado muda (apenas se não estiver no modo novo)
   useEffect(() => {
-    if (mode === "novo" && initialChamado?.Chamado && !form.Chamado) {
+    if (mode === "novo") return;
+    if (initialChamado?.Chamado && !form.Chamado) {
       setForm((p) => ({ ...p, Chamado: String(initialChamado.Chamado) }));
     }
   }, [initialChamado, mode]);
@@ -381,13 +385,12 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
         return;
       }
     }
-    const proxNum = initialChamado?.Chamado ? String(initialChamado.Chamado) : "";
     setMode("novo");
     setChamadoId(undefined);
     setForm({
-      Chamado: proxNum, Loja: "", Tipo: "", NF: "",
-      "Dt Emissão": "", CD: "ES", "Situação ": "Aguardando monitoramento",
-      "Dt Abertura": hojeISO(), "Dt Finalização": "", "Dt Pagamento": "",
+      Chamado: "", Loja: "", Tipo: "", NF: "",
+      "Dt Emissão": "", CD: "", "Situação ": "Aguardando monitoramento",
+      "Dt Abertura": "", "Dt Finalização": "", "Dt Pagamento": "",
       "Status Chamado": "Pendente Monitoramento",
       Motivo: "", Transportadora: "", Conferente: "",
       _valor: "",

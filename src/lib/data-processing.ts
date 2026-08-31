@@ -116,6 +116,36 @@ export function getBusinessDays(startDate: any, endDate: any): number {
   return count;
 }
 
+export function parseValorNumeric(valRaw: any): number {
+  if (valRaw === null || valRaw === undefined) return 0;
+  if (typeof valRaw === "number") return isNaN(valRaw) ? 0 : valRaw;
+
+  let str = String(valRaw).trim();
+  if (!str || str === "-" || str === "—" || str.toLowerCase().includes("sem inform")) return 0;
+
+  str = str.replace(/[R$\s]/gi, "");
+
+  if (str.includes(".") && str.includes(",")) {
+    str = str.replace(/\./g, "").replace(",", ".");
+  } else if (str.includes(",")) {
+    str = str.replace(",", ".");
+  }
+
+  const parsed = parseFloat(str);
+  return isNaN(parsed) ? 0 : parsed;
+}
+
+export function formatarMoedaBR(valRaw: any, options?: { showZero?: boolean }): string {
+  const val = parseValorNumeric(valRaw);
+  if (val === 0 && !options?.showZero) {
+    return "—";
+  }
+  return val.toLocaleString("pt-BR", {
+    style: "currency",
+    currency: "BRL",
+  });
+}
+
 export function isValidField(value: any): boolean {
   if (value === null || value === undefined) return false;
   const str = String(value).trim().toLowerCase();
@@ -132,9 +162,8 @@ export function isValidField(value: any): boolean {
 }
 
 export function isValidValue(value: any): boolean {
-  if (!value && value !== 0) return false;
-  const num = Number(value);
-  return Number.isFinite(num) && num > 0;
+  const num = parseValorNumeric(value);
+  return num > 0;
 }
 
 export function getTarefaAtual(item: any): string {
