@@ -53,7 +53,7 @@ type Props = { rawData: any[] | undefined; onChanged?: () => void; tabela?: "fal
 
 export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas" }: Props) {
   const [busca, setBusca] = useState("");
-  const [filtroLoja, setFiltroLoja] = useState("Todas");
+  const [filtroLoja, setFiltroLoja] = useState("");
   const [filtroChamado, setFiltroChamado] = useState("");
   const [filtroNF, setFiltroNF] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("Todos");
@@ -96,18 +96,12 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
     return Array.from(set).sort((a, b) => a.localeCompare(b));
   }, [rawData]);
 
-  const lojas = useMemo(() => {
-    const set = new Set<string>();
-    (rawData || []).forEach((r: any) => {
-      const l = String(r.Loja || r.loja || "").trim();
-      if (l && l !== "—" && l !== "Sem informação") set.add(l);
-    });
-    return Array.from(set).sort((a, b) => a.localeCompare(b, undefined, { numeric: true }));
-  }, [rawData]);
+
 
   const linhas = useMemo(() => {
     const fGlobal = busca.trim().toLowerCase();
     const fChamado = filtroChamado.trim().toLowerCase();
+    const fLoja = filtroLoja.trim().toLowerCase();
     const fNF = filtroNF.trim().toLowerCase();
 
     return (rawData || [])
@@ -117,9 +111,9 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
         const t = tarefaAtual(r);
         if (filtroTarefa !== "Todas" && t !== filtroTarefa) return false;
 
-        if (filtroLoja !== "Todas") {
-          const l = String(r.Loja || r.loja || "").trim();
-          if (l !== filtroLoja) return false;
+        if (fLoja) {
+          const l = String(r.Loja || r.loja || "").toLowerCase();
+          if (!l.includes(fLoja)) return false;
         }
 
         if (fChamado) {
@@ -160,12 +154,12 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
     setSelected(next);
   };
 
-  const temFiltroAtivo = Boolean(busca || filtroStatus !== "Todos" || filtroTarefa !== "Todas" || filtroLoja !== "Todas" || filtroChamado || filtroNF);
+  const temFiltroAtivo = Boolean(busca || filtroStatus !== "Todos" || filtroTarefa !== "Todas" || filtroLoja || filtroChamado || filtroNF);
   const limparFiltros = () => {
     setBusca("");
     setFiltroStatus("Todos");
     setFiltroTarefa("Todas");
-    setFiltroLoja("Todas");
+    setFiltroLoja("");
     setFiltroChamado("");
     setFiltroNF("");
   };
@@ -260,16 +254,14 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
             />
           </div>
 
-          <div className="flex flex-col min-w-[180px] flex-1 max-w-[220px]">
+          <div className="flex flex-col min-w-[140px] flex-1 max-w-[180px]">
             <label className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Loja</label>
-            <select
+            <input
               value={filtroLoja}
               onChange={(e) => setFiltroLoja(e.target.value)}
-              className="text-xs border border-slate-200 rounded-xl px-3 py-2 bg-white cursor-pointer font-semibold outline-none focus:border-emerald-500"
-            >
-              <option value="Todas">Todas as Lojas</option>
-              {lojas.map((l) => <option key={l} value={l}>{l}</option>)}
-            </select>
+              placeholder="Ex: 105"
+              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium"
+            />
           </div>
 
           <div className="flex flex-col min-w-[140px] flex-1 max-w-[180px]">
