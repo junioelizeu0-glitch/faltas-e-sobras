@@ -89,15 +89,28 @@ export type EtapaInput = {
   ordem?: number;
 };
 
-// Garante que a coluna aplica_recall existe na tabela tarefas_catalogo no Supabase
-async function ensureRecallColumn(supabase: any) {
-  try {
-    await supabase.rpc("aiiliana_run_sql", {
-      sql: "ALTER TABLE public.tarefas_catalogo ADD COLUMN IF NOT EXISTS aplica_recall boolean NOT NULL DEFAULT false;",
-    });
-  } catch (e) {
-    /* silent */
+function normalizeTarefaRow(r: any): TarefaCatalogo {
+  const rawNome = String(r.nome || "").trim();
+  const hasRecallTag = /\[recall\]/i.test(rawNome);
+  const cleanNome = rawNome.replace(/\s*\[recall\]/i, "").trim();
+
+  let recallVal = r.aplica_recall;
+  if (recallVal === undefined || recallVal === null) {
+    recallVal = hasRecallTag ? true : (r.aplica_faltas !== false);
+  } else {
+    recallVal = !!recallVal;
   }
+
+  return {
+    id: r.id,
+    nome: cleanNome,
+    dias_uteis: Number(r.dias_uteis) || 1,
+    aplica_faltas: r.aplica_faltas !== false,
+    aplica_sobras: !!r.aplica_sobras,
+    aplica_recall: recallVal,
+    ativo: r.ativo !== false,
+    ordem: Number(r.ordem) || 0,
+  };
 }
 
 // ===== Tarefas catálogo =====
@@ -107,29 +120,28 @@ export const listTarefas = createServerFn({ method: "GET" })
     const { requireUnlockedSession } = await import("@/lib/gate.server");
     await requireUnlockedSession();
     const supabase = await getSupabase();
-    await ensureRecallColumn(supabase);
     let q = supabase.from("tarefas_catalogo").select("*").eq("ativo", true).order("ordem", { ascending: true });
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
+    const normalized = (rows ?? []).map(normalizeTarefaRow);
     const tipo = data?.tipo;
-    const filtered = (rows ?? []).filter((r: any) => {
+    const filtered = normalized.filter((r) => {
       if (!tipo || tipo === "TODAS") return true;
-      if (tipo === "FALTAS") return r.aplica_faltas !== false;
-      if (tipo === "SOBRAS") return r.aplica_sobras !== false;
-      if (tipo === "RECALL") return r.aplica_recall !== undefined ? !!r.aplica_recall : (r.aplica_faltas !== false);
+      if (tipo === "FALTAS") return r.aplica_faltas;
+      if (tipo === "SOBRAS") return r.aplica_sobras;
+      if (tipo === "RECALL") return r.aplica_recall;
       return true;
     });
-    return filtered as TarefaCatalogo[];
+    return filtered;
   });
 
 export const listAllTarefas = createServerFn({ method: "GET" }).handler(async () => {
   const { requireUnlockedSession } = await import("@/lib/gate.server");
   await requireUnlockedSession();
   const supabase = await getSupabase();
-  await ensureRecallColumn(supabase);
   const { data, error } = await supabase.from("tarefas_catalogo").select("*").order("ordem", { ascending: true });
   if (error) throw new Error(error.message);
-  return (data ?? []) as TarefaCatalogo[];
+  return (data ?? []).map(normalizeTarefaRow);
 });
 
 export const upsertTarefa = createServerFn({ method: "POST" })
@@ -147,29 +159,35 @@ export const upsertTarefa = createServerFn({ method: "POST" })
     const { requireUnlockedSession } = await import("@/lib/gate.server");
     await requireUnlockedSession();
     const supabase = await getSupabase();
-    await ensureRecallColumn(supabase);
+    const baseNome = data.nome.replace(/\s*\[recall\]/i, "").trim();
+    const isRecall = !!data.aplica_recall;
+
     const rowFull: any = {
-      nome: data.nome.trim(),
+      nome: baseNome,
       dias_uteis: Number(data.dias_uteis) || 1,
       aplica_faltas: !!data.aplica_faltas,
       aplica_sobras: !!data.aplica_sobras,
-      aplica_recall: !!data.aplica_recall,
+      aplica_recall: isRecall,
       ativo: data.ativo !== false,
       ordem: Number(data.ordem) || 0,
     };
+
     if (data.id) {
       let { error } = await supabase.from("tarefas_catalogo").update(rowFull).eq("id", data.id);
-      if (error && error.message?.includes("aplica_recall")) {
+      if (error && (error.message?.includes("aplica_recall") || error.code === "PGRST204")) {
         const { aplica_recall, ...rowWithoutRecall } = rowFull;
+        rowWithoutRecall.nome = isRecall ? `${baseNome} [recall]` : baseNome;
         const res = await supabase.from("tarefas_catalogo").update(rowWithoutRecall).eq("id", data.id);
         error = res.error;
       }
       if (error) throw new Error(error.message);
       return { ok: true, id: data.id };
     }
+
     let { data: inserted, error } = await supabase.from("tarefas_catalogo").insert(rowFull).select().single();
-    if (error && error.message?.includes("aplica_recall")) {
+    if (error && (error.message?.includes("aplica_recall") || error.code === "PGRST204")) {
       const { aplica_recall, ...rowWithoutRecall } = rowFull;
+      rowWithoutRecall.nome = isRecall ? `${baseNome} [recall]` : baseNome;
       const res = await supabase.from("tarefas_catalogo").insert(rowWithoutRecall).select().single();
       inserted = res.data;
       error = res.error;
