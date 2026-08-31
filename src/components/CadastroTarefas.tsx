@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Plus, Loader2, Save, X, Pencil, Trash2 } from "lucide-react";
+import { toast } from "sonner";
 import { listAllTarefas, upsertTarefa, deleteTarefa } from "@/lib/chamados.functions";
 import Pagination from "./Pagination";
 
@@ -14,6 +15,7 @@ export default function CadastroTarefas() {
   const del = useServerFn(deleteTarefa);
   const [rows, setRows] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
   const [editing, setEditing] = useState<Partial<T> | null>(null);
   const [page, setPage] = useState(0);
 
@@ -24,18 +26,36 @@ export default function CadastroTarefas() {
   useEffect(() => { setPage(0); }, [rows.length]);
 
   const save = async () => {
-    if (!editing?.nome) return;
-    await up({ data: {
-      id: editing.id, nome: editing.nome, dias_uteis: Number(editing.dias_uteis) || 1,
-      aplica_faltas: !!editing.aplica_faltas, aplica_sobras: !!editing.aplica_sobras,
-      aplica_recall: !!editing.aplica_recall,
-      ativo: editing.ativo !== false, ordem: Number(editing.ordem) || 0,
-    }});
-    setEditing(null); await load();
+    if (!editing?.nome?.trim()) {
+      toast.error("O nome da tarefa é obrigatório.");
+      return;
+    }
+    setSaving(true);
+    try {
+      await up({ data: {
+        id: editing.id, nome: editing.nome.trim(), dias_uteis: Number(editing.dias_uteis) || 1,
+        aplica_faltas: !!editing.aplica_faltas, aplica_sobras: !!editing.aplica_sobras,
+        aplica_recall: !!editing.aplica_recall,
+        ativo: editing.ativo !== false, ordem: Number(editing.ordem) || 0,
+      }});
+      toast.success(editing.id ? "Tarefa atualizada com sucesso!" : "Tarefa criada com sucesso!");
+      setEditing(null);
+      await load();
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao salvar tarefa");
+    } finally {
+      setSaving(false);
+    }
   };
   const remove = async (id: string) => {
     if (!confirm("Remover tarefa?")) return;
-    await del({ data: { id } }); await load();
+    try {
+      await del({ data: { id } });
+      toast.success("Tarefa removida com sucesso!");
+      await load();
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao remover tarefa");
+    }
   };
 
   return (
@@ -153,12 +173,12 @@ export default function CadastroTarefas() {
               </div>
             </div>
             <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-200 bg-slate-50">
-              <button onClick={() => setEditing(null)} className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer">
+              <button disabled={saving} onClick={() => setEditing(null)} className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer disabled:opacity-50">
                 Cancelar
               </button>
-              <button onClick={save} className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl transition-colors cursor-pointer shadow-xs">
-                <Save className="w-4 h-4"/>
-                <span>Salvar</span>
+              <button disabled={saving} onClick={save} className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl transition-colors cursor-pointer shadow-xs disabled:opacity-50">
+                {saving ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4"/>}
+                <span>{saving ? "Salvando..." : "Salvar"}</span>
               </button>
             </div>
           </div>

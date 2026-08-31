@@ -134,7 +134,7 @@ export const upsertTarefa = createServerFn({ method: "POST" })
     const { requireUnlockedSession } = await import("@/lib/gate.server");
     await requireUnlockedSession();
     const supabase = await getSupabase();
-    const row: any = {
+    const rowFull: any = {
       nome: data.nome.trim(),
       dias_uteis: Number(data.dias_uteis) || 1,
       aplica_faltas: !!data.aplica_faltas,
@@ -144,13 +144,24 @@ export const upsertTarefa = createServerFn({ method: "POST" })
       ordem: Number(data.ordem) || 0,
     };
     if (data.id) {
-      const { error } = await supabase.from("tarefas_catalogo").update(row).eq("id", data.id);
+      let { error } = await supabase.from("tarefas_catalogo").update(rowFull).eq("id", data.id);
+      if (error && error.message?.includes("aplica_recall")) {
+        const { aplica_recall, ...rowWithoutRecall } = rowFull;
+        const res = await supabase.from("tarefas_catalogo").update(rowWithoutRecall).eq("id", data.id);
+        error = res.error;
+      }
       if (error) throw new Error(error.message);
       return { ok: true, id: data.id };
     }
-    const { data: inserted, error } = await supabase.from("tarefas_catalogo").insert(row).select().single();
+    let { data: inserted, error } = await supabase.from("tarefas_catalogo").insert(rowFull).select().single();
+    if (error && error.message?.includes("aplica_recall")) {
+      const { aplica_recall, ...rowWithoutRecall } = rowFull;
+      const res = await supabase.from("tarefas_catalogo").insert(rowWithoutRecall).select().single();
+      inserted = res.data;
+      error = res.error;
+    }
     if (error) throw new Error(error.message);
-    return { ok: true, id: inserted.id };
+    return { ok: true, id: inserted?.id };
   });
 
 export const deleteTarefa = createServerFn({ method: "POST" })
