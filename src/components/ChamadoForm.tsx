@@ -369,11 +369,11 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
         Transportadora: form.Transportadora, Conferente: form.Conferente,
         Periodo: primeiroDiaMesISO(form["Dt Abertura"]),
       },
-      referencias: refs.map((r) => ({
+      referencias: tabela === "recall" ? [] : refs.map((r) => ({
         referencia: r.referencia, cor: r.cor, descricao: r.descricao,
         fornecedor: r.fornecedor, tamanho: r.tamanho, quantidade: r.quantidade,
       })),
-      etapas: etapas.map((e, i) => ({
+      etapas: tabela === "recall" ? [] : etapas.map((e, i) => ({
         tarefa_id: e.tarefa_id, nome_tarefa: e.nome_tarefa,
         dias_uteis_previsto: e.dias_uteis_previsto, dt_inicio: e.dt_inicio || null,
         dt_fim: e.dt_fim || null, ordem: i + 1,
@@ -492,11 +492,11 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
           Transportadora: form.Transportadora, Conferente: form.Conferente,
           Periodo: primeiroDiaMesISO(form["Dt Abertura"]),
         },
-        referencias: refs.map((r) => ({
+        referencias: tabela === "recall" ? [] : refs.map((r) => ({
           referencia: r.referencia, cor: r.cor, descricao: r.descricao,
           fornecedor: r.fornecedor, tamanho: r.tamanho, quantidade: r.quantidade,
         })),
-        etapas: novasEtapas.map((e, i) => ({
+        etapas: tabela === "recall" ? [] : novasEtapas.map((e, i) => ({
           tarefa_id: e.tarefa_id, nome_tarefa: e.nome_tarefa,
           dias_uteis_previsto: e.dias_uteis_previsto, dt_inicio: e.dt_inicio || null,
           dt_fim: e.dt_fim || null, ordem: i + 1,
@@ -586,8 +586,10 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
           <div className="sticky top-0 z-20 flex border-b border-slate-200 bg-white/95 backdrop-blur rounded-t-xl">
             {[
               { k: "cadastro", label: "Cadastro" },
-              { k: "referencias", label: `Referências (${refs.length})` },
-              { k: "etapas", label: `Etapas (${etapas.length})` },
+              ...(tabela !== "recall" ? [
+                { k: "referencias", label: `Referências (${refs.length})` },
+                { k: "etapas", label: `Etapas (${etapas.length})` },
+              ] : []),
             ].map((t) => (
               <button
                 key={t.k}
@@ -606,11 +608,11 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
                 situacaoOpcoes={situacaoOpcoes} statusOpcoes={statusOpcoes}
               />
             )}
-            {tab === "referencias" && (
+            {tabela !== "recall" && tab === "referencias" && (
               <ReferenciasTab refs={refs} setRef={setRef} addRef={addRef} rmRef={rmRef} buscar={buscarProduto}
                 onSalvarParcial={() => submit("Referências salvas com sucesso.", { partial: true })} salvando={submitting} />
             )}
-            {tab === "etapas" && (
+            {tabela !== "recall" && tab === "etapas" && (
               <EtapasTab etapas={etapas} setEt={setEt} addEtapa={addEtapa} rmEtapa={rmEtapa} tarefas={etapasCatalogo.length > 0 ? etapasCatalogo : tarefas}
                 onSalvarParcial={() => submit("Etapas salvas com sucesso.", { partial: true })} salvando={submitting} />
             )}
