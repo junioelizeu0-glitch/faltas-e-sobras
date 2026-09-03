@@ -801,7 +801,6 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
                 value={form.Referencia || ""}
                 onChange={(e) => setField("Referencia", e.target.value.toUpperCase())}
                 className={inputCls + " font-bold uppercase text-emerald-700 border-emerald-300 focus:border-emerald-500"}
-                placeholder="Ex.: 12345"
                 required
               />
             </Field>
