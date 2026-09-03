@@ -102,7 +102,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     Chamado: modeProp === "novo" ? "" : (initialChamado?.Chamado ? String(initialChamado.Chamado) : ""),
     Loja: "", Tipo: "", NF: "",
     "Dt Emissão": "", CD: modeProp === "novo" ? "" : (initialChamado?.CD || ""),
-    "Situação ": "Aguardando monitoramento",
+    "Situação ": modeProp === "novo" ? (tabela === "recall" ? "Recall" : "Aguardando monitoramento") : (initialChamado?.["Situação "] || (tabela === "recall" ? "Recall" : "Aguardando monitoramento")),
     "Dt Abertura": modeProp === "novo" ? "" : (initialChamado?.["Dt Abertura"] || ""),
     "Dt Finalização": "", "Dt Pagamento": "",
     "Status Chamado": modeProp === "novo" ? (tabela === "recall" ? "Aprovado" : "Pendente Monitoramento") : (initialChamado?.["Status Chamado"] || (tabela === "recall" ? "Aprovado" : "Pendente Monitoramento")),
@@ -193,7 +193,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     if (!form["Dt Abertura"]) return;
     setForm((p) => {
       const patch: Record<string, string> = {};
-      if (!p["Situação "]) patch["Situação "] = "Aguardando monitoramento";
+      if (!p["Situação "]) patch["Situação "] = tabela === "recall" ? "Recall" : "Aguardando monitoramento";
       if (!p["Status Chamado"]) patch["Status Chamado"] = tabela === "recall" ? "Aprovado" : "Pendente Monitoramento";
       return Object.keys(patch).length ? { ...p, ...patch } : p;
     });
@@ -410,7 +410,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     setChamadoId(undefined);
     setForm({
       Chamado: "", Loja: "", Tipo: "", NF: "",
-      "Dt Emissão": "", CD: "", "Situação ": "Aguardando monitoramento",
+      "Dt Emissão": "", CD: "", "Situação ": tabela === "recall" ? "Recall" : "Aguardando monitoramento",
       "Dt Abertura": "", "Dt Finalização": "", "Dt Pagamento": "",
       "Status Chamado": tabela === "recall" ? "Aprovado" : "Pendente Monitoramento",
       Motivo: "", Transportadora: "", Conferente: "",

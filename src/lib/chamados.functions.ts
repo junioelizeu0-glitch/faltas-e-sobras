@@ -115,7 +115,8 @@ function normalizeTarefaRow(r: any): TarefaCatalogo {
 
 // ===== Tarefas catálogo =====
 const DEFAULT_SITUACOES = [
-  { nome: "Aguardando monitoramento", dias_uteis: 2, aplica_faltas: true, aplica_sobras: true, aplica_recall: true, ordem: 1 },
+  { nome: "Aguardando monitoramento", dias_uteis: 2, aplica_faltas: true, aplica_sobras: true, aplica_recall: false, ordem: 1 },
+  { nome: "Recall", dias_uteis: 1, aplica_faltas: false, aplica_sobras: false, aplica_recall: true, ordem: 2 },
   { nome: "Aguardando NF Espelho", dias_uteis: 3, aplica_faltas: true, aplica_sobras: false, aplica_recall: false, ordem: 4 },
   { nome: "Validação NF Espelho", dias_uteis: 4, aplica_faltas: true, aplica_sobras: false, aplica_recall: false, ordem: 5 },
   { nome: "Aguardando NFD", dias_uteis: 3, aplica_faltas: true, aplica_sobras: false, aplica_recall: false, ordem: 6 },
