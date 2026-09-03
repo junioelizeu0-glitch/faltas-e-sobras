@@ -2,17 +2,17 @@ import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Plus, Loader2, Save, X, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
-import { listAllTarefas, upsertTarefa, deleteTarefa } from "@/lib/chamados.functions";
+import { listAllEtapasCatalogo, upsertEtapaCatalogo, deleteEtapaCatalogo } from "@/lib/chamados.functions";
 import Pagination from "./Pagination";
 
 const PAGE_SIZE = 30;
 
 type T = { id: string; nome: string; dias_uteis: number; aplica_faltas: boolean; aplica_sobras: boolean; aplica_recall?: boolean; ativo: boolean; ordem: number };
 
-export default function CadastroTarefas() {
-  const list = useServerFn(listAllTarefas);
-  const up = useServerFn(upsertTarefa);
-  const del = useServerFn(deleteTarefa);
+export default function CadastroEtapas() {
+  const list = useServerFn(listAllEtapasCatalogo);
+  const up = useServerFn(upsertEtapaCatalogo);
+  const del = useServerFn(deleteEtapaCatalogo);
   const [rows, setRows] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
@@ -29,7 +29,7 @@ export default function CadastroTarefas() {
   const save = async () => {
     setFeedback(null);
     if (!editing?.nome?.trim()) {
-      const msg = "O nome da tarefa é obrigatório.";
+      const msg = "O nome da etapa é obrigatório.";
       setFeedback({ type: "err", msg });
       toast.error(msg);
       return;
@@ -42,13 +42,13 @@ export default function CadastroTarefas() {
         aplica_recall: !!editing.aplica_recall,
         ativo: editing.ativo !== false, ordem: Number(editing.ordem) || 0,
       }});
-      const msg = editing.id ? "Tarefa atualizada com sucesso no banco de dados!" : "Tarefa criada com sucesso no banco de dados!";
+      const msg = editing.id ? "Etapa atualizada com sucesso!" : "Etapa criada com sucesso!";
       setFeedback({ type: "ok", msg });
       toast.success(msg);
       await load();
       setTimeout(() => { setEditing(null); }, 700);
     } catch (e: any) {
-      const msg = e?.message || "Erro ao salvar tarefa no banco de dados";
+      const msg = e?.message || "Erro ao salvar etapa no banco de dados";
       setFeedback({ type: "err", msg });
       toast.error(msg);
     } finally {
@@ -56,13 +56,13 @@ export default function CadastroTarefas() {
     }
   };
   const remove = async (id: string) => {
-    if (!confirm("Remover tarefa?")) return;
+    if (!confirm("Remover etapa do catálogo?")) return;
     try {
       await del({ data: { id } });
-      toast.success("Tarefa removida com sucesso!");
+      toast.success("Etapa removida com sucesso!");
       await load();
     } catch (e: any) {
-      toast.error(e?.message || "Erro ao remover tarefa");
+      toast.error(e?.message || "Erro ao remover etapa");
     }
   };
 
@@ -71,15 +71,15 @@ export default function CadastroTarefas() {
       <div className="w-full bg-white rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] p-6 space-y-6">
         <header className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-100">
           <div>
-            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Cadastro de Situações (Tarefa Atual)</h1>
-            <p className="text-xs text-slate-500 mt-1">Gerencie os status e opções disponíveis para o campo Situação (tarefa atual) nos chamados.</p>
+            <h1 className="text-xl font-bold text-slate-900 tracking-tight">Cadastro de Etapas do Fluxo</h1>
+            <p className="text-xs text-slate-500 mt-1">Gerencie as etapas disponíveis para a aba Etapas dos chamados.</p>
           </div>
           <button
             onClick={() => setEditing({ ativo: true, aplica_faltas: true, aplica_sobras: false, aplica_recall: false })}
             className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl cursor-pointer shadow-xs transition-colors"
           >
             <Plus className="w-4 h-4"/>
-            <span>Nova Situação</span>
+            <span>Nova Etapa</span>
           </button>
         </header>
 
@@ -87,14 +87,14 @@ export default function CadastroTarefas() {
           {loading ? (
             <div className="p-12 text-center text-slate-500">
               <Loader2 className="inline w-6 h-6 animate-spin mr-2 text-emerald-600"/>
-              <span>Carregando tarefas...</span>
+              <span>Carregando etapas do fluxo...</span>
             </div>
           ) : (
             <table className="min-w-full text-xs text-left border-collapse">
               <thead className="bg-slate-50 text-slate-600 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">
                 <tr>
                   <th className="px-4 py-3">Ordem</th>
-                  <th className="px-4 py-3">Nome</th>
+                  <th className="px-4 py-3">Nome da Etapa</th>
                   <th className="px-4 py-3">SLA</th>
                   <th className="px-4 py-3">Faltas</th>
                   <th className="px-4 py-3">Sobras</th>
@@ -126,7 +126,7 @@ export default function CadastroTarefas() {
                 {rows.length === 0 && (
                   <tr>
                     <td colSpan={8} className="px-4 py-8 text-center text-slate-400">
-                      Nenhuma tarefa cadastrada.
+                      Nenhuma etapa cadastrada no catálogo.
                     </td>
                   </tr>
                 )}
@@ -141,7 +141,7 @@ export default function CadastroTarefas() {
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200">
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
-              <h3 className="font-bold text-slate-900">{editing.id ? "Editar" : "Nova"} Tarefa</h3>
+              <h3 className="font-bold text-slate-900">{editing.id ? "Editar" : "Nova"} Etapa do Fluxo</h3>
               <button onClick={() => setEditing(null)} className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer">
                 <X className="w-5 h-5"/>
               </button>
@@ -154,8 +154,8 @@ export default function CadastroTarefas() {
                 </div>
               )}
               <label className="block">
-                <span className="font-semibold text-slate-600">Nome *</span>
-                <input autoFocus value={editing.nome || ""} onChange={(e) => setEditing({ ...editing, nome: e.target.value })} placeholder="Ex.: Validação NF Espelho" className="mt-1.5 w-full text-sm rounded-xl border border-slate-200 px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white font-medium"/>
+                <span className="font-semibold text-slate-600">Nome da Etapa *</span>
+                <input autoFocus value={editing.nome || ""} onChange={(e) => setEditing({ ...editing, nome: e.target.value })} placeholder="Ex.: Conferência Física de Produtos" className="mt-1.5 w-full text-sm rounded-xl border border-slate-200 px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white font-medium"/>
               </label>
               <div className="grid grid-cols-2 gap-4">
                 <label className="block">

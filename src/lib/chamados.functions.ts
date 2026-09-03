@@ -206,6 +206,93 @@ export const deleteTarefa = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+// ===== Etapas catálogo =====
+export const listEtapasCatalogo = createServerFn({ method: "GET" })
+  .validator((data: { tipo?: "FALTAS" | "SOBRAS" | "RECALL" | "TODAS" } | undefined) => data ?? {})
+  .handler(async ({ data }) => {
+    const { requireUnlockedSession } = await import("@/lib/gate.server");
+    await requireUnlockedSession();
+    const supabase = await getSupabase();
+    let q = supabase.from("etapas_catalogo").select("*").eq("ativo", true).order("ordem", { ascending: true });
+    let { data: rows, error } = await q;
+    if (error && (error.code === "PGRST205" || error.code === "42P01" || error.message?.includes("etapas_catalogo"))) {
+      return [];
+    }
+    if (error) throw new Error(error.message);
+    const normalized = (rows ?? []).map(normalizeTarefaRow);
+    const tipo = data?.tipo;
+    const filtered = normalized.filter((r) => {
+      if (!tipo || tipo === "TODAS") return true;
+      if (tipo === "FALTAS") return r.aplica_faltas;
+      if (tipo === "SOBRAS") return r.aplica_sobras;
+      if (tipo === "RECALL") return r.aplica_recall;
+      return true;
+    });
+    return filtered;
+  });
+
+export const listAllEtapasCatalogo = createServerFn({ method: "GET" }).handler(async () => {
+  const { requireUnlockedSession } = await import("@/lib/gate.server");
+  await requireUnlockedSession();
+  const supabase = await getSupabase();
+  const { data, error } = await supabase.from("etapas_catalogo").select("*").order("ordem", { ascending: true });
+  if (error && (error.code === "PGRST205" || error.code === "42P01" || error.message?.includes("etapas_catalogo"))) {
+    return [];
+  }
+  if (error) throw new Error(error.message);
+  return (data ?? []).map(normalizeTarefaRow);
+});
+
+export const upsertEtapaCatalogo = createServerFn({ method: "POST" })
+  .validator((data: {
+    id?: string;
+    nome: string;
+    dias_uteis: number;
+    aplica_faltas: boolean;
+    aplica_sobras: boolean;
+    aplica_recall?: boolean;
+    ativo?: boolean;
+    ordem?: number;
+  }) => data)
+  .handler(async ({ data }) => {
+    const { requireUnlockedSession } = await import("@/lib/gate.server");
+    await requireUnlockedSession();
+    const supabase = await getSupabase();
+    const baseNome = data.nome.replace(/\s*\[recall\]/i, "").trim();
+    const isRecall = !!data.aplica_recall;
+
+    const rowFull: any = {
+      nome: baseNome,
+      dias_uteis: Number(data.dias_uteis) || 1,
+      aplica_faltas: !!data.aplica_faltas,
+      aplica_sobras: !!data.aplica_sobras,
+      aplica_recall: isRecall,
+      ativo: data.ativo !== false,
+      ordem: Number(data.ordem) || 0,
+    };
+
+    if (data.id) {
+      let { error } = await supabase.from("etapas_catalogo").update(rowFull).eq("id", data.id);
+      if (error) throw new Error(error.message);
+      return { ok: true, id: data.id };
+    }
+
+    let { data: inserted, error } = await supabase.from("etapas_catalogo").insert(rowFull).select().single();
+    if (error) throw new Error(error.message);
+    return { ok: true, id: inserted?.id };
+  });
+
+export const deleteEtapaCatalogo = createServerFn({ method: "POST" })
+  .validator((data: { id: string }) => data)
+  .handler(async ({ data }) => {
+    const { requireUnlockedSession } = await import("@/lib/gate.server");
+    await requireUnlockedSession();
+    const supabase = await getSupabase();
+    const { error } = await supabase.from("etapas_catalogo").delete().eq("id", data.id);
+    if (error) throw new Error(error.message);
+    return { ok: true };
+  });
 // ===== Chamado completo =====
 export const createChamadoCompleto = createServerFn({ method: "POST" })
   .validator((data: {

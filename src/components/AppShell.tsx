@@ -11,6 +11,7 @@ import {
   UserCheck,
   FileText,
   ListChecks,
+  Layers,
   Store,
   History,
   LogOut,
@@ -202,7 +203,8 @@ export default function AppShell({
                     {[
                       { k: "cad_lojas", label: "Lojas", icon: Store },
                       { k: "cad_produtos", label: "Produtos", icon: Package },
-                      { k: "cad_tarefas", label: "Tarefas / Etapas", icon: ListChecks },
+                      { k: "cad_tarefas", label: "Situações (Tarefa Atual)", icon: ListChecks },
+                      { k: "cad_etapas", label: "Etapas do Fluxo", icon: Layers },
                       { k: "cad_transportadoras", label: "Transportadoras", icon: Truck },
                       { k: "cad_conferentes", label: "Conferentes", icon: UserCheck },
                       { k: "cad_motivos", label: "Motivos", icon: FileText },

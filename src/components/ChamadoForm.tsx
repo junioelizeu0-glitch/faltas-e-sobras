@@ -9,7 +9,7 @@ const fmtBR = (iso: string | null | undefined) => {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(s);
   return m ? `${m[3]}/${m[2]}/${m[1]}` : s;
 };
-import { createChamadoCompleto, updateChamadoCompleto, getChamadoCompleto, listTarefas, deleteChamado } from "@/lib/chamados.functions";
+import { createChamadoCompleto, updateChamadoCompleto, getChamadoCompleto, listTarefas, listEtapasCatalogo, deleteChamado } from "@/lib/chamados.functions";
 import {
   listTransportadoras, listConferentes, listMotivos, searchProdutos,
   upsertTransportadora, deleteTransportadora,
@@ -79,12 +79,14 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   const delFn = useServerFn(deleteChamado);
 
   const listTarefasFn = useServerFn(listTarefas);
+  const listEtapasCatalogoFn = useServerFn(listEtapasCatalogo);
   const listTFn = useServerFn(listTransportadoras);
   const listCFn = useServerFn(listConferentes);
   const listMFn = useServerFn(listMotivos);
 
   const [tab, setTab] = useState<"cadastro" | "referencias" | "etapas">("cadastro");
   const [tarefas, setTarefas] = useState<Array<{ id: string; nome: string; dias_uteis: number }>>([]);
+  const [etapasCatalogo, setEtapasCatalogo] = useState<Array<{ id: string; nome: string; dias_uteis: number }>>([]);
   const [transp, setTransp] = useState<string[]>([]);
   const [confs, setConfs] = useState<string[]>([]);
   const [motivos, setMotivos] = useState<string[]>([]);
@@ -126,11 +128,16 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   const loadListas = async () => {
     try {
       const tipoTarefas = tabela === "recall" ? "RECALL" : (tabela === "sobras" ? "SOBRAS" : "FALTAS");
-      const [ta, tr, cf, mo] = await Promise.all([
+      const [ta, etCat, tr, cf, mo] = await Promise.all([
         listTarefasFn({ data: { tipo: tipoTarefas } }),
+        listEtapasCatalogoFn({ data: { tipo: tipoTarefas } }),
         listTFn(), listCFn(), listMFn(),
       ]);
       if (Array.isArray(ta)) setTarefas(ta.map((t) => ({ id: t.id, nome: t.nome, dias_uteis: t.dias_uteis })));
+      if (Array.isArray(etCat)) {
+        const etList = etCat.map((t) => ({ id: t.id, nome: t.nome, dias_uteis: t.dias_uteis }));
+        setEtapasCatalogo(etList.length > 0 ? etList : (ta ?? []).map((t) => ({ id: t.id, nome: t.nome, dias_uteis: t.dias_uteis })));
+      }
       if (Array.isArray(tr)) setTransp(tr.map((x) => x.nome));
       if (Array.isArray(cf)) setConfs(cf.map((x) => x.nome));
       if (Array.isArray(mo)) setMotivos(mo.map((x) => x.nome));
@@ -605,7 +612,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
                 onSalvarParcial={() => submit("Referências salvas com sucesso.", { partial: true })} salvando={submitting} />
             )}
             {tab === "etapas" && (
-              <EtapasTab etapas={etapas} setEt={setEt} addEtapa={addEtapa} rmEtapa={rmEtapa} tarefas={tarefas}
+              <EtapasTab etapas={etapas} setEt={setEt} addEtapa={addEtapa} rmEtapa={rmEtapa} tarefas={etapasCatalogo.length > 0 ? etapasCatalogo : tarefas}
                 onSalvarParcial={() => submit("Etapas salvas com sucesso.", { partial: true })} salvando={submitting} />
             )}
           </div>
