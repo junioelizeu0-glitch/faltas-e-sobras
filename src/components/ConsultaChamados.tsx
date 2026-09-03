@@ -1,8 +1,8 @@
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Search, X, Pencil, Trash2, DownloadCloud, UploadCloud, Loader2, Plus, FileText, RotateCcw, DollarSign } from "lucide-react";
-import { parseDataBR, parseValorNumeric, formatarMoedaBR } from "@/lib/data-processing";
+import { Search, X, Pencil, Trash2, DownloadCloud, UploadCloud, Loader2, Plus, FileText, RotateCcw } from "lucide-react";
+import { parseDataBR, formatarMoedaBR } from "@/lib/data-processing";
 import { deleteChamado } from "@/lib/chamados.functions";
 import { pullFromAppsScript, pushToAppsScript } from "@/lib/sync.functions";
 import ChamadoForm from "./ChamadoForm";
@@ -133,9 +133,7 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
       .sort((a: any, b: any) => (parseDataBR(b["Dt Abertura"])?.getTime() ?? 0) - (parseDataBR(a["Dt Abertura"])?.getTime() ?? 0));
   }, [rawData, busca, filtroStatus, filtroTarefa, filtroLoja, filtroChamado, filtroNF]);
 
-  const valorTotalFiltrado = useMemo(() => {
-    return linhas.reduce((acc, r) => acc + parseValorNumeric(r[" Valor "] || r.valor || r.Valor), 0);
-  }, [linhas]);
+
 
   useEffect(() => { setPage(0); }, [busca, filtroStatus, filtroTarefa, filtroLoja, filtroChamado, filtroNF]);
   const totalPages = Math.max(1, Math.ceil(linhas.length / PAGE_SIZE));
@@ -189,11 +187,6 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">Consulta de Chamados</h1>
             <div className="flex flex-wrap items-center gap-3 mt-1.5 text-xs text-slate-500">
               <span>{selected.size > 0 ? `${selected.size} selecionado(s) de ${linhas.length}` : `Exibindo ${linhas.length} chamado(s)`}</span>
-              <span className="text-slate-300">•</span>
-              <span className="inline-flex items-center gap-1 font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded-full border border-emerald-200/60">
-                <DollarSign className="w-3.5 h-3.5" />
-                Valor Total: {formatarMoedaBR(valorTotalFiltrado, { showZero: true })}
-              </span>
             </div>
           </div>
           <div className="flex items-center gap-2">

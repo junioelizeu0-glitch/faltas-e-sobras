@@ -75,7 +75,7 @@ export default function CadastroTarefas() {
             <p className="text-xs text-slate-500 mt-1">Define nome, SLA em dias úteis e a qual tipo de chamado se aplica.</p>
           </div>
           <button
-            onClick={() => setEditing({ ativo: true, aplica_faltas: true, aplica_recall: true })}
+            onClick={() => setEditing({ ativo: true, aplica_faltas: true, aplica_sobras: false, aplica_recall: false })}
             className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl cursor-pointer shadow-xs transition-colors"
           >
             <Plus className="w-4 h-4"/>

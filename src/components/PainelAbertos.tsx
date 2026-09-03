@@ -232,8 +232,8 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
   // GRÁFICOS (APENAS COM DADOS VÁLIDOS, SEM MESES COM TOTAL 0)
   // =========================================================================
 
-  // GRÁFICO 1: Controle de Eventos (Apenas Não Finalizados e Mês > 0)
-  const controleEventosData = useMemo(() => {
+  // GRÁFICO 1: Controle de Chamados (Apenas Não Finalizados e Mês > 0)
+  const controleChamadosData = useMemo(() => {
     const monthCounts: Record<string, { monthLabel: string; yearMonth: string; total: number; vencidos: number }> = {};
     const now = new Date();
 
@@ -399,15 +399,15 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
         {isGraficosOpen && (
           <div className="p-5 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6 bg-slate-50/40">
 
-            {/* GRÁFICO 1: CONTROLE DE EVENTOS (NÃO FINALIZADOS E APENAS MESES COM DADOS) */}
+            {/* GRÁFICO 1: CONTROLE DE CHAMADOS (NÃO FINALIZADOS E APENAS MESES COM DADOS) */}
             <div ref={chart1Ref} className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between relative">
               <div className="flex items-start justify-between mb-2">
                 <div>
-                  <h3 className="text-base font-bold text-slate-800">Controle de Eventos (Não Finalizados)</h3>
+                  <h3 className="text-base font-bold text-slate-800">Controle de Chamados (Não Finalizados)</h3>
                   <p className="text-xs text-slate-500">Volume por mês de abertura e controle SLA (&gt;60D)</p>
                 </div>
                 <button
-                  onClick={() => handleExportChart(chart1Ref, "controle-eventos")}
+                  onClick={() => handleExportChart(chart1Ref, "controle-chamados")}
                   className="p-1.5 rounded-lg text-slate-400 hover:text-slate-700 hover:bg-slate-100 transition-colors cursor-pointer"
                   title="Baixar Gráfico"
                 >
@@ -417,7 +417,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
 
               <div className="h-60 w-full mt-2 cursor-pointer">
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={controleEventosData} margin={{ top: 20, right: 10, left: -20, bottom: 25 }}>
+                  <BarChart data={controleChamadosData} margin={{ top: 20, right: 10, left: -20, bottom: 25 }}>
                     <CartesianGrid strokeDasharray="2 2" vertical={false} stroke="#e2e8f0" />
                     <XAxis dataKey="name" tick={{ fontSize: 10, fill: "#64748b" }} interval={0} angle={-35} textAnchor="end" />
                     <YAxis tick={{ fontSize: 10, fill: "#64748b" }} domain={[0, "auto"]} />
@@ -444,7 +444,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
                       onClick={(entry) => handleChart1Click(entry)}
                     >
                       <LabelList dataKey="total" position="top" style={{ fontSize: "11px", fontWeight: "bold", fill: "#334155" }} />
-                      {controleEventosData.map((entry, index) => (
+                      {controleChamadosData.map((entry, index) => (
                         <Cell
                           key={`cell-c1-${index}`}
                           fill={entry.fill}

@@ -60,7 +60,7 @@ type Props = {
   onClose?: () => void;
   onDeleted?: () => void;
   compact?: boolean; // se true, sem cabeçalho externo (uso em modal)
-  tabela?: "faltas" | "recall";
+  tabela?: "faltas" | "sobras" | "recall";
 };
 
 export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, initialChamado, onSaved, onCancel, onClose, onDeleted, compact, tabela = "faltas" }: Props) {
@@ -107,10 +107,18 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   const [refs, setRefs] = useState<Referencia[]>([]);
   const [etapas, setEtapas] = useState<Etapa[]>([]);
 
+  const situacaoOpcoes = useMemo(() => {
+    const list = new Set<string>();
+    (tarefas || []).forEach((t) => { if (t.nome) list.add(t.nome); });
+    SITUACAO_OPCOES.forEach((o) => list.add(o));
+    if (form["Situação "] && form["Situação "].trim()) list.add(form["Situação "]);
+    return Array.from(list);
+  }, [tarefas, form]);
+
   // Carrega listas + dados quando edita
   const loadListas = async () => {
     try {
-      const tipoTarefas = tabela === "recall" ? "RECALL" : "FALTAS";
+      const tipoTarefas = tabela === "recall" ? "RECALL" : (tabela === "sobras" ? "SOBRAS" : "FALTAS");
       const [ta, tr, cf, mo] = await Promise.all([
         listTarefasFn({ data: { tipo: tipoTarefas } }),
         listTFn(), listCFn(), listMFn(),
@@ -772,7 +780,7 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
           <Field label="Data Pagamento" className="w-[140px]"><input type="date" value={form["Dt Pagamento"]} onChange={(e) => setField("Dt Pagamento", e.target.value)} className={inputCls} /></Field>
           <Field label="Status Pagamento (auto)" className="w-[140px]"><input value={statusPagamento} readOnly className={inputCls + " bg-slate-50 text-slate-500"} /></Field>
           <Field label="Situação (tarefa atual) *" className="w-[240px]">
-            <select value={form["Situação "]} onChange={(e) => setField("Situação ", e.target.value)} className={inputCls} required><option value="">— Selecionar —</option>{SITUACAO_OPCOES.map((o) => <option key={o}>{o}</option>)}</select>
+            <select value={form["Situação "]} onChange={(e) => setField("Situação ", e.target.value)} className={inputCls} required><option value="">— Selecionar —</option>{situacaoOpcoes.map((o) => <option key={o}>{o}</option>)}</select>
           </Field>
           <Field label="Status Chamado *" className="w-[180px]">
             <select value={form["Status Chamado"]} onChange={(e) => setField("Status Chamado", e.target.value)} className={inputCls} required><option value="">— Selecionar —</option>{STATUS_CHAMADO_OPCOES.map((o) => <option key={o}>{o}</option>)}</select>
