@@ -96,7 +96,7 @@ function normalizeTarefaRow(r: any): TarefaCatalogo {
 
   let recallVal = r.aplica_recall;
   if (recallVal === undefined || recallVal === null) {
-    recallVal = hasRecallTag ? true : (r.aplica_faltas !== false);
+    recallVal = hasRecallTag ? true : false;
   } else {
     recallVal = !!recallVal;
   }

@@ -24,12 +24,16 @@ import Combobox from "./Combobox";
 
 
 const STATUS_CHAMADO_OPCOES = ["Pendente Monitoramento", "Aprovado", "Recusado"];
+const STATUS_CHAMADO_RECALL_OPCOES = ["Aprovado", "Recusado"];
 const SITUACAO_OPCOES = [
   "Aguardando monitoramento", "Chamado Aprovado", "Finalizar Chamado",
   "Aguardando NF Espelho", "Validação NF Espelho",
   "Aguardando NFD", "Emitir NFD", "Importação NF", "Dados Bancários",
   "Enviada Solicitação Provisionamento", "Pendente Provisionamento Financeiro",
   "Pagamento Provisionado", "Chamado Recusado", "Sem retorno (Finalizado)", "Finalizado",
+];
+const SITUACAO_RECALL_OPCOES = [
+  "Aguardando monitoramento", "Chamado Aprovado", "Chamado Recusado", "Finalizar Chamado", "Finalizado",
 ];
 const TIPO_OPCOES = ["Franquia", "Própria"];
 const CD_OPCOES = ["ES", "PB"];
@@ -99,7 +103,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     "Situação ": "Aguardando monitoramento",
     "Dt Abertura": modeProp === "novo" ? "" : (initialChamado?.["Dt Abertura"] || ""),
     "Dt Finalização": "", "Dt Pagamento": "",
-    "Status Chamado": "Pendente Monitoramento",
+    "Status Chamado": modeProp === "novo" ? (tabela === "recall" ? "Aprovado" : "Pendente Monitoramento") : (initialChamado?.["Status Chamado"] || (tabela === "recall" ? "Aprovado" : "Pendente Monitoramento")),
     Motivo: "", Transportadora: "", Conferente: "",
     _valor: "",
   }));
@@ -107,13 +111,16 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   const [refs, setRefs] = useState<Referencia[]>([]);
   const [etapas, setEtapas] = useState<Etapa[]>([]);
 
+  const statusOpcoes = useMemo(() => (tabela === "recall" ? STATUS_CHAMADO_RECALL_OPCOES : STATUS_CHAMADO_OPCOES), [tabela]);
+
   const situacaoOpcoes = useMemo(() => {
     const list = new Set<string>();
     (tarefas || []).forEach((t) => { if (t.nome) list.add(t.nome); });
-    SITUACAO_OPCOES.forEach((o) => list.add(o));
+    const baseOpcoes = tabela === "recall" ? SITUACAO_RECALL_OPCOES : SITUACAO_OPCOES;
+    baseOpcoes.forEach((o) => list.add(o));
     if (form["Situação "] && form["Situação "].trim()) list.add(form["Situação "]);
     return Array.from(list);
-  }, [tarefas, form]);
+  }, [tarefas, form, tabela]);
 
   // Carrega listas + dados quando edita
   const loadListas = async () => {
@@ -182,10 +189,10 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     setForm((p) => {
       const patch: Record<string, string> = {};
       if (!p["Situação "]) patch["Situação "] = "Aguardando monitoramento";
-      if (!p["Status Chamado"]) patch["Status Chamado"] = "Pendente Monitoramento";
+      if (!p["Status Chamado"]) patch["Status Chamado"] = tabela === "recall" ? "Aprovado" : "Pendente Monitoramento";
       return Object.keys(patch).length ? { ...p, ...patch } : p;
     });
-  }, [form["Dt Abertura"], mode]);
+  }, [form["Dt Abertura"], mode, tabela]);
 
   // Auto-fill Situação SOMENTE quando o usuário alterar Status Chamado (transição real),
   // não na hidratação inicial nem quando só o Tipo muda.
@@ -198,10 +205,10 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     if (s === "Recusado") {
       setForm((p) => ({ ...p, "Situação ": "Chamado Recusado" }));
     } else if (s === "Aprovado") {
-      const nova = form.Tipo === "Franquia" ? "Aguardando NF Espelho" : "Emitir NFD";
+      const nova = tabela === "recall" ? "Chamado Aprovado" : (form.Tipo === "Franquia" ? "Aguardando NF Espelho" : "Emitir NFD");
       setForm((p) => ({ ...p, "Situação ": nova }));
     }
-  }, [form["Status Chamado"]]);
+  }, [form["Status Chamado"], tabela]);
 
   // Auto-preencher Situação como "Finalizado" quando Data Finalização for informada.
   useEffect(() => {
@@ -400,7 +407,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
       Chamado: "", Loja: "", Tipo: "", NF: "",
       "Dt Emissão": "", CD: "", "Situação ": "Aguardando monitoramento",
       "Dt Abertura": "", "Dt Finalização": "", "Dt Pagamento": "",
-      "Status Chamado": "Pendente Monitoramento",
+      "Status Chamado": tabela === "recall" ? "Aprovado" : "Pendente Monitoramento",
       Motivo: "", Transportadora: "", Conferente: "",
       _valor: "",
     });
@@ -783,7 +790,7 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
             <select value={form["Situação "]} onChange={(e) => setField("Situação ", e.target.value)} className={inputCls} required><option value="">— Selecionar —</option>{situacaoOpcoes.map((o) => <option key={o}>{o}</option>)}</select>
           </Field>
           <Field label="Status Chamado *" className="w-[180px]">
-            <select value={form["Status Chamado"]} onChange={(e) => setField("Status Chamado", e.target.value)} className={inputCls} required><option value="">— Selecionar —</option>{STATUS_CHAMADO_OPCOES.map((o) => <option key={o}>{o}</option>)}</select>
+            <select value={form["Status Chamado"]} onChange={(e) => setField("Status Chamado", e.target.value)} className={inputCls} required><option value="">— Selecionar —</option>{statusOpcoes.map((o) => <option key={o}>{o}</option>)}</select>
           </Field>
           <Field label="SLA (auto, dias úteis)" className="w-[150px]"><input value={sla || "—"} readOnly className={inputCls + " bg-slate-50 text-slate-500"} /></Field>
         </div>
