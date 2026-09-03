@@ -320,7 +320,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     if (!form.CD) return "CD é obrigatório";
     if (!form["Status Chamado"]) return "Status do chamado é obrigatório";
     if (!form["Dt Abertura"]) return "Data de abertura é obrigatória";
-    if (!partial) {
+    if (!partial && tabela !== "recall") {
       const refsOk = (refs || []).some((r) => (r.referencia || "").trim() !== "");
       if (!refsOk) return "Inclua ao menos uma Referência (aba Referências)";
       const etapasOk = (etapas || []).some((e) => (e.nome_tarefa || "").trim() !== "");
