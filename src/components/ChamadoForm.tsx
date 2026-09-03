@@ -118,11 +118,9 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   const situacaoOpcoes = useMemo(() => {
     const list = new Set<string>();
     (tarefas || []).forEach((t) => { if (t.nome) list.add(t.nome); });
-    const baseOpcoes = tabela === "recall" ? SITUACAO_RECALL_OPCOES : SITUACAO_OPCOES;
-    baseOpcoes.forEach((o) => list.add(o));
     if (form["Situação "] && form["Situação "].trim()) list.add(form["Situação "]);
     return Array.from(list);
-  }, [tarefas, form, tabela]);
+  }, [tarefas, form]);
 
   // Carrega listas + dados quando edita
   const loadListas = async () => {

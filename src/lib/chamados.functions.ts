@@ -114,12 +114,53 @@ function normalizeTarefaRow(r: any): TarefaCatalogo {
 }
 
 // ===== Tarefas catálogo =====
+const DEFAULT_SITUACOES = [
+  { nome: "Aguardando monitoramento", dias_uteis: 2, aplica_faltas: true, aplica_sobras: true, aplica_recall: true, ordem: 1 },
+  { nome: "Aguardando NF Espelho", dias_uteis: 3, aplica_faltas: true, aplica_sobras: false, aplica_recall: false, ordem: 4 },
+  { nome: "Validação NF Espelho", dias_uteis: 4, aplica_faltas: true, aplica_sobras: false, aplica_recall: false, ordem: 5 },
+  { nome: "Aguardando NFD", dias_uteis: 3, aplica_faltas: true, aplica_sobras: false, aplica_recall: false, ordem: 6 },
+  { nome: "Emitir NFD", dias_uteis: 2, aplica_faltas: true, aplica_sobras: false, aplica_recall: false, ordem: 7 },
+  { nome: "Importação NF", dias_uteis: 2, aplica_faltas: true, aplica_sobras: false, aplica_recall: false, ordem: 8 },
+  { nome: "Dados Bancários", dias_uteis: 2, aplica_faltas: true, aplica_sobras: false, aplica_recall: false, ordem: 9 },
+  { nome: "Enviada Solicitação Provisionamento", dias_uteis: 2, aplica_faltas: true, aplica_sobras: false, aplica_recall: false, ordem: 10 },
+  { nome: "Pendente Provisionamento Financeiro", dias_uteis: 5, aplica_faltas: true, aplica_sobras: false, aplica_recall: false, ordem: 11 },
+  { nome: "Pagamento Provisionado", dias_uteis: 5, aplica_faltas: true, aplica_sobras: false, aplica_recall: false, ordem: 12 },
+  { nome: "Chamado Aprovado", dias_uteis: 1, aplica_faltas: true, aplica_sobras: true, aplica_recall: true, ordem: 13 },
+  { nome: "Chamado Recusado", dias_uteis: 1, aplica_faltas: true, aplica_sobras: true, aplica_recall: true, ordem: 14 },
+  { nome: "Sem retorno (Finalizado)", dias_uteis: 1, aplica_faltas: true, aplica_sobras: true, aplica_recall: true, ordem: 15 },
+  { nome: "Finalizar Chamado", dias_uteis: 1, aplica_faltas: true, aplica_sobras: true, aplica_recall: true, ordem: 16 },
+  { nome: "Finalizado", dias_uteis: 1, aplica_faltas: true, aplica_sobras: true, aplica_recall: true, ordem: 17 },
+];
+
+async function ensureDefaultSituacoes(supabase: any) {
+  try {
+    const { data: existing } = await supabase.from("tarefas_catalogo").select("nome");
+    const existingNames = new Set((existing ?? []).map((x: any) => String(x.nome || "").trim().toLowerCase()));
+    const missing = DEFAULT_SITUACOES.filter((s) => !existingNames.has(s.nome.trim().toLowerCase()));
+    if (missing.length > 0) {
+      const rows = missing.map((s) => ({
+        nome: s.nome,
+        dias_uteis: s.dias_uteis,
+        aplica_faltas: s.aplica_faltas,
+        aplica_sobras: s.aplica_sobras,
+        aplica_recall: s.aplica_recall,
+        ativo: true,
+        ordem: s.ordem,
+      }));
+      await supabase.from("tarefas_catalogo").insert(rows);
+    }
+  } catch (e) {
+    /* silent fallback */
+  }
+}
+
 export const listTarefas = createServerFn({ method: "GET" })
   .validator((data: { tipo?: "FALTAS" | "SOBRAS" | "RECALL" | "TODAS" } | undefined) => data ?? {})
   .handler(async ({ data }) => {
     const { requireUnlockedSession } = await import("@/lib/gate.server");
     await requireUnlockedSession();
     const supabase = await getSupabase();
+    await ensureDefaultSituacoes(supabase);
     let q = supabase.from("tarefas_catalogo").select("*").eq("ativo", true).order("ordem", { ascending: true });
     const { data: rows, error } = await q;
     if (error) throw new Error(error.message);
@@ -139,6 +180,7 @@ export const listAllTarefas = createServerFn({ method: "GET" }).handler(async ()
   const { requireUnlockedSession } = await import("@/lib/gate.server");
   await requireUnlockedSession();
   const supabase = await getSupabase();
+  await ensureDefaultSituacoes(supabase);
   const { data, error } = await supabase.from("tarefas_catalogo").select("*").order("ordem", { ascending: true });
   if (error) throw new Error(error.message);
   return (data ?? []).map(normalizeTarefaRow);
