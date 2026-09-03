@@ -107,7 +107,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     "Dt Finalização": "", "Dt Pagamento": "",
     "Status Chamado": modeProp === "novo" ? (tabela === "recall" ? "Aprovado" : "Pendente Monitoramento") : (initialChamado?.["Status Chamado"] || (tabela === "recall" ? "Aprovado" : "Pendente Monitoramento")),
     Motivo: "", Transportadora: "", Conferente: "",
-    _valor: "",
+    _valor: "", Referencia: modeProp === "novo" ? "" : (initialChamado?.Referencia || initialChamado?.referencia || ""),
   }));
 
   const [refs, setRefs] = useState<Referencia[]>([]);
@@ -171,6 +171,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
           Transportadora: c.transportadora || "",
           Conferente: c.conferente || "",
           _valor: String(c.valor ?? ""),
+          Referencia: (res.referencias && res.referencias[0]?.referencia) || c.referencia || "",
         });
         setRefs((res.referencias || []).map((r: any) => ({
           id: r.id, referencia: r.referencia || "", cor: r.cor || "",
@@ -320,6 +321,9 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     if (!form.CD) return "CD é obrigatório";
     if (!form["Status Chamado"]) return "Status do chamado é obrigatório";
     if (!form["Dt Abertura"]) return "Data de abertura é obrigatória";
+    if (tabela === "recall" && !(form.Referencia || "").trim()) {
+      return "Referência (Ref) é obrigatória";
+    }
     if (!partial && tabela !== "recall") {
       const refsOk = (refs || []).some((r) => (r.referencia || "").trim() !== "");
       if (!refsOk) return "Inclua ao menos uma Referência (aba Referências)";
@@ -369,10 +373,12 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
         Transportadora: form.Transportadora, Conferente: form.Conferente,
         Periodo: primeiroDiaMesISO(form["Dt Abertura"]),
       },
-      referencias: tabela === "recall" ? [] : refs.map((r) => ({
-        referencia: r.referencia, cor: r.cor, descricao: r.descricao,
-        fornecedor: r.fornecedor, tamanho: r.tamanho, quantidade: r.quantidade,
-      })),
+      referencias: tabela === "recall"
+        ? (form.Referencia?.trim() ? [{ referencia: form.Referencia.trim() }] : [])
+        : refs.map((r) => ({
+            referencia: r.referencia, cor: r.cor, descricao: r.descricao,
+            fornecedor: r.fornecedor, tamanho: r.tamanho, quantidade: r.quantidade,
+          })),
       etapas: tabela === "recall" ? [] : etapas.map((e, i) => ({
         tarefa_id: e.tarefa_id, nome_tarefa: e.nome_tarefa,
         dias_uteis_previsto: e.dias_uteis_previsto, dt_inicio: e.dt_inicio || null,
@@ -492,10 +498,12 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
           Transportadora: form.Transportadora, Conferente: form.Conferente,
           Periodo: primeiroDiaMesISO(form["Dt Abertura"]),
         },
-        referencias: tabela === "recall" ? [] : refs.map((r) => ({
-          referencia: r.referencia, cor: r.cor, descricao: r.descricao,
-          fornecedor: r.fornecedor, tamanho: r.tamanho, quantidade: r.quantidade,
-        })),
+        referencias: tabela === "recall"
+          ? (form.Referencia?.trim() ? [{ referencia: form.Referencia.trim() }] : [])
+          : refs.map((r) => ({
+              referencia: r.referencia, cor: r.cor, descricao: r.descricao,
+              fornecedor: r.fornecedor, tamanho: r.tamanho, quantidade: r.quantidade,
+            })),
         etapas: tabela === "recall" ? [] : novasEtapas.map((e, i) => ({
           tarefa_id: e.tarefa_id, nome_tarefa: e.nome_tarefa,
           dias_uteis_previsto: e.dias_uteis_previsto, dt_inicio: e.dt_inicio || null,
@@ -786,6 +794,18 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
           <Field label="NF" className="w-[130px]"><input type="number" value={form.NF} onChange={(e) => setField("NF", e.target.value.slice(0, 10))} className={inputCls} /></Field>
           <Field label="Data Emissão" className="w-[140px]"><input type="date" value={form["Dt Emissão"]} onChange={(e) => setField("Dt Emissão", e.target.value)} className={inputCls} /></Field>
           <Field label="Valor" className="w-[130px]"><input type="number" step="0.01" value={form._valor} onChange={(e) => setField("_valor", e.target.value.slice(0, 14))} className={inputCls} /></Field>
+          {tabela === "recall" && (
+            <Field label="Ref *" className="w-[140px]">
+              <input
+                type="text"
+                value={form.Referencia || ""}
+                onChange={(e) => setField("Referencia", e.target.value.toUpperCase())}
+                className={inputCls + " font-bold uppercase text-emerald-700 border-emerald-300 focus:border-emerald-500"}
+                placeholder="Ex.: 12345"
+                required
+              />
+            </Field>
+          )}
         </div>
       </section>
       <section>

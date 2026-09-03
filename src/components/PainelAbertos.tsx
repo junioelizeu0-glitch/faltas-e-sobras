@@ -790,6 +790,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
                   <tr className="bg-slate-100">
                     <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 text-center min-w-[130px] text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Chamado</th>
                     <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 min-w-[130px] text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Tipo</th>
+                    {tabela === "recall" && <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 min-w-[120px] text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Ref</th>}
                     <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 w-28 text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Data abertura</th>
                     <th className="sticky top-0 z-20 bg-slate-100 px-3 py-3 w-24 text-center text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">CD</th>
                     <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 min-w-[180px] text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Tarefa atual</th>
@@ -841,6 +842,12 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
                             {r.tipo}
                           </span>
                         </td>
+
+                        {tabela === "recall" && (
+                          <td className="px-4 py-2.5 font-bold text-emerald-700 whitespace-nowrap">
+                            {r.referencia || (r as any).Referencia || "—"}
+                          </td>
+                        )}
 
                         {/* 3. Data Abertura */}
                         <td className="px-4 py-2.5 font-medium text-slate-600 whitespace-nowrap">

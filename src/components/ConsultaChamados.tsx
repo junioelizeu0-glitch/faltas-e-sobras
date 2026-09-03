@@ -324,6 +324,7 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
                   <th className="sticky top-0 z-20 bg-slate-100 w-8 px-3 py-3"><input type="checkbox" checked={allSelected} onChange={toggleAll} className="cursor-pointer"/></th>
                   <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 font-bold">Chamado</th>
                   <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 font-bold">Loja</th>
+                  {tabela === "recall" && <th className="text-left px-3 py-2 font-semibold">Ref</th>}
                   <th className="text-left px-3 py-2 font-semibold">NF</th>
                   <th className="text-left px-3 py-2 font-semibold">CD</th>
                   <th className="text-left px-3 py-2 font-semibold">Abertura</th>
@@ -352,6 +353,7 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
                       </td>
                       <td className="px-3 py-2 font-bold text-slate-900 whitespace-nowrap">{r.Chamado || "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap font-medium text-slate-800">{r.Loja || "—"}</td>
+                      {tabela === "recall" && <td className="px-3 py-2 whitespace-nowrap font-bold text-emerald-700">{r.referencia || r.Referencia || "—"}</td>}
                       <td className="px-3 py-2 whitespace-nowrap font-medium text-slate-700">{nfVal}</td>
                       <td className="px-3 py-2 whitespace-nowrap">{r.CD || "—"}</td>
                       <td className="px-3 py-2 whitespace-nowrap">{fmtBR(r["Dt Abertura"])}</td>

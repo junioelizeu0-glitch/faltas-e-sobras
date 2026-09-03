@@ -6,6 +6,11 @@ async function getSupabase() {
 }
 
 function toApiShape(row: any) {
+  const refsList = row.chamados_recall_referencias || row.chamados_referencias || row.referencias || [];
+  const refText = Array.isArray(refsList)
+    ? refsList.map((r: any) => r.referencia || r).filter(Boolean).join(", ")
+    : (row.referencia || row.Referencia || "");
+
   return {
     id: row.id ?? "",
     Chamado: row.chamado ?? "",
@@ -26,6 +31,8 @@ function toApiShape(row: any) {
     Transportadora: row.transportadora ?? "",
     Conferente: row.conferente ?? "",
     Periodo: row.periodo ?? "",
+    referencia: refText,
+    Referencia: refText,
   };
 }
 
@@ -36,16 +43,27 @@ export const fetchDashboardData = createServerFn({ method: "GET" })
       const { requireUnlockedSession } = await import("@/lib/gate.server"); await requireUnlockedSession();
       const supabase = await getSupabase();
       const targetTable = inputData?.tabela === "recall" ? "chamados_recall" : "chamados_faltas";
+      const refsTable = inputData?.tabela === "recall" ? "chamados_recall_referencias" : "chamados_referencias";
+      const selectQuery = `*, ${refsTable}(referencia)`;
       const all: any[] = [];
       let from = 0;
       const pageSize = 1000;
       try {
         while (true) {
-          const { data, error } = await supabase
+          let { data, error } = await supabase
             .from(targetTable)
-            .select("*")
+            .select(selectQuery)
             .order("dt_abertura", { ascending: false })
             .range(from, from + pageSize - 1);
+          if (error) {
+            const res = await supabase
+              .from(targetTable)
+              .select("*")
+              .order("dt_abertura", { ascending: false })
+              .range(from, from + pageSize - 1);
+            data = res.data;
+            error = res.error;
+          }
           if (error) throw new Error(error.message);
           if (!data || data.length === 0) break;
           all.push(...data);
