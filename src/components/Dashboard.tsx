@@ -334,17 +334,22 @@ const AgingTooltip = ({ active, payload, label }: any) => {
 };
 
 const CustomSlaGreenLabel = (props: any) => {
-  const { x, y, width, height, value, entry, payload } = props;
-  const rowData = entry || payload;
-  if (!rowData) return null;
-  const noPrazo = rowData['No Prazo'] ?? value ?? 0;
-  const foraPrazo = rowData['Fora do Prazo'] ?? 0;
-  const total = noPrazo + foraPrazo;
+  const { x, y, width, height, payload } = props;
+  const rowData = payload || {};
+  if (x == null || width == null || width < 15) return null;
 
+  const noPrazo = rowData['No Prazo'] ?? 0;
+  const total = rowData['Total'] ?? 0;
   if (noPrazo <= 0 || total <= 0) return null;
 
   const pct = Math.round((noPrazo / total) * 100);
-  const text = width < 55 ? `${pct}%` : `${noPrazo} (${pct}%)`;
+
+  let text = `${noPrazo} (${pct}%)`;
+  if (width < 85 && width >= 45) {
+    text = `${pct}%`;
+  } else if (width < 45) {
+    text = `${noPrazo}`;
+  }
 
   return (
     <text
@@ -352,9 +357,9 @@ const CustomSlaGreenLabel = (props: any) => {
       y={y + height / 2 + 4}
       fill="#ffffff"
       textAnchor="middle"
-      fontSize={width < 55 ? 10 : 11}
+      fontSize={width < 60 ? 10 : 11}
       fontWeight="bold"
-      className="select-none"
+      className="select-none pointer-events-none"
     >
       {text}
     </text>
@@ -362,18 +367,40 @@ const CustomSlaGreenLabel = (props: any) => {
 };
 
 const CustomSlaRedLabel = (props: any) => {
-  const { x, y, width, height, value, entry, payload } = props;
-  const rowData = entry || payload;
-  if (!rowData) return null;
-  const noPrazo = rowData['No Prazo'] ?? 0;
-  const foraPrazo = rowData['Fora do Prazo'] ?? value ?? 0;
-  const total = noPrazo + foraPrazo;
+  const { x, y, width, height, payload } = props;
+  const rowData = payload || {};
+  if (x == null || width == null) return null;
 
+  const foraPrazo = rowData['Fora do Prazo'] ?? 0;
+  const total = rowData['Total'] ?? 0;
   if (foraPrazo <= 0 || total <= 0) return null;
 
+  const noPrazo = rowData['No Prazo'] ?? 0;
   const pctGreen = Math.round((noPrazo / total) * 100);
   const pctRed = 100 - pctGreen;
-  const text = width < 55 ? `${pctRed}%` : `${foraPrazo} (${pctRed}%)`;
+
+  if (width < 28) {
+    return (
+      <text
+        x={x + width + 4}
+        y={y + height / 2 + 4}
+        fill="#e11d48"
+        textAnchor="start"
+        fontSize={10}
+        fontWeight="bold"
+        className="select-none pointer-events-none"
+      >
+        {foraPrazo} ({pctRed}%)
+      </text>
+    );
+  }
+
+  let text = `${foraPrazo} (${pctRed}%)`;
+  if (width < 85 && width >= 45) {
+    text = `${pctRed}%`;
+  } else if (width < 45) {
+    text = `${foraPrazo}`;
+  }
 
   return (
     <text
@@ -381,9 +408,9 @@ const CustomSlaRedLabel = (props: any) => {
       y={y + height / 2 + 4}
       fill="#ffffff"
       textAnchor="middle"
-      fontSize={width < 55 ? 10 : 11}
+      fontSize={width < 60 ? 10 : 11}
       fontWeight="bold"
-      className="select-none"
+      className="select-none pointer-events-none"
     >
       {text}
     </text>
@@ -391,28 +418,161 @@ const CustomSlaRedLabel = (props: any) => {
 };
 
 const CustomSlaTotalLabel = (props: any) => {
-  const { x, y, width, height, entry, payload } = props;
-  const rowData = entry || payload;
-  if (!rowData) return null;
-  const noPrazo = rowData['No Prazo'] ?? 0;
-  const foraPrazo = rowData['Fora do Prazo'] ?? 0;
-  const total = rowData['Total'] ?? (noPrazo + foraPrazo);
+  const { x, y, width, height, payload } = props;
+  const rowData = payload || {};
+  if (x == null || width == null) return null;
 
+  const total = rowData['Total'] ?? 0;
   if (total <= 0) return null;
+
+  const foraPrazo = rowData['Fora do Prazo'] ?? 0;
+  const labelOffset = foraPrazo > 0 && width < 28 ? 56 : 8;
 
   return (
     <text
-      x={x + width + 8}
+      x={x + width + labelOffset}
       y={y + height / 2 + 4}
-      fill="#0f172a"
+      fill="#334155"
       fontSize={11}
       fontWeight="bold"
-      className="select-none"
+      className="select-none pointer-events-none"
     >
       Total: {total}
     </text>
   );
 };
+
+function SlaComparativoChart({ rawSlaData, totalChamados, totalPagosQtd, onOpenModal }: any) {
+  const [mode, setMode] = useState<'pct' | 'qtd'>('pct');
+
+  const chartData = useMemo(() => {
+    return (rawSlaData || []).map((item: any) => {
+      const noPrazo = item['No Prazo'] || 0;
+      const foraPrazo = item['Fora do Prazo'] || 0;
+      const total = item['Total'] || (noPrazo + foraPrazo);
+
+      const noPrazoPct = total > 0 ? Number(((noPrazo / total) * 100).toFixed(1)) : 0;
+      const foraPrazoPct = total > 0 ? Number(((foraPrazo / total) * 100).toFixed(1)) : 0;
+
+      return {
+        ...item,
+        'No Prazo': noPrazo,
+        'Fora do Prazo': foraPrazo,
+        Total: total,
+        'No Prazo Pct': noPrazoPct,
+        'Fora do Prazo Pct': foraPrazoPct,
+      };
+    });
+  }, [rawSlaData]);
+
+  const isPct = mode === 'pct';
+
+  return (
+    <ChartCard title="Comparativo SLA (Prazo de 60 dias úteis)">
+      <div className="flex flex-wrap items-center gap-4 mb-3 text-xs justify-between w-full px-2">
+        <div className="flex gap-3 items-center flex-wrap">
+          <div className="flex flex-col bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/70 shadow-xs">
+            <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Total de Chamados</span>
+            <span className="font-bold text-slate-900 text-sm">{formatNum(totalChamados || 0)}</span>
+          </div>
+          <div className="flex flex-col bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/70 shadow-xs">
+            <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Total Pagos</span>
+            <span className="font-bold text-slate-900 text-sm">{formatNum(totalPagosQtd || 0)}</span>
+          </div>
+
+          <div className="flex bg-slate-200/60 p-0.5 rounded-xl border border-slate-200 shadow-xs ml-1">
+            <button
+              type="button"
+              onClick={() => setMode('pct')}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                isPct
+                  ? 'bg-white text-emerald-700 shadow-xs border border-slate-200/50 font-bold'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              100% Preenchido (%)
+            </button>
+            <button
+              type="button"
+              onClick={() => setMode('qtd')}
+              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
+                !isPct
+                  ? 'bg-white text-emerald-700 shadow-xs border border-slate-200/50 font-bold'
+                  : 'text-slate-600 hover:text-slate-900'
+              }`}
+            >
+              Qtd Absoluta
+            </button>
+          </div>
+        </div>
+
+        <div className="flex gap-4 items-center">
+          <div className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-md bg-[#059669] inline-block shadow-xs" />
+            <span className="font-semibold text-slate-700">No Prazo (Qtd / %)</span>
+          </div>
+          <div className="flex items-center gap-1.5">
+            <span className="w-3 h-3 rounded-md bg-[#e11d48] inline-block shadow-xs" />
+            <span className="font-semibold text-slate-700">Fora do Prazo (Qtd / %)</span>
+          </div>
+        </div>
+      </div>
+
+      <ResponsiveContainer width="100%" height={320}>
+        <BarChart
+          layout="vertical"
+          data={chartData}
+          margin={{ top: 10, right: 90, left: 10, bottom: 0 }}
+          onClick={(e: any) => {
+            if (!e || !e.activeLabel) return;
+            if (e.activeLabel === 'SLA do Chamado') onOpenModal('SLA DO CHAMADO');
+            else if (e.activeLabel === 'SLA de Pagamento') onOpenModal('SLA DE PAGAMENTO');
+          }}
+        >
+          <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
+          <XAxis
+            type="number"
+            domain={isPct ? [0, 100] : [0, 'auto']}
+            tickFormatter={(val) => (isPct ? `${val}%` : `${val}`)}
+            axisLine={false}
+            tickLine={false}
+            tick={{ fontSize: 10, fill: '#64748b' }}
+          />
+          <YAxis
+            dataKey="name"
+            type="category"
+            axisLine={false}
+            tickLine={false}
+            tick={{ fontSize: 11, fill: '#334155', fontWeight: 'bold' }}
+            width={115}
+            style={{ cursor: 'pointer' }}
+          />
+          <Tooltip content={<SlaTooltip />} cursor={{ fill: '#f8fafc' }} />
+          <Bar
+            dataKey={isPct ? 'No Prazo Pct' : 'No Prazo'}
+            stackId="a"
+            fill="#059669"
+            barSize={34}
+            style={{ cursor: 'pointer' }}
+          >
+            <LabelList content={<CustomSlaGreenLabel />} />
+          </Bar>
+          <Bar
+            dataKey={isPct ? 'Fora do Prazo Pct' : 'Fora do Prazo'}
+            stackId="a"
+            fill="#e11d48"
+            barSize={34}
+            radius={[0, 6, 6, 0]}
+            style={{ cursor: 'pointer' }}
+          >
+            <LabelList content={<CustomSlaRedLabel />} />
+            <LabelList content={<CustomSlaTotalLabel />} />
+          </Bar>
+        </BarChart>
+      </ResponsiveContainer>
+    </ChartCard>
+  );
+}
 
 const SlaTooltip = ({ active, payload, label }: any) => {
   if (!active || !payload || !payload.length) return null;
@@ -623,51 +783,12 @@ const AbaVisaoExecutiva = ({ data, onOpenModal }: any) => (
         </ResponsiveContainer>
       </ChartCard>
 
-      <ChartCard title="Comparativo SLA (Prazo de 60 dias úteis)">
-        <div className="flex flex-wrap items-center gap-4 mb-3 text-xs justify-between w-full px-2">
-          <div className="flex gap-3">
-             <div className="flex flex-col bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/70 shadow-xs">
-               <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Total de Chamados</span>
-               <span className="font-bold text-slate-900 text-sm">{formatNum(data.kpis?.totalChamados || 0)}</span>
-             </div>
-             <div className="flex flex-col bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/70 shadow-xs">
-               <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Total Pagos</span>
-               <span className="font-bold text-slate-900 text-sm">{formatNum(data.kpis?.totalPagosQtd || 0)}</span>
-             </div>
-          </div>
-          <div className="flex gap-4 items-center">
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-md bg-[#059669] inline-block shadow-xs" />
-              <span className="font-semibold text-slate-700">No Prazo (Qtd / %)</span>
-            </div>
-            <div className="flex items-center gap-1.5">
-              <span className="w-3 h-3 rounded-md bg-[#e11d48] inline-block shadow-xs" />
-              <span className="font-semibold text-slate-700">Fora do Prazo (Qtd / %)</span>
-            </div>
-          </div>
-        </div>
-        <ResponsiveContainer width="100%" height={320}>
-          <BarChart layout="vertical" data={data.charts?.slaComparativoData || data.kpis?.slaComparativoData || []} margin={{ top: 10, right: 100, left: 10, bottom: 0 }}
-            onClick={(e: any) => {
-              if (!e || !e.activeLabel) return;
-              if (e.activeLabel === 'SLA do Chamado') onOpenModal('SLA DO CHAMADO');
-              else if (e.activeLabel === 'SLA de Pagamento') onOpenModal('SLA DE PAGAMENTO');
-            }}
-          >
-            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
-            <XAxis type="number" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b' }} />
-            <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#334155', fontWeight: 'bold' }} width={115} style={{ cursor: 'pointer' }} />
-            <Tooltip content={<SlaTooltip />} cursor={{ fill: "#f8fafc" }} />
-            <Bar dataKey="No Prazo" stackId="a" fill="#059669" barSize={32} style={{ cursor: 'pointer' }}>
-              <LabelList dataKey="No Prazo" content={<CustomSlaGreenLabel />} />
-            </Bar>
-            <Bar dataKey="Fora do Prazo" stackId="a" fill="#e11d48" barSize={32} radius={[0, 6, 6, 0]} style={{ cursor: 'pointer' }}>
-              <LabelList dataKey="Fora do Prazo" content={<CustomSlaRedLabel />} />
-              <LabelList dataKey="Total" content={<CustomSlaTotalLabel />} />
-            </Bar>
-          </BarChart>
-        </ResponsiveContainer>
-      </ChartCard>
+      <SlaComparativoChart
+        rawSlaData={data.charts?.slaComparativoData || data.kpis?.slaComparativoData || []}
+        totalChamados={data.kpis?.totalChamados}
+        totalPagosQtd={data.kpis?.totalPagosQtd}
+        onOpenModal={onOpenModal}
+      />
     </div>
 
     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
