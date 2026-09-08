@@ -334,20 +334,20 @@ const AgingTooltip = ({ active, payload, label }: any) => {
 };
 
 const CustomSlaGreenLabel = (props: any) => {
-  const { x, y, width, height, payload } = props;
+  const { x, y, width, height, value, payload } = props;
   const rowData = payload || {};
-  if (x == null || width == null || width < 15) return null;
+  const noPrazo = value ?? rowData['No Prazo'] ?? 0;
+  const foraPrazo = rowData['Fora do Prazo'] ?? 0;
+  const total = rowData['Total'] ?? (noPrazo + foraPrazo);
 
-  const noPrazo = rowData['No Prazo'] ?? 0;
-  const total = rowData['Total'] ?? 0;
-  if (noPrazo <= 0 || total <= 0) return null;
+  if (noPrazo <= 0 || total <= 0 || width == null || width < 12) return null;
 
   const pct = Math.round((noPrazo / total) * 100);
 
   let text = `${noPrazo} (${pct}%)`;
-  if (width < 85 && width >= 45) {
+  if (width < 75 && width >= 35) {
     text = `${pct}%`;
-  } else if (width < 45) {
+  } else if (width < 35) {
     text = `${noPrazo}`;
   }
 
@@ -357,7 +357,7 @@ const CustomSlaGreenLabel = (props: any) => {
       y={y + height / 2 + 4}
       fill="#ffffff"
       textAnchor="middle"
-      fontSize={width < 60 ? 10 : 11}
+      fontSize={width < 50 ? 10 : 11}
       fontWeight="bold"
       className="select-none pointer-events-none"
     >
@@ -367,19 +367,18 @@ const CustomSlaGreenLabel = (props: any) => {
 };
 
 const CustomSlaRedLabel = (props: any) => {
-  const { x, y, width, height, payload } = props;
+  const { x, y, width, height, value, payload } = props;
   const rowData = payload || {};
-  if (x == null || width == null) return null;
-
-  const foraPrazo = rowData['Fora do Prazo'] ?? 0;
-  const total = rowData['Total'] ?? 0;
-  if (foraPrazo <= 0 || total <= 0) return null;
-
+  const foraPrazo = value ?? rowData['Fora do Prazo'] ?? 0;
   const noPrazo = rowData['No Prazo'] ?? 0;
+  const total = rowData['Total'] ?? (noPrazo + foraPrazo);
+
+  if (foraPrazo <= 0 || total <= 0 || width == null) return null;
+
   const pctGreen = Math.round((noPrazo / total) * 100);
   const pctRed = 100 - pctGreen;
 
-  if (width < 28) {
+  if (width < 32) {
     return (
       <text
         x={x + width + 4}
@@ -396,9 +395,9 @@ const CustomSlaRedLabel = (props: any) => {
   }
 
   let text = `${foraPrazo} (${pctRed}%)`;
-  if (width < 85 && width >= 45) {
+  if (width < 75 && width >= 35) {
     text = `${pctRed}%`;
-  } else if (width < 45) {
+  } else if (width < 35) {
     text = `${foraPrazo}`;
   }
 
@@ -408,7 +407,7 @@ const CustomSlaRedLabel = (props: any) => {
       y={y + height / 2 + 4}
       fill="#ffffff"
       textAnchor="middle"
-      fontSize={width < 60 ? 10 : 11}
+      fontSize={width < 50 ? 10 : 11}
       fontWeight="bold"
       className="select-none pointer-events-none"
     >
@@ -420,13 +419,12 @@ const CustomSlaRedLabel = (props: any) => {
 const CustomSlaTotalLabel = (props: any) => {
   const { x, y, width, height, payload } = props;
   const rowData = payload || {};
-  if (x == null || width == null) return null;
-
   const total = rowData['Total'] ?? 0;
-  if (total <= 0) return null;
+
+  if (total <= 0 || x == null || width == null) return null;
 
   const foraPrazo = rowData['Fora do Prazo'] ?? 0;
-  const labelOffset = foraPrazo > 0 && width < 28 ? 56 : 8;
+  const labelOffset = foraPrazo > 0 && width < 32 ? 58 : 8;
 
   return (
     <text
@@ -443,29 +441,20 @@ const CustomSlaTotalLabel = (props: any) => {
 };
 
 function SlaComparativoChart({ rawSlaData, totalChamados, totalPagosQtd, onOpenModal }: any) {
-  const [mode, setMode] = useState<'pct' | 'qtd'>('pct');
-
   const chartData = useMemo(() => {
     return (rawSlaData || []).map((item: any) => {
       const noPrazo = item['No Prazo'] || 0;
       const foraPrazo = item['Fora do Prazo'] || 0;
       const total = item['Total'] || (noPrazo + foraPrazo);
 
-      const noPrazoPct = total > 0 ? Number(((noPrazo / total) * 100).toFixed(1)) : 0;
-      const foraPrazoPct = total > 0 ? Number(((foraPrazo / total) * 100).toFixed(1)) : 0;
-
       return {
         ...item,
         'No Prazo': noPrazo,
         'Fora do Prazo': foraPrazo,
         Total: total,
-        'No Prazo Pct': noPrazoPct,
-        'Fora do Prazo Pct': foraPrazoPct,
       };
     });
   }, [rawSlaData]);
-
-  const isPct = mode === 'pct';
 
   return (
     <ChartCard title="Comparativo SLA (Prazo de 60 dias úteis)">
@@ -478,31 +467,6 @@ function SlaComparativoChart({ rawSlaData, totalChamados, totalPagosQtd, onOpenM
           <div className="flex flex-col bg-slate-50 px-3 py-1.5 rounded-xl border border-slate-200/70 shadow-xs">
             <span className="text-[10px] text-slate-500 font-semibold uppercase tracking-wider">Total Pagos</span>
             <span className="font-bold text-slate-900 text-sm">{formatNum(totalPagosQtd || 0)}</span>
-          </div>
-
-          <div className="flex bg-slate-200/60 p-0.5 rounded-xl border border-slate-200 shadow-xs ml-1">
-            <button
-              type="button"
-              onClick={() => setMode('pct')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                isPct
-                  ? 'bg-white text-emerald-700 shadow-xs border border-slate-200/50 font-bold'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              100% Preenchido (%)
-            </button>
-            <button
-              type="button"
-              onClick={() => setMode('qtd')}
-              className={`px-2.5 py-1 rounded-lg text-xs font-semibold transition-all cursor-pointer ${
-                !isPct
-                  ? 'bg-white text-emerald-700 shadow-xs border border-slate-200/50 font-bold'
-                  : 'text-slate-600 hover:text-slate-900'
-              }`}
-            >
-              Qtd Absoluta
-            </button>
           </div>
         </div>
 
@@ -532,8 +496,6 @@ function SlaComparativoChart({ rawSlaData, totalChamados, totalPagosQtd, onOpenM
           <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
           <XAxis
             type="number"
-            domain={isPct ? [0, 100] : [0, 'auto']}
-            tickFormatter={(val) => (isPct ? `${val}%` : `${val}`)}
             axisLine={false}
             tickLine={false}
             tick={{ fontSize: 10, fill: '#64748b' }}
@@ -549,24 +511,24 @@ function SlaComparativoChart({ rawSlaData, totalChamados, totalPagosQtd, onOpenM
           />
           <Tooltip content={<SlaTooltip />} cursor={{ fill: '#f8fafc' }} />
           <Bar
-            dataKey={isPct ? 'No Prazo Pct' : 'No Prazo'}
+            dataKey="No Prazo"
             stackId="a"
             fill="#059669"
             barSize={34}
             style={{ cursor: 'pointer' }}
           >
-            <LabelList content={<CustomSlaGreenLabel />} />
+            <LabelList dataKey="No Prazo" content={<CustomSlaGreenLabel />} />
           </Bar>
           <Bar
-            dataKey={isPct ? 'Fora do Prazo Pct' : 'Fora do Prazo'}
+            dataKey="Fora do Prazo"
             stackId="a"
             fill="#e11d48"
             barSize={34}
             radius={[0, 6, 6, 0]}
             style={{ cursor: 'pointer' }}
           >
-            <LabelList content={<CustomSlaRedLabel />} />
-            <LabelList content={<CustomSlaTotalLabel />} />
+            <LabelList dataKey="Fora do Prazo" content={<CustomSlaRedLabel />} />
+            <LabelList dataKey="Total" content={<CustomSlaTotalLabel />} />
           </Bar>
         </BarChart>
       </ResponsiveContainer>
