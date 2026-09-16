@@ -133,10 +133,88 @@ const DEFAULT_SITUACOES = [
   { nome: "Finalizado", dias_uteis: 1, aplica_faltas: true, aplica_sobras: true, aplica_recall: true, ordem: 17 },
 ];
 
+function deduplicateTarefasList<T extends TarefaCatalogo>(list: T[]): T[] {
+  const seen = new Set<string>();
+  const res: T[] = [];
+  for (const item of list) {
+    const key = String(item.nome || "").replace(/\s*\[recall\]/i, "").trim().toLowerCase();
+    if (!seen.has(key)) {
+      seen.add(key);
+      res.push(item);
+    }
+  }
+  return res;
+}
+
 async function ensureDefaultSituacoes(supabase: any) {
   try {
+    // 1. Limpa registros duplicados da tabela tarefas_catalogo no banco
+    const { data: allRows } = await supabase.from("tarefas_catalogo").select("*").order("ordem", { ascending: true });
+    
+    if (allRows && allRows.length > 0) {
+      const grouped = new Map<string, any[]>();
+      for (const row of allRows) {
+        const cleanNome = String(row.nome || "").replace(/\s*\[recall\]/i, "").trim();
+        const key = cleanNome.toLowerCase();
+        if (!key) continue;
+        if (!grouped.has(key)) {
+          grouped.set(key, []);
+        }
+        grouped.get(key)!.push(row);
+      }
+
+      const idsToDelete: string[] = [];
+      for (const [key, group] of grouped.entries()) {
+        const cleanNome = group[0].nome.replace(/\s*\[recall\]/i, "").trim();
+        if (group.length > 1) {
+          // Mantém a linha principal (preferencialmente nome exato sem sufixo ou menor ID/ordem)
+          const primary = group.find((r: any) => String(r.nome || "").trim().toLowerCase() === key) || group[0];
+          
+          const mergedFaltas = group.some((r: any) => r.aplica_faltas !== false);
+          const mergedSobras = group.some((r: any) => !!r.aplica_sobras);
+          const mergedRecall = group.some((r: any) => !!r.aplica_recall || /\[recall\]/i.test(r.nome));
+          const mergedAtivo = group.some((r: any) => r.ativo !== false);
+          
+          await supabase.from("tarefas_catalogo").update({
+            nome: cleanNome,
+            aplica_faltas: mergedFaltas,
+            aplica_sobras: mergedSobras,
+            aplica_recall: mergedRecall,
+            ativo: mergedAtivo
+          }).eq("id", primary.id);
+
+          for (const row of group) {
+            if (row.id !== primary.id) {
+              idsToDelete.push(row.id);
+              try {
+                await supabase.from("chamados_etapas").update({ tarefa_id: primary.id }).eq("tarefa_id", row.id);
+              } catch (e) {}
+              try {
+                await supabase.from("chamados_recall_etapas").update({ tarefa_id: primary.id }).eq("tarefa_id", row.id);
+              } catch (e) {}
+            }
+          }
+        } else {
+          // Linha única - garante nome limpo sem tag [recall] legada no campo nome
+          const row = group[0];
+          if (row.nome !== cleanNome) {
+            await supabase.from("tarefas_catalogo").update({ nome: cleanNome }).eq("id", row.id);
+          }
+        }
+      }
+
+      if (idsToDelete.length > 0) {
+        for (const id of idsToDelete) {
+          await supabase.from("tarefas_catalogo").delete().eq("id", id);
+        }
+      }
+    }
+
+    // 2. Insere situações padrão faltantes
     const { data: existing } = await supabase.from("tarefas_catalogo").select("nome");
-    const existingNames = new Set((existing ?? []).map((x: any) => String(x.nome || "").trim().toLowerCase()));
+    const existingNames = new Set(
+      (existing ?? []).map((x: any) => String(x.nome || "").replace(/\s*\[recall\]/i, "").trim().toLowerCase())
+    );
     const missing = DEFAULT_SITUACOES.filter((s) => !existingNames.has(s.nome.trim().toLowerCase()));
     if (missing.length > 0) {
       const rows = missing.map((s) => ({
@@ -174,7 +252,7 @@ export const listTarefas = createServerFn({ method: "GET" })
       if (tipo === "RECALL") return r.aplica_recall;
       return true;
     });
-    return filtered;
+    return deduplicateTarefasList(filtered);
   });
 
 export const listAllTarefas = createServerFn({ method: "GET" }).handler(async () => {
@@ -184,7 +262,7 @@ export const listAllTarefas = createServerFn({ method: "GET" }).handler(async ()
   await ensureDefaultSituacoes(supabase);
   const { data, error } = await supabase.from("tarefas_catalogo").select("*").order("ordem", { ascending: true });
   if (error) throw new Error(error.message);
-  return (data ?? []).map(normalizeTarefaRow);
+  return deduplicateTarefasList((data ?? []).map(normalizeTarefaRow));
 });
 
 export const upsertTarefa = createServerFn({ method: "POST" })
@@ -280,11 +358,12 @@ export const listAllEtapasCatalogo = createServerFn({ method: "GET" }).handler(a
   await requireUnlockedSession();
   const supabase = await getSupabase();
   const { data, error } = await supabase.from("etapas_catalogo").select("*").order("ordem", { ascending: true });
-  if (error && (error.code === "PGRST205" || error.code === "42P01" || error.message?.includes("etapas_catalogo"))) {
-    return [];
+  if (error && (error.code === "PGRST205" || error.code === "42P01" || error.message?.includes("etapas_catalogo") || error.message?.includes("schema cache"))) {
+    return { rows: [], tableMissing: true };
   }
   if (error) throw new Error(error.message);
-  return (data ?? []).map(normalizeTarefaRow);
+  const rows = (data ?? []).map(normalizeTarefaRow);
+  return { rows, tableMissing: false };
 });
 
 export const upsertEtapaCatalogo = createServerFn({ method: "POST" })
@@ -315,13 +394,32 @@ export const upsertEtapaCatalogo = createServerFn({ method: "POST" })
       ordem: Number(data.ordem) || 0,
     };
 
+    const isMissingTable = (err: any) => err && (err.code === "PGRST205" || err.code === "42P01" || err.message?.includes("etapas_catalogo") || err.message?.includes("schema cache"));
+
     if (data.id) {
       let { error } = await supabase.from("etapas_catalogo").update(rowFull).eq("id", data.id);
+      if (error && (error.message?.includes("aplica_recall") || error.code === "PGRST204")) {
+        const { aplica_recall, ...rowWithoutRecall } = rowFull;
+        const res = await supabase.from("etapas_catalogo").update(rowWithoutRecall).eq("id", data.id);
+        error = res.error;
+      }
+      if (isMissingTable(error)) {
+        throw new Error("A tabela 'public.etapas_catalogo' não foi encontrada no banco Supabase. Por favor, execute o script SQL de criação no Supabase SQL Editor.");
+      }
       if (error) throw new Error(error.message);
       return { ok: true, id: data.id };
     }
 
     let { data: inserted, error } = await supabase.from("etapas_catalogo").insert(rowFull).select().single();
+    if (error && (error.message?.includes("aplica_recall") || error.code === "PGRST204")) {
+      const { aplica_recall, ...rowWithoutRecall } = rowFull;
+      const res = await supabase.from("etapas_catalogo").insert(rowWithoutRecall).select().single();
+      inserted = res.data;
+      error = res.error;
+    }
+    if (isMissingTable(error)) {
+      throw new Error("A tabela 'public.etapas_catalogo' não foi encontrada no banco Supabase. Por favor, execute o script SQL de criação no Supabase SQL Editor.");
+    }
     if (error) throw new Error(error.message);
     return { ok: true, id: inserted?.id };
   });
@@ -333,6 +431,9 @@ export const deleteEtapaCatalogo = createServerFn({ method: "POST" })
     await requireUnlockedSession();
     const supabase = await getSupabase();
     const { error } = await supabase.from("etapas_catalogo").delete().eq("id", data.id);
+    if (error && (error.code === "PGRST205" || error.code === "42P01" || error.message?.includes("etapas_catalogo") || error.message?.includes("schema cache"))) {
+      throw new Error("A tabela 'public.etapas_catalogo' não foi encontrada no banco Supabase. Por favor, execute o script SQL de criação no Supabase SQL Editor.");
+    }
     if (error) throw new Error(error.message);
     return { ok: true };
   });

@@ -405,7 +405,7 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
         <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-1">
           <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-2xl w-full max-w-[99vw] h-[99vh] flex flex-col overflow-hidden">
             <div className="flex items-center justify-between px-5 py-2 border-b border-slate-200 bg-white shrink-0">
-              <h2 className="text-base font-bold text-slate-800">Novo Chamado</h2>
+              <h2 className="text-base font-bold text-slate-800">{tabela === "recall" ? "Novo Chamado de Recall" : "Novo Chamado"}</h2>
               <button onClick={() => setCreating(false)} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5"/></button>
             </div>
             <div className="flex-1 min-h-0 p-3 overflow-hidden">

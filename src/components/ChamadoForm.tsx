@@ -539,7 +539,9 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
           <header className="mb-4 flex items-center justify-between">
             <div>
               <h1 className="text-xl font-bold text-slate-800 tracking-tight">
-                {mode === "editar" ? `Editar Chamado nº ${form.Chamado}` : `Novo Chamado — ${tabela === "recall" ? "Recall" : "Faltas"}`}
+                {mode === "editar"
+                  ? (tabela === "recall" ? `Editar Chamado de Recall nº ${form.Chamado}` : `Editar Chamado nº ${form.Chamado}`)
+                  : (tabela === "recall" ? "Novo Chamado de Recall" : `Novo Chamado — ${tabela === "sobras" ? "Sobras" : "Faltas"}`)}
               </h1>
               <p className="text-xs text-slate-500 mt-0.5">
                 {mode === "editar" ? "Altere ou consulte as informações do chamado" : "Preencha os dados abaixo para registrar um novo chamado"}

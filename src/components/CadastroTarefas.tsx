@@ -20,7 +20,24 @@ export default function CadastroTarefas() {
   const [editing, setEditing] = useState<Partial<T> | null>(null);
   const [page, setPage] = useState(0);
 
-  const load = async () => { setLoading(true); try { setRows(await list() as any); } finally { setLoading(false); } };
+  const load = async () => {
+    setLoading(true);
+    try {
+      const data = (await list()) as T[];
+      const seen = new Set<string>();
+      const unique: T[] = [];
+      for (const item of data || []) {
+        const key = String(item.nome || "").replace(/\s*\[recall\]/i, "").trim().toLowerCase();
+        if (!seen.has(key)) {
+          seen.add(key);
+          unique.push(item);
+        }
+      }
+      setRows(unique);
+    } finally {
+      setLoading(false);
+    }
+  };
   useEffect(() => { load(); }, []);
   const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const paginated = useMemo(() => rows.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE), [rows, page]);

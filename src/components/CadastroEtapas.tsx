@@ -1,11 +1,28 @@
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
-import { Plus, Loader2, Save, X, Pencil, Trash2 } from "lucide-react";
+import { Plus, Loader2, Save, X, Pencil, Trash2, AlertTriangle, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
 import { listAllEtapasCatalogo, upsertEtapaCatalogo, deleteEtapaCatalogo } from "@/lib/chamados.functions";
 import Pagination from "./Pagination";
 
 const PAGE_SIZE = 30;
+
+const CREATE_ETAPAS_SQL = `-- Executar no SQL Editor do Supabase para criar a tabela etapas_catalogo
+CREATE TABLE IF NOT EXISTS public.etapas_catalogo (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  nome text NOT NULL,
+  dias_uteis integer NOT NULL DEFAULT 1,
+  aplica_faltas boolean NOT NULL DEFAULT false,
+  aplica_sobras boolean NOT NULL DEFAULT false,
+  aplica_recall boolean NOT NULL DEFAULT false,
+  ativo boolean NOT NULL DEFAULT true,
+  ordem integer NOT NULL DEFAULT 0,
+  created_at timestamptz NOT NULL DEFAULT now(),
+  updated_at timestamptz NOT NULL DEFAULT now()
+);
+
+GRANT ALL ON public.etapas_catalogo TO service_role;
+ALTER TABLE public.etapas_catalogo ENABLE ROW LEVEL SECURITY;`;
 
 type T = { id: string; nome: string; dias_uteis: number; aplica_faltas: boolean; aplica_sobras: boolean; aplica_recall?: boolean; ativo: boolean; ordem: number };
 
@@ -15,16 +32,55 @@ export default function CadastroEtapas() {
   const del = useServerFn(deleteEtapaCatalogo);
   const [rows, setRows] = useState<T[]>([]);
   const [loading, setLoading] = useState(true);
+  const [tableMissing, setTableMissing] = useState(false);
+  const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "ok" | "err"; msg: string } | null>(null);
   const [editing, setEditing] = useState<Partial<T> | null>(null);
   const [page, setPage] = useState(0);
 
-  const load = async () => { setLoading(true); try { setRows(await list() as any); } finally { setLoading(false); } };
+  const load = async () => {
+    setLoading(true);
+    try {
+      const res = await list() as any;
+      let rawRows: T[] = [];
+      if (res && typeof res === "object" && "rows" in res) {
+        rawRows = res.rows || [];
+        setTableMissing(!!res.tableMissing);
+      } else if (Array.isArray(res)) {
+        rawRows = res;
+        setTableMissing(false);
+      }
+      const seen = new Set<string>();
+      const unique: T[] = [];
+      for (const item of rawRows) {
+        const key = String(item.nome || "").replace(/\s*\[recall\]/i, "").trim().toLowerCase();
+        if (!seen.has(key)) {
+          seen.add(key);
+          unique.push(item);
+        }
+      }
+      setRows(unique);
+    } catch (e: any) {
+      if (e?.message?.includes("etapas_catalogo") || e?.message?.includes("schema cache")) {
+        setTableMissing(true);
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => { load(); }, []);
   const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const paginated = useMemo(() => rows.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE), [rows, page]);
   useEffect(() => { setPage(0); }, [rows.length]);
+
+  const copySql = () => {
+    navigator.clipboard.writeText(CREATE_ETAPAS_SQL);
+    setCopied(true);
+    toast.success("Script SQL copiado para a área de transferência!");
+    setTimeout(() => setCopied(false), 2000);
+  };
 
   const save = async () => {
     setFeedback(null);
@@ -82,6 +138,33 @@ export default function CadastroEtapas() {
             <span>Nova Etapa</span>
           </button>
         </header>
+
+        {tableMissing && (
+          <div className="p-4 md:p-5 rounded-2xl bg-amber-50/90 border border-amber-200 text-amber-900 text-xs space-y-3 shadow-xs">
+            <div className="flex items-start gap-2.5 font-bold text-amber-900 text-sm">
+              <AlertTriangle className="w-5 h-5 text-amber-600 flex-shrink-0 mt-0.5" />
+              <div>
+                <span>Tabela <code className="bg-amber-100/90 text-amber-950 px-1.5 py-0.5 rounded-md font-mono border border-amber-300/60">public.etapas_catalogo</code> não encontrada no Supabase</span>
+                <p className="text-xs font-normal text-amber-800 mt-1">
+                  A tabela necessária para armazenar o cadastro de etapas ainda não existe no seu projeto do Supabase.
+                  Para ativá-la, copie o comando SQL abaixo e execute no <strong>SQL Editor</strong> do painel Supabase:
+                </p>
+              </div>
+            </div>
+            <div className="relative mt-2">
+              <pre className="bg-slate-900 text-slate-100 p-4 rounded-xl font-mono text-[11px] leading-relaxed overflow-x-auto border border-slate-800">
+{CREATE_ETAPAS_SQL}
+              </pre>
+              <button
+                onClick={copySql}
+                className="absolute top-3 right-3 inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg transition-colors cursor-pointer shadow-xs"
+              >
+                {copied ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
+                <span>{copied ? "Copiado!" : "Copiar SQL"}</span>
+              </button>
+            </div>
+          </div>
+        )}
 
         <div className="bg-white border border-slate-200/80 rounded-xl shadow-xs overflow-hidden">
           {loading ? (
