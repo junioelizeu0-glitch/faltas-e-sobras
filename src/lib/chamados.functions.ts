@@ -328,6 +328,18 @@ export const deleteTarefa = createServerFn({ method: "POST" })
     return { ok: true };
   });
 
+export const deleteMultipleTarefas = createServerFn({ method: "POST" })
+  .validator((data: { ids: string[] }) => data)
+  .handler(async ({ data }) => {
+    const { requireUnlockedSession } = await import("@/lib/gate.server");
+    await requireUnlockedSession();
+    if (!data.ids || data.ids.length === 0) return { ok: true, count: 0 };
+    const supabase = await getSupabase();
+    const { error, count } = await supabase.from("tarefas_catalogo").delete().in("id", data.ids);
+    if (error) throw new Error(error.message);
+    return { ok: true, count };
+  });
+
 // ===== Etapas catálogo =====
 export const listEtapasCatalogo = createServerFn({ method: "GET" })
   .validator((data: { tipo?: "FALTAS" | "SOBRAS" | "RECALL" | "TODAS" } | undefined) => data ?? {})
@@ -436,6 +448,21 @@ export const deleteEtapaCatalogo = createServerFn({ method: "POST" })
     }
     if (error) throw new Error(error.message);
     return { ok: true };
+  });
+
+export const deleteMultipleEtapasCatalogo = createServerFn({ method: "POST" })
+  .validator((data: { ids: string[] }) => data)
+  .handler(async ({ data }) => {
+    const { requireUnlockedSession } = await import("@/lib/gate.server");
+    await requireUnlockedSession();
+    if (!data.ids || data.ids.length === 0) return { ok: true, count: 0 };
+    const supabase = await getSupabase();
+    const { error, count } = await supabase.from("etapas_catalogo").delete().in("id", data.ids);
+    if (error && (error.code === "PGRST205" || error.code === "42P01" || error.message?.includes("etapas_catalogo") || error.message?.includes("schema cache"))) {
+      throw new Error("A tabela 'public.etapas_catalogo' não foi encontrada no banco Supabase. Por favor, execute o script SQL de criação no Supabase SQL Editor.");
+    }
+    if (error) throw new Error(error.message);
+    return { ok: true, count };
   });
 // ===== Chamado completo =====
 export const createChamadoCompleto = createServerFn({ method: "POST" })

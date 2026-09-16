@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { Plus, Loader2, Save, X, Pencil, Trash2, AlertTriangle, Copy, Check } from "lucide-react";
 import { toast } from "sonner";
-import { listAllEtapasCatalogo, upsertEtapaCatalogo, deleteEtapaCatalogo } from "@/lib/chamados.functions";
+import { listAllEtapasCatalogo, upsertEtapaCatalogo, deleteEtapaCatalogo, deleteMultipleEtapasCatalogo } from "@/lib/chamados.functions";
 import Pagination from "./Pagination";
 
 const PAGE_SIZE = 30;
@@ -30,17 +30,21 @@ export default function CadastroEtapas() {
   const list = useServerFn(listAllEtapasCatalogo);
   const up = useServerFn(upsertEtapaCatalogo);
   const del = useServerFn(deleteEtapaCatalogo);
+  const delMultiple = useServerFn(deleteMultipleEtapasCatalogo);
   const [rows, setRows] = useState<T[]>([]);
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
   const [loading, setLoading] = useState(true);
   const [tableMissing, setTableMissing] = useState(false);
   const [copied, setCopied] = useState(false);
   const [saving, setSaving] = useState(false);
+  const [deletingMultiple, setDeletingMultiple] = useState(false);
   const [feedback, setFeedback] = useState<{ type: "ok" | "err"; msg: string } | null>(null);
   const [editing, setEditing] = useState<Partial<T> | null>(null);
   const [page, setPage] = useState(0);
 
   const load = async () => {
     setLoading(true);
+    setSelectedIds(new Set());
     try {
       const res = await list() as any;
       let rawRows: T[] = [];
@@ -74,6 +78,45 @@ export default function CadastroEtapas() {
   const totalPages = Math.max(1, Math.ceil(rows.length / PAGE_SIZE));
   const paginated = useMemo(() => rows.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE), [rows, page]);
   useEffect(() => { setPage(0); }, [rows.length]);
+
+  const isAllPageSelected = useMemo(() => {
+    if (paginated.length === 0) return false;
+    return paginated.every((r) => selectedIds.has(r.id));
+  }, [paginated, selectedIds]);
+
+  const toggleSelectAll = () => {
+    const next = new Set(selectedIds);
+    if (isAllPageSelected) {
+      paginated.forEach((r) => next.delete(r.id));
+    } else {
+      paginated.forEach((r) => next.add(r.id));
+    }
+    setSelectedIds(next);
+  };
+
+  const toggleSelectRow = (id: string) => {
+    const next = new Set(selectedIds);
+    if (next.has(id)) next.delete(id);
+    else next.add(id);
+    setSelectedIds(next);
+  };
+
+  const removeSelected = async () => {
+    const count = selectedIds.size;
+    if (count === 0) return;
+    if (!confirm(`Tem certeza que deseja excluir as ${count} etapas selecionadas?`)) return;
+    setDeletingMultiple(true);
+    try {
+      await delMultiple({ data: { ids: Array.from(selectedIds) } });
+      toast.success(`${count} ${count === 1 ? "etapa excluída" : "etapas excluídas"} com sucesso!`);
+      setSelectedIds(new Set());
+      await load();
+    } catch (e: any) {
+      toast.error(e?.message || "Erro ao excluir etapas selecionadas.");
+    } finally {
+      setDeletingMultiple(false);
+    }
+  };
 
   const copySql = () => {
     navigator.clipboard.writeText(CREATE_ETAPAS_SQL);
@@ -111,6 +154,7 @@ export default function CadastroEtapas() {
       setSaving(false);
     }
   };
+
   const remove = async (id: string) => {
     if (!confirm("Remover etapa do catálogo?")) return;
     try {
@@ -130,13 +174,25 @@ export default function CadastroEtapas() {
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">Cadastro de Etapas do Fluxo</h1>
             <p className="text-xs text-slate-500 mt-1">Gerencie as etapas disponíveis para a aba Etapas dos chamados.</p>
           </div>
-          <button
-            onClick={() => setEditing({ ativo: true, aplica_faltas: true, aplica_sobras: false, aplica_recall: false })}
-            className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl cursor-pointer shadow-xs transition-colors"
-          >
-            <Plus className="w-4 h-4"/>
-            <span>Nova Etapa</span>
-          </button>
+          <div className="flex items-center gap-2">
+            {selectedIds.size > 0 && (
+              <button
+                disabled={deletingMultiple}
+                onClick={removeSelected}
+                className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-rose-600 hover:bg-rose-700 rounded-xl cursor-pointer shadow-xs transition-colors disabled:opacity-50"
+              >
+                {deletingMultiple ? <Loader2 className="w-4 h-4 animate-spin"/> : <Trash2 className="w-4 h-4"/>}
+                <span>Excluir Selecionadas ({selectedIds.size})</span>
+              </button>
+            )}
+            <button
+              onClick={() => setEditing({ ativo: true, aplica_faltas: true, aplica_sobras: false, aplica_recall: false })}
+              className="inline-flex items-center gap-2 px-4 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl cursor-pointer shadow-xs transition-colors"
+            >
+              <Plus className="w-4 h-4"/>
+              <span>Nova Etapa</span>
+            </button>
+          </div>
         </header>
 
         {tableMissing && (
@@ -176,6 +232,15 @@ export default function CadastroEtapas() {
             <table className="min-w-full text-xs text-left border-collapse">
               <thead className="bg-slate-50 text-slate-600 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">
                 <tr>
+                  <th className="px-4 py-3 w-10 text-center">
+                    <input
+                      type="checkbox"
+                      checked={isAllPageSelected}
+                      onChange={toggleSelectAll}
+                      className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                      title="Selecionar todos da página"
+                    />
+                  </th>
                   <th className="px-4 py-3">Ordem</th>
                   <th className="px-4 py-3">Nome da Etapa</th>
                   <th className="px-4 py-3">SLA</th>
@@ -187,28 +252,39 @@ export default function CadastroEtapas() {
                 </tr>
               </thead>
               <tbody className="divide-y divide-slate-100 bg-white">
-                {paginated.map((r) => (
-                  <tr key={r.id} className="hover:bg-slate-50/80 transition-colors">
-                    <td className="px-4 py-3 font-mono font-bold text-slate-500">{r.ordem}</td>
-                    <td className="px-4 py-3 font-bold text-slate-900">{r.nome}</td>
-                    <td className="px-4 py-3 text-slate-700 font-medium">{r.dias_uteis} dias úteis</td>
-                    <td className="px-4 py-3">{r.aplica_faltas ? <span className="text-emerald-600 font-bold">✓</span> : <span className="text-slate-300">—</span>}</td>
-                    <td className="px-4 py-3">{r.aplica_sobras ? <span className="text-emerald-600 font-bold">✓</span> : <span className="text-slate-300">—</span>}</td>
-                    <td className="px-4 py-3">{r.aplica_recall ? <span className="text-emerald-600 font-bold">✓</span> : <span className="text-slate-300">—</span>}</td>
-                    <td className="px-4 py-3">{r.ativo ? <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60">Sim</span> : <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500">Não</span>}</td>
-                    <td className="px-4 py-3 text-right space-x-1">
-                      <button onClick={() => setEditing(r)} title="Editar" className="inline-flex items-center p-1.5 text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer">
-                        <Pencil className="w-3.5 h-3.5"/>
-                      </button>
-                      <button onClick={() => remove(r.id)} title="Excluir" className="inline-flex items-center p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer">
-                        <Trash2 className="w-3.5 h-3.5"/>
-                      </button>
-                    </td>
-                  </tr>
-                ))}
+                {paginated.map((r) => {
+                  const isSelected = selectedIds.has(r.id);
+                  return (
+                    <tr key={r.id} className={`transition-colors ${isSelected ? "bg-emerald-50/50" : "hover:bg-slate-50/80"}`}>
+                      <td className="px-4 py-3 text-center">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleSelectRow(r.id)}
+                          className="rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer"
+                        />
+                      </td>
+                      <td className="px-4 py-3 font-mono font-bold text-slate-500">{r.ordem}</td>
+                      <td className="px-4 py-3 font-bold text-slate-900">{r.nome}</td>
+                      <td className="px-4 py-3 text-slate-700 font-medium">{r.dias_uteis} dias úteis</td>
+                      <td className="px-4 py-3">{r.aplica_faltas ? <span className="text-emerald-600 font-bold">✓</span> : <span className="text-slate-300">—</span>}</td>
+                      <td className="px-4 py-3">{r.aplica_sobras ? <span className="text-emerald-600 font-bold">✓</span> : <span className="text-slate-300">—</span>}</td>
+                      <td className="px-4 py-3">{r.aplica_recall ? <span className="text-emerald-600 font-bold">✓</span> : <span className="text-slate-300">—</span>}</td>
+                      <td className="px-4 py-3">{r.ativo ? <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60">Sim</span> : <span className="inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-500">Não</span>}</td>
+                      <td className="px-4 py-3 text-right space-x-1">
+                        <button onClick={() => setEditing(r)} title="Editar" className="inline-flex items-center p-1.5 text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer">
+                          <Pencil className="w-3.5 h-3.5"/>
+                        </button>
+                        <button onClick={() => remove(r.id)} title="Excluir" className="inline-flex items-center p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer">
+                          <Trash2 className="w-3.5 h-3.5"/>
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })}
                 {rows.length === 0 && (
                   <tr>
-                    <td colSpan={8} className="px-4 py-8 text-center text-slate-400">
+                    <td colSpan={9} className="px-4 py-8 text-center text-slate-400">
                       Nenhuma etapa cadastrada no catálogo.
                     </td>
                   </tr>
