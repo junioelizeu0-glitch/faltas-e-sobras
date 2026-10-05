@@ -1349,13 +1349,14 @@ const ConferenteBarChart = ({ items, limit, onOpenModal }: { items: any[]; limit
 
 const PodioRankingConferentes = ({ data, onOpenModal }: { data: any; onOpenModal?: any }) => {
   const [statusFilter, setStatusFilter] = useState<'aprovados' | 'recusados' | 'todos'>('aprovados');
-  const [cdFilter, setCdFilter] = useState<'geral' | 'es' | 'pb'>('geral');
+  const [cdFilter, setCdFilter] = useState<'geral' | 'es' | 'pb' | 'to'>('geral');
   const [searchQuery, setSearchQuery] = useState('');
 
   // 1. Obter lista base de conferentes pelo CD selecionado
   const baseList = useMemo(() => {
     if (cdFilter === 'es') return data.charts?.conferentesES || [];
     if (cdFilter === 'pb') return data.charts?.conferentesPB || [];
+    if (cdFilter === 'to') return data.charts?.conferentesTO || [];
     return data.charts?.conferentesGeral || [];
   }, [cdFilter, data]);
 
@@ -1491,6 +1492,16 @@ const PodioRankingConferentes = ({ data, onOpenModal }: { data: any; onOpenModal
             }`}
           >
             CD Paraíba
+          </button>
+          <button
+            onClick={() => setCdFilter('to')}
+            className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer ${
+              cdFilter === 'to'
+                ? 'bg-white text-emerald-800 shadow-xs border border-slate-200'
+                : 'text-slate-600 hover:text-slate-900'
+            }`}
+          >
+            CD Tocantins
           </button>
         </div>
 
@@ -2193,7 +2204,7 @@ export default function Dashboard() {
         )}
         {selectedSubmenu === 'cad_conferentes' && (
           <CadastroSimples titulo="Conferentes" nomeLabel="Conferente" listFn={listConferentes} upsertFn={upsertConferente} deleteFn={deleteConferente}
-            extraFields={[{ key: "cd", label: "CD", type: "select", options: ["ES", "PB"] }]} />
+            extraFields={[{ key: "cd", label: "CD", type: "select", options: ["ES", "PB", "TO"] }]} />
         )}
 
         {selectedSubmenu === 'cad_motivos' && (

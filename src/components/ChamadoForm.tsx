@@ -36,7 +36,7 @@ const SITUACAO_RECALL_OPCOES = [
   "Aguardando monitoramento", "Chamado Aprovado", "Chamado Recusado", "Finalizar Chamado", "Finalizado",
 ];
 const TIPO_OPCOES = ["Franquia", "Própria"];
-const CD_OPCOES = ["ES", "PB"];
+const CD_OPCOES = ["ES", "PB", "TO"];
 
 const hojeISO = () => {
   const d = new Date();
@@ -712,7 +712,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
               )}
               {manage === "conf" && (
                 <CadastroSimples titulo="Conferentes" listFn={listConferentes} upsertFn={upsertConferente} deleteFn={deleteConferente}
-                  extraFields={[{ key: "cd", label: "CD", type: "select", options: ["ES", "PB"] }]} />
+                  extraFields={[{ key: "cd", label: "CD", type: "select", options: ["ES", "PB", "TO"] }]} />
               )}
               {manage === "motivo" && (
                 <CadastroSimples titulo="Motivos" listFn={listMotivos} upsertFn={upsertMotivo} deleteFn={deleteMotivo} />

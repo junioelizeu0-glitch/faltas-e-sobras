@@ -49,6 +49,19 @@ function tarefaAtual(r: any) {
   return String(r.situacao || r["Situação "] || "").trim() || "—";
 }
 
+function isMatchExato(valor: any, filtro: string): boolean {
+  const f = filtro.trim().toLowerCase();
+  if (!f) return true;
+  const strVal = String(valor ?? "").trim().toLowerCase();
+  if (strVal === f) return true;
+  const numVal = Number(strVal);
+  const numF = Number(f);
+  if (!isNaN(numVal) && !isNaN(numF) && strVal !== "" && f !== "") {
+    return numVal === numF;
+  }
+  return false;
+}
+
 type Props = { rawData: any[] | undefined; onChanged?: () => void; tabela?: "faltas" | "recall" };
 
 export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas" }: Props) {
@@ -100,9 +113,6 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
 
   const linhas = useMemo(() => {
     const fGlobal = busca.trim().toLowerCase();
-    const fChamado = filtroChamado.trim().toLowerCase();
-    const fLoja = filtroLoja.trim().toLowerCase();
-    const fNF = filtroNF.trim().toLowerCase();
 
     return (rawData || [])
       .filter((r: any) => {
@@ -111,19 +121,19 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
         const t = tarefaAtual(r);
         if (filtroTarefa !== "Todas" && t !== filtroTarefa) return false;
 
-        if (fLoja) {
-          const l = String(r.Loja || r.loja || "").toLowerCase();
-          if (!l.includes(fLoja)) return false;
+        if (filtroLoja.trim()) {
+          const l = r.Loja ?? r.loja;
+          if (!isMatchExato(l, filtroLoja)) return false;
         }
 
-        if (fChamado) {
-          const cham = String(r.Chamado || r["Chamados"] || r.chamadoId || "").toLowerCase();
-          if (!cham.includes(fChamado)) return false;
+        if (filtroChamado.trim()) {
+          const cham = r.Chamado ?? r["Chamados"] ?? r.chamadoId;
+          if (!isMatchExato(cham, filtroChamado)) return false;
         }
 
-        if (fNF) {
-          const nf = String(r.NF || r["Nº Nfe"] || r.nfe || "").toLowerCase();
-          if (!nf.includes(fNF)) return false;
+        if (filtroNF.trim()) {
+          const nf = r.NF ?? r["Nº Nfe"] ?? r.nfe;
+          if (!isMatchExato(nf, filtroNF)) return false;
         }
 
         if (!fGlobal) return true;
@@ -235,36 +245,72 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
           </div>
         </header>
 
-        {/* Filtros Avançados */}
+        {/* Filtros Avançados com Lupa em Cada Campo e Busca Exata */}
         <div className="flex flex-wrap gap-3 bg-slate-50/70 border border-slate-200/60 rounded-xl p-3.5 items-end text-xs">
           <div className="flex flex-col min-w-[140px] flex-1 max-w-[180px]">
-            <label className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Nº Chamado</label>
-            <input
-              value={filtroChamado}
-              onChange={(e) => setFiltroChamado(e.target.value)}
-              placeholder="Ex: 12345"
-              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium"
-            />
+            <label className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider flex items-center justify-between">
+              <span>Nº Chamado</span>
+              <span className="text-[9px] text-emerald-600 font-normal uppercase">Exato</span>
+            </label>
+            <div className="relative flex items-center">
+              <input
+                value={filtroChamado}
+                onChange={(e) => setFiltroChamado(e.target.value)}
+                placeholder="Ex: 12345"
+                className="w-full pl-3 pr-8 py-2 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium"
+              />
+              <button
+                type="button"
+                title="Buscar Chamado Exato"
+                className="absolute right-2 text-slate-400 hover:text-emerald-700 transition-colors p-1 cursor-pointer"
+              >
+                <Search className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-col min-w-[140px] flex-1 max-w-[180px]">
-            <label className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Loja</label>
-            <input
-              value={filtroLoja}
-              onChange={(e) => setFiltroLoja(e.target.value)}
-              placeholder="Ex: 105"
-              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium"
-            />
+            <label className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider flex items-center justify-between">
+              <span>Loja</span>
+              <span className="text-[9px] text-emerald-600 font-normal uppercase">Exato</span>
+            </label>
+            <div className="relative flex items-center">
+              <input
+                value={filtroLoja}
+                onChange={(e) => setFiltroLoja(e.target.value)}
+                placeholder="Ex: 4"
+                className="w-full pl-3 pr-8 py-2 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium"
+              />
+              <button
+                type="button"
+                title="Buscar Loja Exata"
+                className="absolute right-2 text-slate-400 hover:text-emerald-700 transition-colors p-1 cursor-pointer"
+              >
+                <Search className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-col min-w-[140px] flex-1 max-w-[180px]">
-            <label className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Nº NF</label>
-            <input
-              value={filtroNF}
-              onChange={(e) => setFiltroNF(e.target.value)}
-              placeholder="Ex: 98765"
-              className="w-full px-3 py-2 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium"
-            />
+            <label className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider flex items-center justify-between">
+              <span>Nº NF</span>
+              <span className="text-[9px] text-emerald-600 font-normal uppercase">Exato</span>
+            </label>
+            <div className="relative flex items-center">
+              <input
+                value={filtroNF}
+                onChange={(e) => setFiltroNF(e.target.value)}
+                placeholder="Ex: 98765"
+                className="w-full pl-3 pr-8 py-2 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium"
+              />
+              <button
+                type="button"
+                title="Buscar NF Exata"
+                className="absolute right-2 text-slate-400 hover:text-emerald-700 transition-colors p-1 cursor-pointer"
+              >
+                <Search className="w-3.5 h-3.5" />
+              </button>
+            </div>
           </div>
 
           <div className="flex flex-col min-w-[160px] flex-1 max-w-[200px]">
@@ -293,14 +339,20 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
 
           <div className="relative min-w-[200px] flex-1">
             <label className="block text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider">Busca Geral</label>
-            <div className="relative">
-              <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
+            <div className="relative flex items-center">
               <input
                 value={busca}
                 onChange={(e) => setBusca(e.target.value)}
                 placeholder="Busca por CD, Conferente, Transportadora..."
-                className="w-full pl-9 pr-3 py-2 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium"
+                className="w-full pl-3 pr-8 py-2 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium"
               />
+              <button
+                type="button"
+                title="Buscar Geral"
+                className="absolute right-2 text-slate-400 hover:text-emerald-700 transition-colors p-1 cursor-pointer"
+              >
+                <Search className="w-3.5 h-3.5" />
+              </button>
             </div>
           </div>
 

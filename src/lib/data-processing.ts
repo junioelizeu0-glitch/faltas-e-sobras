@@ -317,6 +317,7 @@ export function useDashboardData(filters?: FilterState, tabela: "faltas" | "reca
     const confMap: Record<string, any> = {};
     const confMapES: Record<string, any> = {};
     const confMapPB: Record<string, any> = {};
+    const confMapTO: Record<string, any> = {};
 
     rawData.forEach((item) => {
       const isValValid = isValidValue(item[" Valor "]);
@@ -730,6 +731,28 @@ export function useDashboardData(filters?: FilterState, tabela: "faltas" | "reca
             }
           }
           if (statusChamado === "Recusado") confMapPB[conf].recusados++;
+        } else if (
+          cdStr.includes("TO") ||
+          cdStr.includes("TOCANTINS")
+        ) {
+          if (!confMapTO[conf])
+            confMapTO[conf] = {
+              name: conf,
+              analisados: 0,
+              aprovados: 0,
+              aprovadosMotivoConferente: 0,
+              recusados: 0,
+              valAprovadoMotivo: 0,
+            };
+          confMapTO[conf].analisados++;
+          if (statusChamado === "Aprovado") {
+            confMapTO[conf].aprovados++;
+            if (isErroConf) {
+              confMapTO[conf].aprovadosMotivoConferente++;
+              confMapTO[conf].valAprovadoMotivo += val || 0;
+            }
+          }
+          if (statusChamado === "Recusado") confMapTO[conf].recusados++;
         }
       }
 
@@ -865,6 +888,9 @@ export function useDashboardData(filters?: FilterState, tabela: "faltas" | "reca
         (a: any, b: any) => b.aprovados + b.recusados - (a.aprovados + a.recusados),
       ),
       conferentesPB: Object.values(confMapPB).sort(
+        (a: any, b: any) => b.aprovados + b.recusados - (a.aprovados + a.recusados),
+      ),
+      conferentesTO: Object.values(confMapTO).sort(
         (a: any, b: any) => b.aprovados + b.recusados - (a.aprovados + a.recusados),
       ),
       taxaAprovacaoCdData: Object.values(cdMap)

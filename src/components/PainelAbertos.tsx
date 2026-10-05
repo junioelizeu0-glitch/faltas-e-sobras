@@ -42,10 +42,11 @@ function isFinalizado(r: any) {
 
 function siglaCD(v: any): string {
   const s = String(v ?? "").toUpperCase();
-  const m = s.match(/\b(ES|PB)\b/);
+  const m = s.match(/\b(ES|PB|TO)\b/);
   if (m) return m[1];
   if (s.includes("ES")) return "ES";
   if (s.includes("PB")) return "PB";
+  if (s.includes("TO")) return "TO";
   return "";
 }
 
@@ -111,7 +112,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
 
   // Filtros da tabela de atividades
   const [query, setQuery] = useState("");
-  const [cdFilter, setCdFilter] = useState<"Todos" | "ES" | "PB">("Todos");
+  const [cdFilter, setCdFilter] = useState<"Todos" | "ES" | "PB" | "TO">("Todos");
   const [alertaFilter, setAlertaFilter] = useState<"todos" | "vencido" | "atencao" | "prazo">("todos");
   const [statusFilter, setStatusFilter] = useState<string>("Todos");
   const [tarefaFilter, setTarefaFilter] = useState<string>("Todas");
@@ -725,6 +726,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
                   <option value="Todos">Todos os CDs</option>
                   <option value="ES">ES</option>
                   <option value="PB">PB</option>
+                  <option value="TO">TO</option>
                 </select>
               </div>
 
