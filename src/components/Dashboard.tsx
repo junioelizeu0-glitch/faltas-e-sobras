@@ -2057,7 +2057,8 @@ export default function Dashboard() {
       cd: 'Todos',
       transp: 'Todas',
       status: 'Todos',
-      tipo: 'Todos'
+      tipo: 'Todos',
+      ref: ''
     };
   };
 
@@ -2649,6 +2650,21 @@ export default function Dashboard() {
                      <option>Recusado</option>
                      <option>Pendente</option>
                   </select>
+               </div>
+
+               <div className="flex flex-col gap-1.5">
+                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Ref / Produto</label>
+                  <div className="relative">
+                    <input
+                      type="text"
+                      placeholder="Buscar Ref..."
+                      value={filterSelections.ref || ''}
+                      onChange={(e) => setFilterSelections({...filterSelections, ref: e.target.value})}
+                      onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
+                      className="bg-white border border-slate-300 text-slate-700 h-9 pl-7 pr-3 rounded shadow-sm outline-none focus:ring-1 focus:ring-blue-500 font-medium text-xs max-w-[150px]"
+                    />
+                    <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
+                  </div>
                </div>
 
                <button onClick={handleSearch} disabled={isLoading} className="ml-auto flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold h-9 px-6 rounded border border-blue-500 transition-colors shadow-sm focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 disabled:opacity-50 cursor-pointer">

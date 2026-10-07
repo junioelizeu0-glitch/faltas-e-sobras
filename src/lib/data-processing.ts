@@ -11,6 +11,7 @@ export type FilterState = {
   transp: string;
   status: string;
   tipo: string;
+  ref?: string;
 };
 
 export function isMotivoErroConferente(motivoRaw: any): boolean {
@@ -402,6 +403,17 @@ export function useDashboardData(filters?: FilterState, tabela: "faltas" | "reca
             return false;
           }
         }
+      }
+
+      if (filters.ref && filters.ref.trim() !== "") {
+        const term = filters.ref.toLowerCase().trim();
+        const itemRef = String(item["referencia"] || item["Referencia"] || item["Motivo"] || "").toLowerCase();
+        const subRefs = item["chamados_referencias"] || item["chamados_recall_referencias"] || item["referencias"];
+        let hasSubRefMatch = false;
+        if (Array.isArray(subRefs)) {
+          hasSubRefMatch = subRefs.some((r: any) => String(r.referencia || r.descricao || "").toLowerCase().includes(term));
+        }
+        if (!itemRef.includes(term) && !hasSubRefMatch) return false;
       }
 
       const refMap: Record<string, string> = {
