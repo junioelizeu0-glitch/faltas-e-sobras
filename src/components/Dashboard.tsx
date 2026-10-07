@@ -40,19 +40,13 @@ import ErrorBoundary from '@/components/ErrorBoundary';
 import { toPng } from 'html-to-image';
 import { exportToExcel } from '@/lib/excel-export';
 
-function RecallContainer({ selectedSubmenu, setSelectedSubmenu }: { selectedSubmenu: string; setSelectedSubmenu: (val: string | null) => void }) {
-  const { isLoading, error, refetch, rawData } = useDashboardData(undefined, "recall");
-
+function RecallContainer({ selectedSubmenu, setSelectedSubmenu, rawData, refetch }: { selectedSubmenu: string; setSelectedSubmenu: (val: string | null) => void; rawData: any[]; refetch: () => void }) {
   if (selectedSubmenu === "recall_novo") {
     return <NovoChamadoForm rawData={rawData} onCreated={() => refetch()} onClose={() => setSelectedSubmenu(null)} tabela="recall" />;
   }
 
   if (selectedSubmenu === "recall_consulta") {
     return <ConsultaChamados rawData={rawData} onChanged={() => refetch()} tabela="recall" />;
-  }
-
-  if (selectedSubmenu === "recall_relatorio") {
-    return <RelatorioRecall rawData={rawData} isLoading={isLoading} error={error} onChanged={() => refetch()} />;
   }
 
   return null;
@@ -1777,7 +1771,8 @@ export default function Dashboard() {
     }));
   };
 
-  const { kpis, filterOptions, isLoading, isRefetching, error, refetch, rawData } = useDashboardData(activeFilters);
+  const tabelaAtual: "faltas" | "recall" = selectedSubmenu && selectedSubmenu.startsWith("recall_") ? "recall" : "faltas";
+  const { kpis, filterOptions, isLoading, isRefetching, error, refetch, rawData } = useDashboardData(activeFilters, tabelaAtual);
   const charts = kpis?.charts;
 
   const fetchLojas = useServerFn(listLojas);
@@ -2190,9 +2185,9 @@ export default function Dashboard() {
           </ErrorBoundary>
         )}
 
-        {selectedSubmenu && ['recall_novo', 'recall_consulta', 'recall_relatorio'].includes(selectedSubmenu) && (
+        {selectedSubmenu && ['recall_novo', 'recall_consulta'].includes(selectedSubmenu) && (
           <ErrorBoundary fallbackTitle="Erro ao carregar módulo Recall">
-            <RecallContainer selectedSubmenu={selectedSubmenu} setSelectedSubmenu={setSelectedSubmenu} />
+            <RecallContainer selectedSubmenu={selectedSubmenu} setSelectedSubmenu={setSelectedSubmenu} rawData={rawData} refetch={refetch} />
           </ErrorBoundary>
         )}
 
@@ -2216,7 +2211,7 @@ export default function Dashboard() {
 
         {selectedSubmenu === 'aiiliana' && <AIliana />}
 
-        {selectedSubmenu === 'relatorio' && (
+        {(selectedSubmenu === 'relatorio' || selectedSubmenu === 'recall_relatorio') && (
           <div className="flex-1 flex flex-col overflow-hidden bg-slate-50">
             {/* Header Corporativo */}
             <header className="h-14 bg-white border-b border-slate-200 shadow-sm flex items-center justify-between px-6 flex-shrink-0 z-30">
@@ -2225,7 +2220,7 @@ export default function Dashboard() {
                   <img src="https://iili.io/CKolF1t.png" alt="Logo" className="object-cover w-full h-full" referrerPolicy="no-referrer" />
                 </div>
                 <div>
-                  <h1 className="text-sm font-bold tracking-wide text-slate-800">Dashboard <span className="text-slate-500 font-medium">| Faltas e Sobras</span></h1>
+                  <h1 className="text-sm font-bold tracking-wide text-slate-800">Dashboard <span className="text-slate-500 font-medium">| {tabelaAtual === 'recall' ? 'Recall' : 'Faltas e Sobras'}</span></h1>
                 </div>
               </div>
               <div className="flex items-center gap-4 text-xs font-semibold text-slate-600">
