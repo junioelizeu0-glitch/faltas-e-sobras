@@ -1773,6 +1773,12 @@ export default function Dashboard() {
 
   const tabelaAtual: "faltas" | "recall" = selectedSubmenu && selectedSubmenu.startsWith("recall_") ? "recall" : "faltas";
   const { kpis, filterOptions, isLoading, isRefetching, error, refetch, rawData } = useDashboardData(activeFilters, tabelaAtual);
+  
+  useEffect(() => {
+    if (tabelaAtual === 'recall' && (activeTab === 'transp_geral' || activeTab === 'conf_geral')) {
+      setActiveTab('executivo');
+    }
+  }, [tabelaAtual, activeTab]);
   const charts = kpis?.charts;
 
   const fetchLojas = useServerFn(listLojas);
@@ -2125,13 +2131,20 @@ export default function Dashboard() {
     setIsDrillDownOpen(true);
   };
 
-  const tabs = [
-    { id: 'executivo', label: 'Geral', icon: LayoutDashboard },
-    { id: 'operacao', label: 'Operação', icon: Settings },
-    { id: 'financeiro', label: 'Financeiro', icon: DollarSign },
-    { id: 'transp_geral', label: 'Transportadoras', icon: Truck },
-    { id: 'conf_geral', label: 'Conferentes', icon: Users },
-  ];
+  const tabs = useMemo(() => {
+    const list = [
+      { id: 'executivo', label: 'Geral', icon: LayoutDashboard },
+      { id: 'operacao', label: 'Operação', icon: Settings },
+      { id: 'financeiro', label: 'Financeiro', icon: DollarSign },
+    ];
+    if (tabelaAtual !== 'recall') {
+      list.push(
+        { id: 'transp_geral', label: 'Transportadoras', icon: Truck },
+        { id: 'conf_geral', label: 'Conferentes', icon: Users }
+      );
+    }
+    return list;
+  }, [tabelaAtual]);
 
   const renderContent = () => {
     if (isLoading) {
@@ -2281,13 +2294,15 @@ export default function Dashboard() {
                   </select>
                </div>
 
-               <div className="flex flex-col gap-1.5">
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Transportadora</label>
-                  <select value={filterSelections.transp} onChange={(e) => setFilterSelections({...filterSelections, transp: e.target.value})} className="bg-white border border-slate-300 text-slate-700 h-9 px-3 rounded shadow-sm outline-none focus:ring-1 focus:ring-blue-500 font-medium cursor-pointer text-xs max-w-[200px]">
-                     <option>Todas</option>
-                     {filterOptions?.transps?.map((t: string) => <option key={t} value={t}>{t}</option>)}
-                  </select>
-               </div>
+               {tabelaAtual !== 'recall' && (
+                 <div className="flex flex-col gap-1.5">
+                    <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Transportadora</label>
+                    <select value={filterSelections.transp} onChange={(e) => setFilterSelections({...filterSelections, transp: e.target.value})} className="bg-white border border-slate-300 text-slate-700 h-9 px-3 rounded shadow-sm outline-none focus:ring-1 focus:ring-blue-500 font-medium cursor-pointer text-xs max-w-[200px]">
+                       <option>Todas</option>
+                       {filterOptions?.transps?.map((t: string) => <option key={t} value={t}>{t}</option>)}
+                    </select>
+                 </div>
+               )}
                
                <div className="flex flex-col gap-1.5">
                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Status do Chamado</label>
