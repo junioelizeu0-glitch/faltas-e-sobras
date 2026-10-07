@@ -897,8 +897,19 @@ export function useDashboardData(filters?: FilterState, tabela: "faltas" | "reca
         .map((c: any) => ({
           name: c.name,
           taxaAprovacao: c.abertos > 0 ? Math.trunc((c.aprovados / c.abertos) * 1000) / 10 : 0,
+          valAprovado: c.valAprovado || 0,
+          valPago: c.valPago || 0,
+          pendente: c.pendente || 0,
         }))
         .sort((a: any, b: any) => b.taxaAprovacao - a.taxaAprovacao),
+      valoresCdData: Object.values(cdMap)
+        .map((c: any) => ({
+          name: c.name,
+          valAprovado: c.valAprovado || 0,
+          valPago: c.valPago || 0,
+          pendente: c.pendente || 0,
+        }))
+        .sort((a: any, b: any) => b.valAprovado - a.valAprovado),
       slaData: Object.keys(slaStatusMap).map((k: string) => ({
         name: k,
         value: filteredData.length

@@ -663,14 +663,9 @@ const AbaVisaoExecutiva = ({ data, onOpenModal }: any) => (
   <div className="flex flex-col gap-6">
     <div id="executivo-cards-grid" className="grid grid-cols-[repeat(auto-fit,minmax(180px,1fr))] gap-4 p-2 bg-slate-100">
       <KpiCard onClick={() => onOpenModal('TOTAL CHAMADOS')} title="Total Chamados" value={formatNum(data.kpis?.totalChamados || 0)} subtitle="Volume Geral do período" icon={FileText} colorClass="blue" />
-      <KpiCard onClick={() => onOpenModal('APROVADOS')} title="Aprovados" value={formatNum(data.kpis?.aprovados || 0)} subtitle="Ressarcimentos devidos" icon={CheckCircle2} colorClass="emerald" />
-      <KpiCard onClick={() => onOpenModal('RECUSADOS')} title="Recusados" value={formatNum(data.kpis?.recusados || 0)} subtitle="Improcedentes" icon={XCircle} colorClass="rose" />
-      <KpiCard onClick={() => onOpenModal('PENDENTE MONITORAMENTO')} title="Pendente Monitoramento" value={formatNum(data.kpis?.pendentes || 0)} subtitle="Aguardando análise" icon={Clock} colorClass="amber" />
       <KpiCard onClick={() => onOpenModal('VALORES APROVADOS')} title="Valores Aprovados" value={formatCurrency(data.kpis?.valAprovado || 0)} subtitle="Acumulado" icon={Banknote} colorClass="indigo" />
       <KpiCard onClick={() => onOpenModal('VALORES PAGOS')} title="Valores Pagos" value={formatCurrency(data.kpis?.valPago || 0)} subtitle="Quitados" icon={CheckCircle2} colorClass="emerald" />
       <KpiCard onClick={() => onOpenModal('VALOR PENDENTE')} title="Valor Pendente" value={formatCurrency(data.kpis?.valPendente || 0)} subtitle="Aguardando fin." icon={AlertCircle} colorClass="amber" />
-      <KpiCard title="Taxa Aprovação" value={formatTaxa(data.kpis?.aprovados || 0, data.kpis?.totalChamados || 0)} subtitle="Efetividade (%)" icon={Activity} colorClass="indigo" />
-      <KpiCard title="Taxa Recusa" value={formatTaxa(data.kpis?.recusados || 0, data.kpis?.totalChamados || 0)} subtitle="Improcedentes (%)" icon={XCircle} colorClass="rose" />
       <KpiCard onClick={() => onOpenModal('SLA DO CHAMADO')} title="SLA Cumprido" value={`${data.kpis?.slaCumprido || 0}%`} subtitle="Chamados no prazo (60d úteis)" icon={CheckCircle2} colorClass="emerald" />
       <KpiCard title="Ticket Médio" value={formatCurrency(data.kpis?.ticketMedio || 0)} subtitle="Por chamado aprovado" icon={Target} colorClass="slate" />
     </div>
@@ -748,38 +743,18 @@ const AbaVisaoExecutiva = ({ data, onOpenModal }: any) => (
       />
     </div>
 
-    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mt-6">
-      <ChartCard title="Taxa de Aprovação por CD" desc="Aprovados / Abertos (%)">
+    <div className="grid grid-cols-1 gap-6 mt-6">
+      <ChartCard title="Valores por CD" desc="Valores em R$ por Centro de Distribuição (Aprovados, Pagos e Pendentes)">
         <ResponsiveContainer width="100%" height={320}>
-          <BarChart layout="vertical" onClick={(e: any) => { if(e && e.activeLabel) onOpenModal(`TAXA APROVAÇÃO CD - ${e.activeLabel}`) }} data={data.charts?.taxaAprovacaoCdData?.slice(0,10) || []} margin={{ top: 0, right: 30, left: 0, bottom: 0 }}>
-            <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
-            <XAxis type="number" hide domain={[0, 100]} />
-            <YAxis dataKey="name" type="category" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#475569' }} width={120} />
-            <Tooltip cursor={{ fill: '#f8fafc' }} formatter={(val: any) => `${val}%`} contentStyle={{ fontSize: '12px', borderRadius: '8px' }} />
-            <Bar dataKey="taxaAprovacao" name="Aprovação (%)" fill="#2563eb" radius={[0, 4, 4, 0]} barSize={20} minPointSize={2} label={{ position: 'right', fontSize: 10, fill: '#64748b', formatter: (val: any) => `${val || 0}%` }} />
-          </BarChart>
-        </ResponsiveContainer>
-      </ChartCard>
-
-      <ChartCard title="Aging Geral (Aprovados Pendentes)">
-        <ResponsiveContainer width="100%" height={320}>
-          <BarChart onClick={(e: any) => { if (e && e.activeLabel) onOpenModal(`AGING - ${e.activeLabel}`) }} data={data.charts?.agingData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+          <BarChart data={data.charts?.valoresCdData || []} margin={{ top: 15, right: 30, left: 10, bottom: 5 }}>
             <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
-            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b' }} dy={10} style={{ cursor: 'pointer' }} />
-            <YAxis axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: '#64748b' }} />
-            <Tooltip content={<AgingTooltip />} cursor={{ fill: '#f8fafc' }} />
-            <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} iconType="circle" />
-            <Bar dataKey="qtd" name="Qtd Chamados" radius={[4, 4, 0, 0]} maxBarSize={40} label={{ position: 'top', fontSize: 10, fill: '#64748b' }} style={{ cursor: 'pointer' }}>
-              {(data.charts?.agingData || []).map((entry: any, index: number) => {
-                const n = String(entry.name || '');
-                const color = n.includes('0 a 30') ? '#16a34a'
-                  : n.includes('31 a 60') ? '#65a30d'
-                  : n.includes('61 a 90') ? '#d97706'
-                  : n.includes('91 a 180') ? '#ea580c'
-                  : '#dc2626';
-                return <Cell key={`aging-${index}`} fill={color} />;
-              })}
-            </Bar>
+            <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#475569', fontWeight: 600 }} />
+            <YAxis tickFormatter={formatShortValueNoSpace} axisLine={false} tickLine={false} tick={{ fontSize: 11, fill: '#64748b' }} />
+            <Tooltip formatter={(val: any, name: string) => [formatCurrency(Number(val)), name]} contentStyle={{ fontSize: '12px', borderRadius: '8px' }} />
+            <Legend wrapperStyle={{ fontSize: '11px', paddingTop: '10px' }} />
+            <Bar dataKey="valAprovado" name="Valor Aprovado" fill="#16a34a" radius={[4, 4, 0, 0]} barSize={24} />
+            <Bar dataKey="valPago" name="Valor Pago" fill="#2563eb" radius={[4, 4, 0, 0]} barSize={24} />
+            <Bar dataKey="pendente" name="Valor Pendente" fill="#d97706" radius={[4, 4, 0, 0]} barSize={24} />
           </BarChart>
         </ResponsiveContainer>
       </ChartCard>
