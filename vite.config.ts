@@ -8,6 +8,16 @@ import { defineConfig } from "@lovable.dev/vite-tanstack-config";
 
 export default defineConfig({
   vite: {
+    build: {
+      rollupOptions: {
+        onwarn(warning, defaultHandler) {
+          if (warning.code === 'MODULE_LEVEL_DIRECTIVE' || warning.message?.includes('use client')) {
+            return;
+          }
+          defaultHandler(warning);
+        },
+      },
+    },
     define: {
       "process.env.SUPABASE_URL": JSON.stringify(process.env.SUPABASE_URL || "https://fqffsqgzlkahqcshpxom.supabase.co"),
       "process.env.VITE_SUPABASE_URL": JSON.stringify(process.env.VITE_SUPABASE_URL || "https://fqffsqgzlkahqcshpxom.supabase.co"),
@@ -16,8 +26,6 @@ export default defineConfig({
     },
   },
   tanstackStart: {
-    // Redirect TanStack Start's bundled server entry to src/server.ts (our SSR error wrapper).
-    // nitro/vite builds from this
     server: { entry: "server" },
   },
 });
