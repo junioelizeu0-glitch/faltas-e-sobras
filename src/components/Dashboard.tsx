@@ -13,7 +13,7 @@ import {
   ChevronDown, LayoutDashboard, Settings, History, Store, UserCheck, UserX, Target, AlertCircle, Banknote, ListTodo, PackageX, Search, Loader2, RefreshCcw, MoreVertical, Download, FileSpreadsheet,
   Plus, BarChart2, LayoutGrid, Menu, ChevronLeft, ChevronRight, Package
 } from 'lucide-react';
-import { useDashboardData, isValidField, getTarefaAtual, isSemRetorno, parseDataBR, getBusinessDays, isMotivoErroConferente } from '@/lib/data-processing';
+import { useDashboardData, isValidField, getTarefaAtual, isSemRetorno, parseDataBR, getBusinessDays, isMotivoErroConferente, parseValorNumeric } from '@/lib/data-processing';
 import NovoChamadoForm from '@/components/NovoChamadoForm';
 import PainelAbertos from '@/components/PainelAbertos';
 import ConsultaChamados from '@/components/ConsultaChamados';
@@ -1703,6 +1703,297 @@ const AbaConferentes = ({ mode, data, onOpenModal }: { mode: 'geral'; data: any;
   return <PodioRankingConferentes data={data} onOpenModal={onOpenModal} />;
 };
 
+const AbaReferenciasFornecedores = ({ rawData, onOpenModal }: { rawData: any[]; onOpenModal: (type: string) => void }) => {
+  const [searchTerm, setSearchTerm] = useState('');
+
+  const refData = useMemo(() => {
+    const map: Record<string, {
+      refName: string;
+      qtd: number;
+      valorTotal: number;
+      valorAprovado: number;
+      valorPendente: number;
+      valorRecusado: number;
+      chamados: any[];
+    }> = {};
+
+    let grandTotalValue = 0;
+
+    (rawData || []).forEach((item) => {
+      const rawRef = String(item['referencia'] || item['Referencia'] || item['Motivo'] || 'Outros').trim();
+      const refName = rawRef === '' ? 'Sem Referência Especificada' : rawRef;
+      const val = parseValorNumeric(item[' Valor ']);
+      const st = String(item['Status Chamado'] || item['Situação '] || '').toUpperCase();
+
+      grandTotalValue += val;
+
+      if (!map[refName]) {
+        map[refName] = {
+          refName,
+          qtd: 0,
+          valorTotal: 0,
+          valorAprovado: 0,
+          valorPendente: 0,
+          valorRecusado: 0,
+          chamados: [],
+        };
+      }
+
+      map[refName].qtd += 1;
+      map[refName].valorTotal += val;
+      map[refName].chamados.push(item);
+
+      if (st.includes('APROVADO')) {
+        map[refName].valorAprovado += val;
+      } else if (st.includes('RECUSADO')) {
+        map[refName].valorRecusado += val;
+      } else {
+        map[refName].valorPendente += val;
+      }
+    });
+
+    const list = Object.values(map).sort((a, b) => b.valorTotal - a.valorTotal);
+    const totalRefs = list.length;
+    const top1 = list[0] || null;
+
+    const top5Val = list.slice(0, 5).reduce((acc, curr) => acc + curr.valorTotal, 0);
+    const abcPercentage = grandTotalValue > 0 ? Math.round((top5Val / grandTotalValue) * 100) : 0;
+
+    return {
+      list,
+      totalRefs,
+      grandTotalValue,
+      top1,
+      abcPercentage,
+    };
+  }, [rawData]);
+
+  const filteredList = useMemo(() => {
+    if (!searchTerm.trim()) return refData.list;
+    const term = searchTerm.trim().toLowerCase();
+    return refData.list.filter(item => item.refName.toLowerCase().includes(term));
+  }, [refData.list, searchTerm]);
+
+  return (
+    <div className="space-y-6">
+      {/* Header da Aba */}
+      <div className="bg-white p-5 rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <div className="flex items-center gap-2">
+            <h2 className="text-base font-bold text-slate-900 tracking-tight">Análise por Referência & Fornecedor</h2>
+            <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+              <Package className="w-3.5 h-3.5" /> {refData.totalRefs} Referências
+            </span>
+          </div>
+          <p className="text-xs text-slate-500 font-medium mt-1">
+            Indicadores de volume, impacto financeiro acumulado e detalhamento por produto/lote
+          </p>
+        </div>
+
+        <div className="relative">
+          <input
+            type="text"
+            placeholder="Buscar Referência exata..."
+            value={searchTerm}
+            onChange={(e) => setSearchTerm(e.target.value)}
+            className="w-64 rounded-xl border border-slate-200 bg-white pl-3 pr-8 py-2 text-xs font-medium text-slate-700 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none shadow-xs"
+          />
+          <Search className="w-4 h-4 text-slate-400 absolute right-2.5 top-2.5 pointer-events-none" />
+        </div>
+      </div>
+
+      {/* KPI Cards */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total de Refs</span>
+            <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center">
+              <Package className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="text-2xl font-bold text-slate-900 tracking-tight">{refData.totalRefs}</div>
+          <div className="text-[11px] text-slate-400 font-medium mt-1">Referências únicas registradas</div>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Valor Bruto em Refs</span>
+            <div className="w-8 h-8 rounded-xl bg-blue-50 text-blue-700 flex items-center justify-center">
+              <Banknote className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="text-2xl font-bold text-slate-900 tracking-tight">{formatCurrency(refData.grandTotalValue)}</div>
+          <div className="text-[11px] text-slate-400 font-medium mt-1">Acumulado do período</div>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Ref Líder em Valor</span>
+            <div className="w-8 h-8 rounded-xl bg-purple-50 text-purple-700 flex items-center justify-center">
+              <Target className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="text-lg font-bold text-slate-900 truncate" title={refData.top1?.refName || 'N/A'}>
+            {refData.top1?.refName || 'N/A'}
+          </div>
+          <div className="text-[11px] text-emerald-700 font-semibold mt-1">
+            {formatCurrency(refData.top1?.valorTotal || 0)} ({refData.top1?.qtd || 0} chamados)
+          </div>
+        </div>
+
+        <div className="bg-white p-4 rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+          <div className="flex items-center justify-between mb-2">
+            <span className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Concentração Top 5</span>
+            <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center">
+              <BarChart2 className="w-4 h-4" />
+            </div>
+          </div>
+          <div className="text-2xl font-bold text-slate-900 tracking-tight">{refData.abcPercentage}%</div>
+          <div className="text-[11px] text-slate-400 font-medium mt-1">Curva ABC das 5 maiores refs</div>
+        </div>
+      </div>
+
+      {/* Gráficos de Referências */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">Top 10 Referências por Valor Acumulado</h3>
+              <p className="text-xs text-slate-500">Clique na barra para abrir o relatório detalhado da referência</p>
+            </div>
+          </div>
+          <div className="h-80 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart layout="vertical" data={refData.list.slice(0, 10)} margin={{ top: 0, right: 20, left: 30, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+                <XAxis type="number" tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                <YAxis dataKey="refName" type="category" tick={{ fontSize: 11, fill: "#334155" }} width={120} axisLine={false} tickLine={false} />
+                <Tooltip
+                  formatter={(val: any) => [formatCurrency(Number(val)), "Valor Total"]}
+                  contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0" }}
+                />
+                <Bar
+                  dataKey="valorTotal"
+                  fill="#047857"
+                  radius={[0, 6, 6, 0]}
+                  barSize={18}
+                  className="cursor-pointer hover:opacity-80 transition-opacity"
+                  onClick={(data: any) => {
+                    if (data && data.refName) onOpenModal('REF - ' + data.refName);
+                  }}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        <div className="bg-white p-5 rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col">
+          <div className="flex items-center justify-between mb-4">
+            <div>
+              <h3 className="text-sm font-bold text-slate-900">Status por Referência (Aprovado vs Pendente)</h3>
+              <p className="text-xs text-slate-500">Distribuição financeira entre status nas principais refs</p>
+            </div>
+          </div>
+          <div className="h-80 w-full">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={refData.list.slice(0, 6)} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                <XAxis dataKey="refName" tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                <YAxis tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} />
+                <Tooltip
+                  formatter={(val: any, name: string) => [formatCurrency(Number(val)), name]}
+                  contentStyle={{ borderRadius: "12px", border: "1px solid #e2e8f0" }}
+                />
+                <Legend wrapperStyle={{ fontSize: "11px", paddingTop: "10px" }} />
+                <Bar dataKey="valorAprovado" name="Valor Aprovado" fill="#047857" stackId="a" barSize={26} />
+                <Bar dataKey="valorPendente" name="Valor Pendente" fill="#d97706" stackId="a" barSize={26} />
+                <Bar dataKey="valorRecusado" name="Valor Recusado" fill="#e11d48" stackId="a" radius={[6, 6, 0, 0]} barSize={26} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+      </div>
+
+      {/* Tabela Completa de Referências */}
+      <div className="bg-white rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] overflow-hidden">
+        <div className="p-4 border-b border-slate-200/80 flex items-center justify-between bg-slate-50/50">
+          <div>
+            <h3 className="text-sm font-bold text-slate-900">Tabela de Referências & Fornecedores</h3>
+            <p className="text-xs text-slate-500">Clique na linha ou botão para abrir o detalhamento e exportar relatório Excel</p>
+          </div>
+          <span className="text-xs font-semibold text-slate-600 bg-white px-3 py-1 rounded-xl border border-slate-200">
+            {filteredList.length} Referências encontradas
+          </span>
+        </div>
+
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse text-xs">
+            <thead>
+              <tr className="bg-slate-50/80 border-b border-slate-200/80 text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
+                <th className="px-4 py-3"># Pos</th>
+                <th className="px-4 py-3">Código / Referência</th>
+                <th className="px-4 py-3 text-center">Chamados (Qtd)</th>
+                <th className="px-4 py-3">Valor Total (R$)</th>
+                <th className="px-4 py-3">Valor Aprovado</th>
+                <th className="px-4 py-3">Valor Pendente</th>
+                <th className="px-4 py-3">% do Montante</th>
+                <th className="px-4 py-3 text-center">Ação / Relatório</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {filteredList.map((item, idx) => {
+                const pctShare = refData.grandTotalValue > 0 ? ((item.valorTotal / refData.grandTotalValue) * 100).toFixed(1) : '0';
+                return (
+                  <tr
+                    key={item.refName}
+                    onClick={() => onOpenModal('REF - ' + item.refName)}
+                    className="hover:bg-emerald-50/40 transition-colors cursor-pointer group"
+                  >
+                    <td className="px-4 py-3 font-bold text-slate-400 group-hover:text-emerald-700">#{idx + 1}</td>
+                    <td className="px-4 py-3 font-bold text-slate-800 group-hover:text-emerald-700 flex items-center gap-2">
+                      <Package className="w-4 h-4 text-emerald-600 shrink-0" />
+                      <span>{item.refName}</span>
+                    </td>
+                    <td className="px-4 py-3 text-center">
+                      <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-semibold bg-slate-100 text-slate-700">
+                        {item.qtd}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3 font-bold text-slate-900">{formatCurrency(item.valorTotal)}</td>
+                    <td className="px-4 py-3 font-semibold text-emerald-700">{formatCurrency(item.valorAprovado)}</td>
+                    <td className="px-4 py-3 font-semibold text-amber-700">{formatCurrency(item.valorPendente)}</td>
+                    <td className="px-4 py-3 font-semibold text-slate-600">{pctShare}%</td>
+                    <td className="px-4 py-3 text-center">
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          onOpenModal('REF - ' + item.refName);
+                        }}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/80 text-xs font-semibold transition-all cursor-pointer"
+                        title="Ver detalhamento e exportar relatório Excel da Referência"
+                      >
+                        <FileSpreadsheet className="w-3.5 h-3.5" />
+                        Relatório
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
+              {filteredList.length === 0 && (
+                <tr>
+                  <td colSpan={8} className="px-4 py-8 text-center text-slate-400 font-medium">
+                    Nenhuma referência localizada com o termo pesquisado.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 // --- MAIN COMPONENT ---
 export default function Dashboard() {
   const [selectedSubmenu, setSelectedSubmenu] = useState<string | null>(null);
@@ -2119,9 +2410,18 @@ export default function Dashboard() {
           raw = raw.filter((d:any) => d['Status Chamado'] === 'Aprovado' && !isSemRetorno(d));
           cols = ['Chamado', 'Loja', 'CD', 'NF', 'Valor', 'Dt Abertura'];
           break;
-        case 'ALL':
         default:
-          title = 'Detalhamento de Chamados - Geral';
+          if (type.startsWith('REF - ')) {
+            const refInfo = type.replace('REF - ', '').trim().toLowerCase();
+            raw = raw.filter((d: any) => {
+              const r = String(d['referencia'] || d['Referencia'] || d['Motivo'] || '').trim().toLowerCase();
+              return r === refInfo || r.includes(refInfo);
+            });
+            cols = ['Chamado', 'Loja', 'CD', 'referencia', 'NF', 'Valor', 'Status Chamado', 'Dt Abertura', 'Motivo', 'Tarefa Atual'];
+            title = `Detalhamento de Chamados - Referência: ${type.replace('REF - ', '')}`;
+          } else {
+            title = 'Detalhamento de Chamados - Geral';
+          }
           break;
       }
     }
@@ -2136,6 +2436,7 @@ export default function Dashboard() {
       { id: 'executivo', label: 'Geral', icon: LayoutDashboard },
       { id: 'operacao', label: 'Operação', icon: Settings },
       { id: 'financeiro', label: 'Financeiro', icon: DollarSign },
+      { id: 'referencias', label: 'Fornecedores / Refs', icon: Package },
     ];
     if (tabelaAtual !== 'recall') {
       list.push(
@@ -2172,6 +2473,7 @@ export default function Dashboard() {
       case 'executivo': return <AbaVisaoExecutiva data={passData} onOpenModal={handleOpenModal} />;
       case 'operacao': return <AbaOperacao data={passData} onOpenModal={handleOpenModal} />;
       case 'financeiro': return <AbaFinanceiro data={passData} onOpenModal={handleOpenModal} filters={filterSelections} />;
+      case 'referencias': return <AbaReferenciasFornecedores rawData={rawData} onOpenModal={handleOpenModal} />;
       case 'transp_geral': return <AbaTransportadoras mode="geral" data={passData} onOpenModal={handleOpenModal} />;
       case 'conf_geral': return <AbaConferentes mode="geral" data={passData} onOpenModal={handleOpenModal} />;
       default: return <AbaVisaoExecutiva data={passData} onOpenModal={handleOpenModal} />;
