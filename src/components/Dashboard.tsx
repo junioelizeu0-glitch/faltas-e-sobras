@@ -17,6 +17,7 @@ import { useDashboardData, isValidField, getTarefaAtual, isSemRetorno, parseData
 import NovoChamadoForm from '@/components/NovoChamadoForm';
 import PainelAbertos from '@/components/PainelAbertos';
 import ConsultaChamados from '@/components/ConsultaChamados';
+import RelatorioRecall from '@/components/RelatorioRecall';
 import CadastroProdutos from '@/components/CadastroProdutos';
 import CadastroTarefas from '@/components/CadastroTarefas';
 import CadastroEtapas from '@/components/CadastroEtapas';
@@ -51,7 +52,7 @@ function RecallContainer({ selectedSubmenu, setSelectedSubmenu }: { selectedSubm
   }
 
   if (selectedSubmenu === "recall_relatorio") {
-    return <PainelAbertos rawData={rawData} isLoading={isLoading} error={error} onChanged={() => refetch()} tabela="recall" />;
+    return <RelatorioRecall rawData={rawData} isLoading={isLoading} error={error} onChanged={() => refetch()} />;
   }
 
   return null;
