@@ -14,6 +14,22 @@ export type FilterState = {
   ref?: string;
 };
 
+export function isValidRef(ref: any): boolean {
+  if (ref === null || ref === undefined) return false;
+  const s = String(ref).trim();
+  if (!s) return false;
+  const lower = s.toLowerCase();
+  const invalid = [
+    "-", "—", "–", ".", "..", "...", "/", "\\",
+    "n/a", "na", "null", "undefined", "none",
+    "sem referencia", "sem referência", "sem referencia especificada", "sem referência especificada",
+    "outros", "outro", "sem ref", "não identificado", "nao identificado"
+  ];
+  if (invalid.includes(lower)) return false;
+  if (/^[-—–_./\s]+$/.test(s)) return false;
+  return true;
+}
+
 export function isMotivoErroConferente(motivoRaw: any): boolean {
   if (!motivoRaw) return false;
   const m = String(motivoRaw).toUpperCase().trim();
@@ -407,11 +423,14 @@ export function useDashboardData(filters?: FilterState, tabela: "faltas" | "reca
 
       if (filters.ref && filters.ref.trim() !== "") {
         const term = filters.ref.toLowerCase().trim();
-        const itemRef = String(item["referencia"] || item["Referencia"] || item["Motivo"] || "").toLowerCase();
+        const itemRef = String(item["referencia"] || item["Referencia"] || "").toLowerCase();
         const subRefs = item["chamados_referencias"] || item["chamados_recall_referencias"] || item["referencias"];
         let hasSubRefMatch = false;
         if (Array.isArray(subRefs)) {
-          hasSubRefMatch = subRefs.some((r: any) => String(r.referencia || r.descricao || "").toLowerCase().includes(term));
+          hasSubRefMatch = subRefs.some((r: any) => {
+            const refVal = String(r.referencia || "").trim().toLowerCase();
+            return isValidRef(refVal) && (refVal.includes(term) || refVal === term);
+          });
         }
         if (!itemRef.includes(term) && !hasSubRefMatch) return false;
       }

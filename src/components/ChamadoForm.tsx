@@ -16,7 +16,7 @@ import {
   upsertConferente, deleteConferente,
   upsertMotivo, deleteMotivo,
 } from "@/lib/cadastros.functions";
-import { getLojaByNumero, type Loja } from "@/lib/lojas.functions";
+import { getLojaByNumero, getParceiroByLoja, type Loja } from "@/lib/lojas.functions";
 import { diasUteisEntre, parseISO, calcDataPrevista } from "@/lib/business-days";
 import CadastroSimples from "./CadastroSimples";
 import CadastroLojas from "./CadastroLojas";
@@ -33,7 +33,7 @@ const SITUACAO_OPCOES = [
   "Pagamento Provisionado", "Chamado Recusado", "Sem retorno (Finalizado)", "Finalizado",
 ];
 const SITUACAO_RECALL_OPCOES = [
-  "Aguardando monitoramento", "Chamado Aprovado", "Chamado Recusado", "Finalizar Chamado", "Finalizado",
+  "Aguardando monitoramento", "Chamado Aprovado", "Importação NF", "Chamado Recusado", "Finalizar Chamado", "Finalizado",
 ];
 const TIPO_OPCOES = ["Franquia", "Própria"];
 const CD_OPCOES = ["ES", "PB", "TO"];
@@ -100,6 +100,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
 
   const [form, setForm] = useState<Record<string, string>>(() => ({
     Chamado: modeProp === "novo" ? "" : (initialChamado?.Chamado ? String(initialChamado.Chamado) : ""),
+    GLPI: modeProp === "novo" ? "" : (initialChamado?.GLPI || initialChamado?.glpi ? String(initialChamado?.GLPI || initialChamado?.glpi) : ""),
     Loja: "", Tipo: "", NF: "",
     "Dt Emissão": "", CD: modeProp === "novo" ? "" : (initialChamado?.CD || ""),
     "Situação ": modeProp === "novo" ? (tabela === "recall" ? "" : "Aguardando monitoramento") : (initialChamado?.["Situação "] || ""),
@@ -150,23 +151,24 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     (async () => {
       setLoading(true);
       try {
-        const res: any = await getFn({ data: { id: chamadoId, tabela } });
+        const res: any = await getFn({ data: { id: chamadoId, tabela: (tabela === "recall" ? "recall" : "faltas") } });
         const c = res.chamado || {};
         // Sincroniza a ref ANTES do setForm para evitar que o auto-fill de status
         // sobrescreva a Situação carregada do banco.
         prevStatusRef.current = c.status_chamado || "";
         setForm({
           Chamado: String(c.chamado ?? ""),
+          GLPI: String(c.glpi ?? c.GLPI ?? ""),
           Loja: String(c.loja ?? ""),
           Tipo: c.tipo || "Franquia",
           NF: String(c.nf ?? ""),
           "Dt Emissão": c.dt_emissao || "",
           CD: c.cd || "",
-          "Situação ": c.situacao || "Aguardando monitoramento",
+          "Situação ": c.situacao || (tabela === "recall" ? "" : "Aguardando monitoramento"),
           "Dt Abertura": c.dt_abertura || "",
           "Dt Finalização": c.dt_finalizacao || "",
           "Dt Pagamento": c.dt_pagamento || "",
-          "Status Chamado": c.status_chamado || "Pendente Monitoramento",
+          "Status Chamado": c.status_chamado || (tabela === "recall" ? "Aprovado" : "Pendente Monitoramento"),
           Motivo: c.motivo || "",
           Transportadora: c.transportadora || "",
           Conferente: c.conferente || "",
@@ -321,9 +323,30 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     if (!form.CD) return "CD é obrigatório";
     if (!form["Status Chamado"]) return "Status do chamado é obrigatório";
     if (!form["Dt Abertura"]) return "Data de abertura é obrigatória";
-    if (tabela === "recall" && !(form.Referencia || "").trim()) {
-      return "Referência (Ref) é obrigatória";
+    // Regra específica para Chamados de Recall
+    if (tabela === "recall") {
+      const isImportacaoNF =
+        /importa[çc][ãa]o\s*nf/i.test(form["Situação "] || "") ||
+        (etapas || []).some((e) => /importa[çc][ãa]o\s*nf/i.test(e.nome_tarefa || ""));
+
+      if (isImportacaoNF) {
+        const faltando: string[] = [];
+        if (!form["Dt Emissão"]?.trim()) faltando.push("Data de Emissão");
+        if (!form.NF?.trim()) faltando.push("Nº da NF");
+        const valNum = Number(String(form._valor || "").replace(",", "."));
+        if (!form._valor?.trim() || isNaN(valNum) || valNum <= 0) {
+          faltando.push("Valor");
+        }
+        if (!form.Referencia?.trim()) {
+          faltando.push("Referência");
+        }
+
+        if (faltando.length > 0) {
+          return `Para salvar a tarefa "Importação NF" em Recall, é obrigatório preencher: ${faltando.join(", ")}.`;
+        }
+      }
     }
+
     if (!partial && tabela !== "recall") {
       const refsOk = (refs || []).some((r) => (r.referencia || "").trim() !== "");
       if (!refsOk) return "Inclua ao menos uma Referência (aba Referências)";
@@ -342,7 +365,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
         return `Para registrar o resultado do monitoramento, é obrigatório preencher: ${faltantes.join(", ")}.`;
       }
     }
-    if (precisaDadosNF) {
+    if (tabela !== "recall" && precisaDadosNF) {
       const faltando: string[] = [];
       if (!form.NF) faltando.push("Nº NF");
       if (!form._valor) faltando.push("Valor");
@@ -364,7 +387,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     setSubmitting(true);
     const payload = {
       chamado: {
-        Chamado: form.Chamado, Loja: form.Loja, Tipo: form.Tipo, NF: form.NF,
+        Chamado: form.Chamado, Loja: form.Loja, Parceiro: lojaInfo?.parceiro || (form.Loja ? getParceiroByLoja(form.Loja) : "") || null, Tipo: form.Tipo, NF: form.NF,
         "Dt Emissão": form["Dt Emissão"], " Valor ": form._valor,
         CD: form.CD, "Situação ": form["Situação "], "Dt Abertura": form["Dt Abertura"],
         "Dt Finalização": form["Dt Finalização"], "Dt Pagamento": form["Dt Pagamento"],
@@ -372,6 +395,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
         "Status Chamado": form["Status Chamado"], Motivo: form.Motivo,
         Transportadora: form.Transportadora, Conferente: form.Conferente,
         Periodo: primeiroDiaMesISO(form["Dt Abertura"]),
+        GLPI: form.GLPI,
       },
       referencias: tabela === "recall"
         ? (form.Referencia?.trim() ? [{ referencia: form.Referencia.trim() }] : [])
@@ -388,9 +412,9 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     try {
       const isEdit = mode === "editar" && chamadoId;
       if (isEdit) {
-        await updateFn({ data: { id: chamadoId!, ...payload, tabela } });
+        await updateFn({ data: { id: chamadoId!, ...payload, tabela: (tabela === "recall" ? "recall" : "faltas") } });
       } else {
-        const res: any = await createFn({ data: { ...payload, tabela } });
+        const res: any = await createFn({ data: { ...payload, tabela: (tabela === "recall" ? "recall" : "faltas") } });
         if (res?.id) { setChamadoId(res.id); setMode("editar"); }
       }
       const msg = successMsg || (isEdit ? "Chamado salvo" : "Chamado incluído");
@@ -416,12 +440,12 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     setMode("novo");
     setChamadoId(undefined);
     setForm({
-      Chamado: "", Loja: "", Tipo: "", NF: "",
+      Chamado: "", GLPI: "", Loja: "", Tipo: "", NF: "",
       "Dt Emissão": "", CD: "", "Situação ": tabela === "recall" ? "" : "Aguardando monitoramento",
       "Dt Abertura": "", "Dt Finalização": "", "Dt Pagamento": "",
       "Status Chamado": tabela === "recall" ? "Aprovado" : "Pendente Monitoramento",
       Motivo: "", Transportadora: "", Conferente: "",
-      _valor: "",
+      _valor: "", Referencia: "",
     });
     setRefs([]);
     setEtapas([]);
@@ -489,7 +513,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
     try {
       const payload = {
         chamado: {
-          Chamado: form.Chamado, Loja: form.Loja, Tipo: form.Tipo, NF: form.NF,
+          Chamado: form.Chamado, Loja: form.Loja, Parceiro: lojaInfo?.parceiro || (form.Loja ? getParceiroByLoja(form.Loja) : "") || null, Tipo: form.Tipo, NF: form.NF,
           "Dt Emissão": form["Dt Emissão"], " Valor ": form._valor,
           CD: form.CD, "Situação ": novaTarefaNome, "Dt Abertura": form["Dt Abertura"],
           "Dt Finalização": form["Dt Finalização"], "Dt Pagamento": form["Dt Pagamento"],
@@ -497,6 +521,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
           "Status Chamado": novoStatus, Motivo: form.Motivo,
           Transportadora: form.Transportadora, Conferente: form.Conferente,
           Periodo: primeiroDiaMesISO(form["Dt Abertura"]),
+          GLPI: form.GLPI,
         },
         referencias: tabela === "recall"
           ? (form.Referencia?.trim() ? [{ referencia: form.Referencia.trim() }] : [])
@@ -511,9 +536,9 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
         })),
       };
       if (mode === "editar" && chamadoId) {
-        await updateFn({ data: { id: chamadoId, ...payload, tabela } });
+        await updateFn({ data: { id: chamadoId, ...payload, tabela: (tabela === "recall" ? "recall" : "faltas") } });
       } else {
-        const res: any = await createFn({ data: { ...payload, tabela } });
+        const res: any = await createFn({ data: { ...payload, tabela: (tabela === "recall" ? "recall" : "faltas") } });
         if (res?.id) { setChamadoId(res.id); setMode("editar"); }
       }
       toast.success(aprovado ? "Falta aprovada" : "Falta recusada");
@@ -637,7 +662,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
                     onClick={async () => {
                       if (!confirm("Excluir este chamado? Esta ação não pode ser desfeita.")) return;
                       try {
-                        await delFn({ data: { ids: [chamadoId], tabela } });
+                        await delFn({ data: { ids: [chamadoId], tabela: (tabela === "recall" ? "recall" : "faltas") } });
                         toast.success("Chamado excluído");
                         onDeleted?.();
                       } catch (e: any) { toast.error(e?.message || "Erro ao excluir chamado"); }
@@ -666,12 +691,12 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
                       if (onCancel) return onCancel();
                       if (!confirm("Cancelar a inclusão? Os dados preenchidos serão descartados.")) return;
                       setForm({
-                        Chamado: "", Loja: "", Tipo: "", NF: "",
+                        Chamado: "", GLPI: "", Loja: "", Tipo: "", NF: "",
                         "Dt Emissão": "", CD: "", "Situação ": "",
                         "Dt Abertura": hojeISO(), "Dt Finalização": "", "Dt Pagamento": "",
                         "Status Chamado": "",
                         Motivo: "", Transportadora: "", Conferente: "",
-                        _valor: "",
+                        _valor: "", Referencia: "",
                       });
                       setRefs([]); setEtapas([]); setFeedback(null);
                       toast.info("Inclusão cancelada");
@@ -784,26 +809,49 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
       <Pencil className="w-3 h-3" />
     </button>
   );
+
+  const isImportacaoNFRecall = tabela === "recall" && /importa[çc][ãa]o\s*nf/i.test(form["Situação "] || "");
+
   return (
     <div className="space-y-5">
       <section>
         <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Identificação</h2>
         <div className="flex flex-wrap gap-3">
           <Field label="Chamado *" className="w-[110px]"><input type="number" value={form.Chamado} onChange={(e) => setField("Chamado", e.target.value.slice(0, 8))} className={inputCls} required /></Field>
+          {tabela === "recall" && (
+            <Field label="Nº Chamado GLPI" className="w-[140px]">
+              <input
+                type="text"
+                value={form.GLPI || ""}
+                onChange={(e) => setField("GLPI", e.target.value)}
+                placeholder="Ex: 987654"
+                className={inputCls + " font-medium text-slate-800 border-slate-300 focus:border-emerald-500 focus:ring-emerald-500/20"}
+              />
+            </Field>
+          )}
           <Field label="Loja *" className="w-[90px]"><input type="number" value={form.Loja} onChange={(e) => setField("Loja", e.target.value.slice(0, 5))} className={inputCls} required /></Field>
+          <Field label="Parceiro" className="w-[105px]">
+            <input
+              type="text"
+              value={lojaInfo?.parceiro || (form.Loja ? getParceiroByLoja(form.Loja) : "") || "—"}
+              readOnly
+              title="Número do parceiro vinculado a esta loja"
+              className={inputCls + " bg-slate-50 text-emerald-800 font-bold font-mono cursor-default border-slate-200"}
+            />
+          </Field>
           <Field label="Tipo *" className="w-[130px]"><select value={form.Tipo} onChange={(e) => setField("Tipo", e.target.value)} className={inputCls} required><option value="">— Selecionar —</option>{TIPO_OPCOES.map((o) => <option key={o}>{o}</option>)}</select></Field>
           <Field label="CD *" className="w-[80px]"><select value={form.CD} onChange={(e) => setField("CD", e.target.value)} className={inputCls} required><option value="">—</option>{CD_OPCOES.map((o) => <option key={o}>{o}</option>)}</select></Field>
-          <Field label="NF" className="w-[130px]"><input type="number" value={form.NF} onChange={(e) => setField("NF", e.target.value.slice(0, 10))} className={inputCls} /></Field>
-          <Field label="Data Emissão" className="w-[140px]"><input type="date" value={form["Dt Emissão"]} onChange={(e) => setField("Dt Emissão", e.target.value)} className={inputCls} /></Field>
-          <Field label="Valor" className="w-[130px]"><input type="number" step="0.01" value={form._valor} onChange={(e) => setField("_valor", e.target.value.slice(0, 14))} className={inputCls} /></Field>
+          <Field label={isImportacaoNFRecall ? "NF *" : "NF"} className="w-[130px]"><input type="number" value={form.NF} onChange={(e) => setField("NF", e.target.value.slice(0, 10))} className={inputCls} /></Field>
+          <Field label={isImportacaoNFRecall ? "Data Emissão *" : "Data Emissão"} className="w-[140px]"><input type="date" value={form["Dt Emissão"]} onChange={(e) => setField("Dt Emissão", e.target.value)} className={inputCls} /></Field>
+          <Field label={isImportacaoNFRecall ? "Valor *" : "Valor"} className="w-[130px]"><input type="number" step="0.01" value={form._valor} onChange={(e) => setField("_valor", e.target.value.slice(0, 14))} className={inputCls} /></Field>
           {tabela === "recall" && (
-            <Field label="Ref *" className="w-[140px]">
+            <Field label={isImportacaoNFRecall ? "Ref *" : "Ref"} className="w-[140px]">
               <input
                 type="text"
                 value={form.Referencia || ""}
                 onChange={(e) => setField("Referencia", e.target.value.toUpperCase())}
+                placeholder="Ex: REF123"
                 className={inputCls + " font-bold uppercase text-emerald-700 border-emerald-300 focus:border-emerald-500"}
-                required
               />
             </Field>
           )}
@@ -817,10 +865,10 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
           <Field label="Data Pagamento" className="w-[140px]"><input type="date" value={form["Dt Pagamento"]} onChange={(e) => setField("Dt Pagamento", e.target.value)} className={inputCls} /></Field>
           <Field label="Status Pagamento (auto)" className="w-[140px]"><input value={statusPagamento} readOnly className={inputCls + " bg-slate-50 text-slate-500"} /></Field>
           <Field label="Situação (tarefa atual) *" className="w-[240px]">
-            <select value={form["Situação "]} onChange={(e) => setField("Situação ", e.target.value)} className={inputCls} required><option value="">— Selecionar —</option>{situacaoOpcoes.map((o) => <option key={o}>{o}</option>)}</select>
+            <select value={form["Situação "]} onChange={(e) => setField("Situação ", e.target.value)} className={inputCls} required><option value="">— Selecionar —</option>{situacaoOpcoes.map((o: string) => <option key={o}>{o}</option>)}</select>
           </Field>
           <Field label="Status Chamado *" className="w-[180px]">
-            <select value={form["Status Chamado"]} onChange={(e) => setField("Status Chamado", e.target.value)} className={inputCls} required><option value="">— Selecionar —</option>{statusOpcoes.map((o) => <option key={o}>{o}</option>)}</select>
+            <select value={form["Status Chamado"]} onChange={(e) => setField("Status Chamado", e.target.value)} className={inputCls} required><option value="">— Selecionar —</option>{statusOpcoes.map((o: string) => <option key={o}>{o}</option>)}</select>
           </Field>
           <Field label="SLA (auto, dias úteis)" className="w-[150px]"><input value={sla || "—"} readOnly className={inputCls + " bg-slate-50 text-slate-500"} /></Field>
         </div>
@@ -861,7 +909,7 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
       <section className="bg-slate-50/70 border border-slate-200/80 rounded-2xl p-4 shadow-2xs">
         <div className="flex items-center justify-between mb-3.5">
           <h2 className="text-xs font-bold uppercase tracking-wider text-slate-600 flex items-center gap-2">
-            <span>Dados Bancários da Loja</span>
+            <span>Dados Cadastrais e Bancários da Loja</span>
             <span className="text-[10px] font-normal text-slate-400 normal-case">(somente leitura)</span>
           </h2>
           <button
@@ -877,60 +925,73 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
 
         {!form.Loja ? (
           <div className="text-xs text-slate-400 border border-dashed border-slate-200 bg-white rounded-xl p-4 text-center w-full">
-            Informe o número da loja para carregar os dados bancários.
+            Informe o número da loja para carregar os dados cadastrais e bancários.
           </div>
         ) : !lojaInfo ? (
           <div className="text-xs text-amber-700 bg-amber-50/80 border border-amber-200/80 rounded-xl p-3.5 flex items-center justify-between gap-2 w-full">
-            <span>Loja <b>{form.Loja}</b> não cadastrada. Clique no botão "Editar Loja" acima para cadastrar no sistema.</span>
+            <span>Loja <b>{form.Loja}</b> não cadastrada. {getParceiroByLoja(form.Loja) ? `(Parceiro na tabela oficial: ${getParceiroByLoja(form.Loja)})` : ""} Clique no botão "Editar Loja" acima para cadastrar no sistema.</span>
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-12 gap-3 w-full">
-            <div className="lg:col-span-3 flex flex-col">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Razão Social</span>
-              <div className="mt-1 rounded-xl bg-white border border-slate-200/90 px-3 py-2 text-xs font-semibold text-slate-800 min-h-[38px] flex items-center shadow-2xs truncate">
-                {lojaInfo.razao_social || "—"}
+          <div className="space-y-3">
+            {/* Linha 1: Dados Cadastrais Corporativos */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-12 gap-3 w-full">
+              <div className="lg:col-span-2 flex flex-col">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Cód. Parceiro</span>
+                <div className="mt-1 rounded-xl bg-white border border-emerald-200/90 px-3 py-2 text-xs font-bold text-emerald-700 min-h-[38px] flex items-center shadow-2xs font-mono">
+                  {lojaInfo.parceiro || (form.Loja ? getParceiroByLoja(form.Loja) : "") || "—"}
+                </div>
+              </div>
+              <div className="lg:col-span-5 flex flex-col">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Razão Social</span>
+                <div className="mt-1 rounded-xl bg-white border border-slate-200/90 px-3 py-2 text-xs font-semibold text-slate-800 min-h-[38px] flex items-center shadow-2xs truncate">
+                  {lojaInfo.razao_social || "—"}
+                </div>
+              </div>
+              <div className="lg:col-span-3 flex flex-col">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">CNPJ</span>
+                <div className="mt-1 rounded-xl bg-white border border-slate-200/90 px-3 py-2 text-xs font-semibold text-slate-800 min-h-[38px] flex items-center shadow-2xs">
+                  {lojaInfo.cnpj || "—"}
+                </div>
+              </div>
+              <div className="lg:col-span-2 flex flex-col">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tipo Loja</span>
+                <div className="mt-1 rounded-xl bg-white border border-slate-200/90 px-3 py-2 text-xs font-semibold text-slate-800 min-h-[38px] flex items-center shadow-2xs">
+                  {lojaInfo.tipo || "—"}
+                </div>
               </div>
             </div>
-            <div className="lg:col-span-2 flex flex-col">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">CNPJ</span>
-              <div className="mt-1 rounded-xl bg-white border border-slate-200/90 px-3 py-2 text-xs font-semibold text-slate-800 min-h-[38px] flex items-center shadow-2xs">
-                {lojaInfo.cnpj || "—"}
+
+            {/* Linha 2: Dados Bancários */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 lg:grid-cols-12 gap-3 w-full">
+              <div className="lg:col-span-4 flex flex-col">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Banco</span>
+                <div className="mt-1 rounded-xl bg-white border border-slate-200/90 px-3 py-2 text-xs font-semibold text-slate-800 min-h-[38px] flex items-center shadow-2xs">
+                  {lojaInfo.banco || "—"}
+                </div>
               </div>
-            </div>
-            <div className="lg:col-span-1 flex flex-col">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tipo</span>
-              <div className="mt-1 rounded-xl bg-white border border-slate-200/90 px-3 py-2 text-xs font-semibold text-slate-800 min-h-[38px] flex items-center shadow-2xs">
-                {lojaInfo.tipo || "—"}
+              <div className="lg:col-span-2 flex flex-col">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Agência</span>
+                <div className="mt-1 rounded-xl bg-white border border-slate-200/90 px-3 py-2 text-xs font-semibold text-slate-800 min-h-[38px] flex items-center shadow-2xs">
+                  {lojaInfo.agencia || "—"}
+                </div>
               </div>
-            </div>
-            <div className="lg:col-span-2 flex flex-col">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Banco</span>
-              <div className="mt-1 rounded-xl bg-white border border-slate-200/90 px-3 py-2 text-xs font-semibold text-slate-800 min-h-[38px] flex items-center shadow-2xs">
-                {lojaInfo.banco || "—"}
+              <div className="lg:col-span-2 flex flex-col">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Díg. Ag.</span>
+                <div className="mt-1 rounded-xl bg-white border border-slate-200/90 px-3 py-2 text-xs font-semibold text-slate-800 min-h-[38px] flex items-center shadow-2xs">
+                  {lojaInfo.agencia_dig || "—"}
+                </div>
               </div>
-            </div>
-            <div className="lg:col-span-1 flex flex-col">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Agência</span>
-              <div className="mt-1 rounded-xl bg-white border border-slate-200/90 px-3 py-2 text-xs font-semibold text-slate-800 min-h-[38px] flex items-center shadow-2xs">
-                {lojaInfo.agencia || "—"}
+              <div className="lg:col-span-2 flex flex-col">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Conta</span>
+                <div className="mt-1 rounded-xl bg-white border border-slate-200/90 px-3 py-2 text-xs font-semibold text-slate-800 min-h-[38px] flex items-center shadow-2xs">
+                  {lojaInfo.conta || "—"}
+                </div>
               </div>
-            </div>
-            <div className="lg:col-span-1 flex flex-col">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Díg. Ag.</span>
-              <div className="mt-1 rounded-xl bg-white border border-slate-200/90 px-3 py-2 text-xs font-semibold text-slate-800 min-h-[38px] flex items-center shadow-2xs">
-                {lojaInfo.agencia_dig || "—"}
-              </div>
-            </div>
-            <div className="lg:col-span-1 flex flex-col">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Conta</span>
-              <div className="mt-1 rounded-xl bg-white border border-slate-200/90 px-3 py-2 text-xs font-semibold text-slate-800 min-h-[38px] flex items-center shadow-2xs">
-                {lojaInfo.conta || "—"}
-              </div>
-            </div>
-            <div className="lg:col-span-1 flex flex-col">
-              <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Díg. Cta.</span>
-              <div className="mt-1 rounded-xl bg-white border border-slate-200/90 px-3 py-2 text-xs font-semibold text-slate-800 min-h-[38px] flex items-center shadow-2xs">
-                {lojaInfo.conta_dig || "—"}
+              <div className="lg:col-span-2 flex flex-col">
+                <span className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Díg. Cta.</span>
+                <div className="mt-1 rounded-xl bg-white border border-slate-200/90 px-3 py-2 text-xs font-semibold text-slate-800 min-h-[38px] flex items-center shadow-2xs">
+                  {lojaInfo.conta_dig || "—"}
+                </div>
               </div>
             </div>
           </div>

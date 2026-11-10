@@ -1,20 +1,51 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getParceiroByLoja } from "./lojas-parceiros.data";
 
 async function getSupabase() {
   const { getServerSupabase } = await import("@/integrations/supabase/server-client");
   return getServerSupabase();
 }
 
+function isValidRef(ref: any): boolean {
+  if (ref === null || ref === undefined) return false;
+  const s = String(ref).trim();
+  if (!s) return false;
+  const lower = s.toLowerCase();
+  const invalid = [
+    "-", "—", "–", ".", "..", "...", "/", "\\",
+    "n/a", "na", "null", "undefined", "none",
+    "sem referencia", "sem referência", "sem referencia especificada", "sem referência especificada",
+    "outros", "outro", "sem ref", "não identificado", "nao identificado"
+  ];
+  if (invalid.includes(lower)) return false;
+  if (/^[-—–_./\\s]+$/.test(s)) return false;
+  return true;
+}
+
 function toApiShape(row: any) {
   const refsList = row.chamados_recall_referencias || row.chamados_referencias || row.referencias || [];
-  const refText = Array.isArray(refsList)
-    ? refsList.map((r: any) => r.referencia || r).filter(Boolean).join(", ")
-    : (row.referencia || row.Referencia || "");
+  let validRefs: string[] = [];
+
+  if (Array.isArray(refsList)) {
+    refsList.forEach((r: any) => {
+      const v = typeof r === "object" && r !== null ? r.referencia : r;
+      if (isValidRef(v)) {
+        const clean = String(v).trim();
+        if (!validRefs.includes(clean)) validRefs.push(clean);
+      }
+    });
+  } else if (isValidRef(row.referencia || row.Referencia)) {
+    validRefs.push(String(row.referencia || row.Referencia).trim());
+  }
+
+  const refText = validRefs.join(", ");
 
   return {
     id: row.id ?? "",
     Chamado: row.chamado ?? "",
     Loja: row.loja ?? "",
+    parceiro: row.parceiro || getParceiroByLoja(row.loja) || "",
+    Parceiro: row.parceiro || getParceiroByLoja(row.loja) || "",
     Tipo: row.tipo ?? "",
     NF: row.nf ?? "",
     "Dt Emissão": row.dt_emissao ?? "",
@@ -33,6 +64,8 @@ function toApiShape(row: any) {
     Periodo: row.periodo ?? "",
     referencia: refText,
     Referencia: refText,
+    glpi: row.glpi ?? row.GLPI ?? "",
+    GLPI: row.glpi ?? row.GLPI ?? "",
   };
 }
 
@@ -88,6 +121,8 @@ export type NovoChamadoPayload = {
   aba: "FALTAS" | "SOBRA" | "RECALL" | "GATO";
   Chamado: number | string;
   Loja: number | string;
+  parceiro?: string | null;
+  Parceiro?: string | null;
   Tipo: string;
   NF: number | string;
   "Dt Emissão": string;
@@ -104,6 +139,8 @@ export type NovoChamadoPayload = {
   Transportadora: string;
   Conferente: string;
   Periodo: string;
+  GLPI?: number | string;
+  glpi?: number | string;
 };
 
 const nullIfEmpty = (v: any) => {
@@ -177,6 +214,7 @@ export const createChamado = createServerFn({ method: "POST" })
     const row = {
       chamado: nullIfEmpty(data.Chamado),
       loja: nullIfEmpty(data.Loja),
+      parceiro: nullIfEmpty((data as any).Parceiro || (data as any).parceiro) || (data.Loja ? getParceiroByLoja(data.Loja) : null),
       tipo: nullIfEmpty(data.Tipo),
       nf: nullIfEmpty(data.NF),
       dt_emissao: dateOrNull(data["Dt Emissão"]),

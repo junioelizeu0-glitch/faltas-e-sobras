@@ -1,13 +1,13 @@
 import { useEffect, useMemo, useState } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { toast } from "sonner";
-import { Plus, Loader2, Save, X, Search, Pencil, Trash2, Lock, Download } from "lucide-react";
+import { Plus, Loader2, Save, X, Search, Pencil, Trash2, Lock, Download, Sparkles } from "lucide-react";
 import Pagination from "./Pagination";
-import { listLojas, upsertLoja, deleteLoja, type Loja } from "@/lib/lojas.functions";
+import { listLojas, upsertLoja, deleteLoja, getParceiroByLoja, type Loja } from "@/lib/lojas.functions";
 
 const PAGE_SIZE = 30;
 const EMPTY: Loja = {
-  id: "", numero: "", cnpj: "", razao_social: "", tipo: "", banco: "", agencia: "", agencia_dig: "",
+  id: "", numero: "", parceiro: "", cnpj: "", razao_social: "", tipo: "", banco: "", agencia: "", agencia_dig: "",
   conta: "", conta_dig: "", observacao: "",
 };
 
@@ -62,7 +62,6 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
     }
   };
 
-
   const load = async () => {
     setLoading(true);
     try { setRows(await list() as any); } finally { setLoading(false); }
@@ -73,7 +72,7 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
     const q = busca.trim().toLowerCase();
     if (!q) return rows;
     return rows.filter((r) =>
-      [r.numero, r.cnpj, r.razao_social, r.banco].some((v) => String(v ?? "").toLowerCase().includes(q))
+      [r.numero, r.parceiro, r.cnpj, r.razao_social, r.banco].some((v) => String(v ?? "").toLowerCase().includes(q))
     );
   }, [rows, busca]);
 
@@ -86,7 +85,7 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
     setErr(null); setSaving(true);
     try {
       await up({ data: editing as any });
-      toast.success("Loja salva");
+      toast.success("Loja salva com sucesso");
       setEditing(null); await load();
     } catch (e: any) { setErr(e?.message || "Erro"); toast.error(e?.message || "Erro ao salvar loja"); }
     finally { setSaving(false); }
@@ -118,7 +117,9 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
         <header className="flex flex-wrap items-center justify-between gap-3 pb-4 border-b border-slate-100">
           <div>
             <h1 className="text-xl font-bold text-slate-900 tracking-tight">Cadastro de Lojas</h1>
-            <p className="text-xs text-slate-500 mt-1">Dados bancários e cadastrais corporativos. Total: {filtered.length.toLocaleString("pt-BR")} lojas</p>
+            <p className="text-xs text-slate-500 mt-1">
+              Vinculação de Código de Parceiro, dados bancários e cadastrais corporativos. Total: {filtered.length.toLocaleString("pt-BR")} lojas
+            </p>
           </div>
           <button
             onClick={() => { setErr(null); setEditing({ ...EMPTY }); }}
@@ -134,7 +135,7 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
           <input
             value={busca}
             onChange={(e) => setBusca(e.target.value)}
-            placeholder="Buscar por número, CNPJ, razão social ou banco..."
+            placeholder="Buscar por número da loja, parceiro, CNPJ, razão social ou banco..."
             className="w-full pl-10 pr-4 py-2 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium"
           />
         </div>
@@ -149,7 +150,8 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
             <table className="min-w-full text-xs text-left border-collapse">
               <thead className="bg-slate-50 text-slate-600 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">
                 <tr>
-                  <th className="px-4 py-3">Número</th>
+                  <th className="px-4 py-3">Loja</th>
+                  <th className="px-4 py-3">Parceiro</th>
                   <th className="px-4 py-3">Razão Social</th>
                   <th className="px-4 py-3">CNPJ</th>
                   <th className="px-4 py-3">Banco</th>
@@ -161,6 +163,15 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
                 {paginated.map((r) => (
                   <tr key={r.id} className="hover:bg-slate-50/80 transition-colors cursor-pointer" onClick={() => setViewing(r)}>
                     <td className="px-4 py-3 font-bold text-slate-900">{r.numero}</td>
+                    <td className="px-4 py-3">
+                      {r.parceiro ? (
+                        <span className="inline-flex items-center px-2 py-0.5 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60 font-mono">
+                          {r.parceiro}
+                        </span>
+                      ) : (
+                        <span className="text-slate-400">—</span>
+                      )}
+                    </td>
                     <td className="px-4 py-3 font-medium text-slate-800">{r.razao_social || "—"}</td>
                     <td className="px-4 py-3 text-slate-600">{r.cnpj || "—"}</td>
                     <td className="px-4 py-3 text-slate-600">{r.banco || "—"}</td>
@@ -181,7 +192,7 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
                 ))}
                 {filtered.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-slate-400">
+                    <td colSpan={7} className="px-4 py-8 text-center text-slate-400">
                       Nenhuma loja cadastrada.
                     </td>
                   </tr>
@@ -201,14 +212,16 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
             <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
               <h3 className="font-bold text-slate-900 flex items-center gap-2">
                 <Lock className="w-4 h-4 text-slate-400"/>
-                <span>Loja {viewing.numero} — dados bancários</span>
+                <span>Loja {viewing.numero} {viewing.parceiro ? `(Parceiro: ${viewing.parceiro})` : ""} — Detalhes Cadastrais</span>
               </h3>
               <button onClick={() => setViewing(null)} className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer">
                 <X className="w-5 h-5"/>
               </button>
             </div>
-            <div className="p-6 grid grid-cols-2 gap-4 text-xs">
+            <div className="p-6 grid grid-cols-2 md:grid-cols-3 gap-4 text-xs">
               {[
+                ["Número da Loja", viewing.numero],
+                ["Cód. Parceiro", viewing.parceiro],
                 ["Razão Social", viewing.razao_social],
                 ["CNPJ", viewing.cnpj],
                 ["Tipo", viewing.tipo],
@@ -217,9 +230,9 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
                 ["Conta", viewing.conta ? `${viewing.conta}${viewing.conta_dig ? "-" + viewing.conta_dig : ""}` : null],
                 ["Observação", viewing.observacao],
               ].map(([label, val]) => (
-                <div key={label as string}>
+                <div key={label as string} className={label === "Razão Social" || label === "Observação" ? "col-span-2" : ""}>
                   <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{label}</div>
-                  <div className="mt-1 rounded-xl bg-slate-50 border border-slate-200 px-3.5 py-2.5 text-slate-800 font-medium min-h-[38px]">
+                  <div className="mt-1 rounded-xl bg-slate-50 border border-slate-200 px-3.5 py-2.5 text-slate-800 font-medium min-h-[38px] flex items-center">
                     {val || "—"}
                   </div>
                 </div>
@@ -237,7 +250,7 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
         </div>
       )}
 
-      {/* Modal de edição/criação com Alinhamento Perfeito da Conta e Dígito */}
+      {/* Modal de edição/criação */}
       {editing && (
         <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] overflow-auto border border-slate-200">
@@ -257,13 +270,57 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
                     <input
                       inputMode="numeric"
                       value={editing?.numero ?? ""}
-                      onChange={(e) => setEditing({ ...(editing as Loja), numero: onlyDigits(e.target.value) })}
+                      onChange={(e) => {
+                        const raw = e.target.value;
+                        const num = onlyDigits(raw);
+                        const autoParceiro = getParceiroByLoja(num) || "";
+                        setEditing((prev) => {
+                          if (!prev) return prev;
+                          // Auto-preenche o parceiro se estiver vazio ou se acompanhou o número anterior
+                          const shouldUpdate = !prev.parceiro || prev.parceiro === getParceiroByLoja(prev.numero);
+                          return {
+                            ...prev,
+                            numero: num,
+                            parceiro: shouldUpdate && autoParceiro ? autoParceiro : prev.parceiro,
+                          };
+                        });
+                      }}
                       placeholder="Ex.: 101"
                       className="mt-1.5 w-full text-sm rounded-xl border border-slate-200 px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white font-medium"
                     />
                   </label>
                 </div>
-                <label className="flex-1 min-w-0 block">
+
+                <div className="w-36 shrink-0">
+                  <label className="block">
+                    <span className="text-xs font-semibold text-slate-600 flex items-center justify-between">
+                      <span>Nº Parceiro</span>
+                      {editing?.numero && getParceiroByLoja(editing.numero) && (
+                        <button
+                          type="button"
+                          onClick={() => {
+                            const p = getParceiroByLoja(editing.numero);
+                            if (p) setEditing((prev) => prev ? ({ ...prev, parceiro: p }) : prev);
+                          }}
+                          className="text-[10px] text-emerald-700 hover:underline font-bold flex items-center gap-0.5 cursor-pointer"
+                          title="Puxar código de parceiro oficial da tabela"
+                        >
+                          <Sparkles className="w-3 h-3 text-emerald-600" />
+                          <span>Puxar</span>
+                        </button>
+                      )}
+                    </span>
+                    <input
+                      inputMode="numeric"
+                      value={editing?.parceiro ?? ""}
+                      onChange={(e) => setEditing({ ...(editing as Loja), parceiro: onlyDigits(e.target.value) })}
+                      placeholder="Ex.: 375"
+                      className="mt-1.5 w-full text-sm rounded-xl border border-slate-200 px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white font-medium font-mono text-emerald-800"
+                    />
+                  </label>
+                </div>
+
+                <label className="flex-1 min-w-[220px] block">
                   <span className="text-xs font-semibold text-slate-600">CNPJ</span>
                   <div className="mt-1.5 flex gap-2">
                     <input

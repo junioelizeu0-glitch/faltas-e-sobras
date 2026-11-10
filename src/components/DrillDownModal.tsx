@@ -223,9 +223,8 @@ export default function DrillDownModal({
                   <th
                     key={col}
                     onClick={() => handleSort(col)}
-                    className={`p-3 font-semibold cursor-pointer hover:bg-slate-200 transition-colors select-none group ${
-                      idx === 0 ? "rounded-tl-lg" : ""
-                    } ${idx === activeColumns.length - 1 ? "rounded-tr-lg" : ""}`}
+                    className={`p-3 font-semibold cursor-pointer hover:bg-slate-200 transition-colors select-none group ${idx === 0 ? "rounded-tl-lg" : ""
+                      } ${idx === activeColumns.length - 1 ? "rounded-tr-lg" : ""}`}
                   >
                     <div className="flex items-center gap-1">
                       {col}
@@ -286,13 +285,12 @@ export default function DrillDownModal({
                       return (
                         <td key={col} className="p-3">
                           <span
-                            className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase ${
-                              statusVal === "Aprovado"
+                            className={`px-2.5 py-1 rounded-md text-[10px] font-bold uppercase ${statusVal === "Aprovado"
                                 ? "bg-emerald-100 text-emerald-700"
                                 : statusVal === "Recusado"
                                   ? "bg-rose-100 text-rose-700"
                                   : "bg-amber-100 text-amber-700"
-                            }`}
+                              }`}
                           >
                             {statusVal}
                           </span>
@@ -328,10 +326,10 @@ export default function DrillDownModal({
                         row[col] !== undefined
                           ? row[col]
                           : row[
-                              Object.keys(row).find(
-                                (k) => k.trim().toLowerCase() === col.trim().toLowerCase(),
-                              ) || ""
-                            ];
+                          Object.keys(row).find(
+                            (k) => k.trim().toLowerCase() === col.trim().toLowerCase(),
+                          ) || ""
+                          ];
                       val = formatarDataBR(cellVal);
                       return (
                         <td key={col} className="p-3 text-slate-500">
@@ -352,6 +350,23 @@ export default function DrillDownModal({
                       return (
                         <td key={col} className="p-3 text-slate-600">
                           {val}
+                        </td>
+                      );
+                    }
+                    if (col === "Referência" || col === "referencia" || col === "SKU") {
+                      const rawRef = row["referencia"] || row["Referencia"] || row["sku"] || row["SKU"] || "";
+                      const isVazio = !rawRef || ["-", "—", "–", "n/a", "sem referencia"].includes(String(rawRef).trim().toLowerCase());
+                      return (
+                        <td key={col} className="p-3">
+                          {isVazio ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200/60">
+                              Sem SKU
+                            </span>
+                          ) : (
+                            <span className="font-semibold text-slate-800">
+                              {rawRef}
+                            </span>
+                          )}
                         </td>
                       );
                     }

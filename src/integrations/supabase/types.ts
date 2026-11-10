@@ -125,6 +125,7 @@ export type Database = {
           motivo: string | null
           nf: string | null
           periodo: string | null
+          parceiro: string | null
           situacao: string | null
           sla_status: string | null
           status_chamado: string | null
@@ -148,6 +149,7 @@ export type Database = {
           motivo?: string | null
           nf?: string | null
           periodo?: string | null
+          parceiro?: string | null
           situacao?: string | null
           sla_status?: string | null
           status_chamado?: string | null
@@ -171,6 +173,7 @@ export type Database = {
           motivo?: string | null
           nf?: string | null
           periodo?: string | null
+          parceiro?: string | null
           situacao?: string | null
           sla_status?: string | null
           status_chamado?: string | null
@@ -265,6 +268,7 @@ export type Database = {
           id: string
           numero: string
           observacao: string | null
+          parceiro: string | null
           razao_social: string | null
           tipo: string | null
           updated_at: string
@@ -280,6 +284,7 @@ export type Database = {
           id?: string
           numero: string
           observacao?: string | null
+          parceiro?: string | null
           razao_social?: string | null
           tipo?: string | null
           updated_at?: string
@@ -295,6 +300,7 @@ export type Database = {
           id?: string
           numero?: string
           observacao?: string | null
+          parceiro?: string | null
           razao_social?: string | null
           tipo?: string | null
           updated_at?: string

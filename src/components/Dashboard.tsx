@@ -13,7 +13,7 @@ import {
   ChevronDown, LayoutDashboard, Settings, History, Store, UserCheck, UserX, Target, AlertCircle, Banknote, ListTodo, PackageX, Search, Loader2, RefreshCcw, MoreVertical, Download, FileSpreadsheet,
   Plus, BarChart2, LayoutGrid, Menu, ChevronLeft, ChevronRight, Package
 } from 'lucide-react';
-import { useDashboardData, isValidField, getTarefaAtual, isSemRetorno, parseDataBR, getBusinessDays, isMotivoErroConferente, parseValorNumeric } from '@/lib/data-processing';
+import { useDashboardData, isValidField, getTarefaAtual, isSemRetorno, parseDataBR, getBusinessDays, isMotivoErroConferente, parseValorNumeric, isValidRef } from '@/lib/data-processing';
 import NovoChamadoForm from '@/components/NovoChamadoForm';
 import PainelAbertos from '@/components/PainelAbertos';
 import ConsultaChamados from '@/components/ConsultaChamados';
@@ -1738,8 +1738,113 @@ const AbaConferentes = ({ mode, data, onOpenModal }: { mode: 'geral'; data: any;
   return <PodioRankingConferentes data={data} onOpenModal={onOpenModal} />;
 };
 
-const AbaReferenciasFornecedores = ({ rawData, onOpenModal }: { rawData: any[]; onOpenModal: (type: string) => void }) => {
+const AbaReferenciasFornecedores = ({
+  rawData,
+  onOpenModal,
+  tabela = 'faltas',
+}: {
+  rawData: any[];
+  onOpenModal: (type: string, customData?: any[]) => void;
+  tabela?: 'faltas' | 'recall';
+}) => {
   const [searchTerm, setSearchTerm] = useState('');
+
+  // 1) Filtro por Natureza:
+  // No dashboard de recall, considera APENAS chamados cuja natureza seja "Recall".
+  // Chamados de outras naturezas (Falta, Sobra, etc.) não entram em nenhum cálculo ou indicador.
+  const isRecallContext = tabela === 'recall';
+
+  const chamadosFiltradosPorNatureza = useMemo(() => {
+    if (!rawData || !Array.isArray(rawData)) return [];
+
+    return rawData.filter((item) => {
+      if (!item) return false;
+      const tipo = String(item.Tipo || item.tipo || '').trim().toUpperCase();
+      const nat = String(item.natureza || item.Natureza || '').trim().toUpperCase();
+      const aba = String(item.aba || item.Aba || '').trim().toUpperCase();
+
+      const mentionsRecall = tipo.includes('RECALL') || nat.includes('RECALL') || aba.includes('RECALL');
+      const mentionsFaltaOuSobra = (
+        tipo.includes('FALTA') || tipo.includes('SOBRA') ||
+        nat.includes('FALTA') || nat.includes('SOBRA') ||
+        aba.includes('FALTA') || aba.includes('SOBRA')
+      );
+
+      if (isRecallContext) {
+        // Se expressamente rotulado como Falta ou Sobra e não for Recall, descartar
+        if (mentionsFaltaOuSobra && !mentionsRecall) return false;
+        // No contexto de recall, aceita registros de recall
+        return true;
+      } else {
+        // Se for contexto de faltas e sobras, descartar recalls puros
+        if (mentionsRecall && !mentionsFaltaOuSobra) return false;
+        return true;
+      }
+    });
+  }, [rawData, isRecallContext]);
+
+  // 2) Normalização do SKU:
+  // Antes de agrupar, padroniza o código: trim, maiúsculas, remover espaços internos/extras.
+  const normalizeSku = (val: any): string => {
+    if (val === null || val === undefined) return '';
+    return String(val)
+      .trim()
+      .toUpperCase()
+      .replace(/\s+/g, '');
+  };
+
+  // 3) Validação de SKU:
+  // Se for vazio, null, "-", "N/A" etc., NÃO é considerado referência válida.
+  const isInvalidSku = (sku: string): boolean => {
+    if (!sku) return true;
+    const s = sku.trim().toUpperCase();
+    if (!s) return true;
+
+    const invalidSet = new Set([
+      "-", "—", "–", "−", ".", "..", "...", "/", "\\",
+      "N/A", "NA", "NULL", "UNDEFINED", "NONE",
+      "SEMREFERENCIA", "SEMREFERÊNCIA", "SEMREFERENCIAESPECIFICADA", "SEMREFERÊNCIAESPECIFICADA",
+      "OUTROS", "OUTRO", "SEMREF", "NÃOIDENTIFICADO", "NAOIDENTIFICADO",
+      "0", "00", "000"
+    ]);
+
+    if (invalidSet.has(s)) return true;
+    if (/^[-—–−_./\\\s]+$/.test(s)) return true;
+    return false;
+  };
+
+  // Extrai referências únicas normalizadas de um chamado
+  const extractSkusFromItem = (item: any): string[] => {
+    const skus: string[] = [];
+
+    // 1. Array de referências associadas
+    const subRefs = item.chamados_recall_referencias || item.chamados_referencias || item.referencias;
+    if (Array.isArray(subRefs) && subRefs.length > 0) {
+      subRefs.forEach((r: any) => {
+        const raw = typeof r === 'object' && r !== null ? (r.referencia || r.Referencia || r.sku || r.SKU) : r;
+        const norm = normalizeSku(raw);
+        if (!isInvalidSku(norm) && !skus.includes(norm)) {
+          skus.push(norm);
+        }
+      });
+    }
+
+    // 2. Se não encontrou nas subRefs, tentar campo texto 'referencia'/'Referencia'
+    if (skus.length === 0) {
+      const rawRef = String(item.referencia || item.Referencia || item.sku || item.SKU || '').trim();
+      if (rawRef) {
+        const parts = rawRef.split(/[,;\n/]+/);
+        parts.forEach((p) => {
+          const norm = normalizeSku(p);
+          if (!isInvalidSku(norm) && !skus.includes(norm)) {
+            skus.push(norm);
+          }
+        });
+      }
+    }
+
+    return skus;
+  };
 
   const refData = useMemo(() => {
     const map: Record<string, {
@@ -1752,56 +1857,85 @@ const AbaReferenciasFornecedores = ({ rawData, onOpenModal }: { rawData: any[]; 
       chamados: any[];
     }> = {};
 
-    let grandTotalValue = 0;
+    let totalChamadosGeral = 0;
+    let totalValorGeral = 0;
 
-    (rawData || []).forEach((item) => {
-      const rawRef = String(item['referencia'] || item['Referencia'] || item['Motivo'] || 'Outros').trim();
-      const refName = rawRef === '' ? 'Sem Referência Especificada' : rawRef;
-      const val = parseValorNumeric(item[' Valor ']);
-      const st = String(item['Status Chamado'] || item['Situação '] || '').toUpperCase();
+    const semSkuChamados: any[] = [];
+    let semSkuValor = 0;
 
-      grandTotalValue += val;
+    let comSkuValor = 0;
 
-      if (!map[refName]) {
-        map[refName] = {
-          refName,
-          qtd: 0,
-          valorTotal: 0,
-          valorAprovado: 0,
-          valorPendente: 0,
-          valorRecusado: 0,
-          chamados: [],
-        };
+    chamadosFiltradosPorNatureza.forEach((item) => {
+      totalChamadosGeral += 1;
+      const val = parseValorNumeric(item[' Valor '] ?? item.valor ?? item['Valor']);
+      totalValorGeral += val;
+
+      const validSkus = extractSkusFromItem(item);
+
+      // 3) Chamados sem SKU:
+      // Se o chamado de recall não tiver SKU (vazio, null ou "-"), NÃO crie uma referência "-".
+      // Exclua esses chamados do gráfico e dos indicadores de referência.
+      if (validSkus.length === 0) {
+        semSkuChamados.push(item);
+        semSkuValor += val;
+        return;
       }
 
-      map[refName].qtd += 1;
-      map[refName].valorTotal += val;
-      map[refName].chamados.push(item);
+      // Chamado com SKU válido:
+      comSkuValor += val;
+      const st = String(item['Status Chamado'] || item['Situação '] || item.status_chamado || '').toUpperCase();
+      const splitVal = validSkus.length > 1 ? val / validSkus.length : val;
 
-      if (st.includes('APROVADO')) {
-        map[refName].valorAprovado += val;
-      } else if (st.includes('RECUSADO')) {
-        map[refName].valorRecusado += val;
-      } else {
-        map[refName].valorPendente += val;
-      }
+      validSkus.forEach((sku) => {
+        if (!map[sku]) {
+          map[sku] = {
+            refName: sku,
+            qtd: 0,
+            valorTotal: 0,
+            valorAprovado: 0,
+            valorPendente: 0,
+            valorRecusado: 0,
+            chamados: [],
+          };
+        }
+
+        map[sku].qtd += 1;
+        map[sku].valorTotal += splitVal;
+        map[sku].chamados.push(item);
+
+        if (st.includes('APROVADO')) {
+          map[sku].valorAprovado += splitVal;
+        } else if (st.includes('RECUSADO')) {
+          map[sku].valorRecusado += splitVal;
+        } else {
+          map[sku].valorPendente += splitVal;
+        }
+      });
     });
 
     const list = Object.values(map).sort((a, b) => b.valorTotal - a.valorTotal);
     const totalRefs = list.length;
     const top1 = list[0] || null;
 
+    // Concentração Top 5: % que as 5 maiores referências representam sobre o montante válido
     const top5Val = list.slice(0, 5).reduce((acc, curr) => acc + curr.valorTotal, 0);
-    const abcPercentage = grandTotalValue > 0 ? Math.round((top5Val / grandTotalValue) * 100) : 0;
+    const abcPercentage = comSkuValor > 0 ? Math.round((top5Val / comSkuValor) * 100) : 0;
 
     return {
       list,
       totalRefs,
-      grandTotalValue,
+      grandTotalValue: comSkuValor, // Apenas referências com SKU válido
       top1,
       abcPercentage,
+      // Chamados sem SKU (à parte)
+      semSkuChamados,
+      semSkuCount: semSkuChamados.length,
+      semSkuValor,
+      // Totais gerais auditados (Recall Geral)
+      totalChamadosGeral,
+      totalValorGeral,
     };
-  }, [rawData]);
+  }, [chamadosFiltradosPorNatureza]);
 
   const filteredList = useMemo(() => {
     if (!searchTerm.trim()) return refData.list;
@@ -1815,13 +1949,15 @@ const AbaReferenciasFornecedores = ({ rawData, onOpenModal }: { rawData: any[]; 
       <div className="bg-white p-5 rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-wrap items-center justify-between gap-4">
         <div>
           <div className="flex items-center gap-2">
-            <h2 className="text-base font-bold text-slate-900 tracking-tight">Análise por Referência & Fornecedor</h2>
+            <h2 className="text-base font-bold text-slate-900 tracking-tight">
+              Análise por Referência {isRecallContext ? '(Recall)' : '& Fornecedor'}
+            </h2>
             <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
-              <Package className="w-3.5 h-3.5" /> {refData.totalRefs} Referências
+              <Package className="w-3.5 h-3.5" /> {refData.totalRefs} Referências Válidas
             </span>
           </div>
           <p className="text-xs text-slate-500 font-medium mt-1">
-            Indicadores de volume, impacto financeiro acumulado e detalhamento por produto/lote
+            Indicadores de volume, impacto financeiro acumulado e detalhamento por produto/lote (SKU normalizado)
           </p>
         </div>
 
@@ -1837,6 +1973,39 @@ const AbaReferenciasFornecedores = ({ rawData, onOpenModal }: { rawData: any[]; 
         </div>
       </div>
 
+      {/* 3) Aviso / Card de Chamados sem SKU (Mostrados à parte para correção na origem) */}
+      {refData.semSkuCount > 0 && (
+        <div className="bg-amber-50/80 border border-amber-200/90 rounded-2xl p-4 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-wrap items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <div className="w-9 h-9 rounded-xl bg-amber-100 text-amber-800 flex items-center justify-center shrink-0 mt-0.5">
+              <AlertTriangle className="w-5 h-5 text-amber-700" />
+            </div>
+            <div>
+              <div className="flex items-center gap-2">
+                <h4 className="text-sm font-bold text-amber-900">
+                  {isRecallContext ? 'Recall sem SKU Cadastrado' : 'Chamados sem Referência Cadastrada'}: {refData.semSkuCount} chamado(s) / {formatCurrency(refData.semSkuValor)}
+                </h4>
+                <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-200/80 text-amber-900 uppercase tracking-wider">
+                  Correção na Origem
+                </span>
+              </div>
+              <p className="text-xs text-amber-800 font-medium mt-0.5">
+                Estes chamados foram excluídos dos rankings e gráficos de produto para não gerar referência &quot;-&quot;. Clique no botão ao lado para consultar a lista e regularizar o SKU.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            onClick={() => onOpenModal('RECALL SEM SKU', refData.semSkuChamados)}
+            className="inline-flex items-center gap-2 px-3.5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold transition-all shadow-xs cursor-pointer"
+            title="Abrir detalhamento de chamados sem SKU para correção"
+          >
+            <FileSpreadsheet className="w-4 h-4" />
+            <span>Ver Chamados sem SKU ({refData.semSkuCount})</span>
+          </button>
+        </div>
+      )}
+
       {/* KPI Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
         <div className="bg-white p-4 rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
@@ -1847,7 +2016,7 @@ const AbaReferenciasFornecedores = ({ rawData, onOpenModal }: { rawData: any[]; 
             </div>
           </div>
           <div className="text-2xl font-bold text-slate-900 tracking-tight">{refData.totalRefs}</div>
-          <div className="text-[11px] text-slate-400 font-medium mt-1">Referências únicas registradas</div>
+          <div className="text-[11px] text-slate-400 font-medium mt-1">SKUs únicos válidos normalizados</div>
         </div>
 
         <div className="bg-white p-4 rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
@@ -1858,7 +2027,7 @@ const AbaReferenciasFornecedores = ({ rawData, onOpenModal }: { rawData: any[]; 
             </div>
           </div>
           <div className="text-2xl font-bold text-slate-900 tracking-tight">{formatCurrency(refData.grandTotalValue)}</div>
-          <div className="text-[11px] text-slate-400 font-medium mt-1">Acumulado do período</div>
+          <div className="text-[11px] text-slate-400 font-medium mt-1">Acumulado das referências válidas</div>
         </div>
 
         <div className="bg-white p-4 rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
@@ -1888,7 +2057,24 @@ const AbaReferenciasFornecedores = ({ rawData, onOpenModal }: { rawData: any[]; 
         </div>
       </div>
 
-      {/* Gráficos de Referências */}
+      {/* 5) Validação e Conciliação Financeira Auditada */}
+      <div className="bg-emerald-50/70 border border-emerald-200/70 rounded-2xl px-5 py-3.5 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-wrap items-center justify-between gap-3 text-xs">
+        <div className="flex items-center gap-2.5">
+          <CheckCircle2 className="w-5 h-5 text-emerald-600 shrink-0" />
+          <div>
+            <span className="font-bold text-slate-800">Conciliação Financeira Auditada: </span>
+            <span className="text-slate-600">
+              Refs com SKU ({formatCurrency(refData.grandTotalValue)}) + {isRecallContext ? 'Recall sem SKU' : 'Sem Ref'} ({formatCurrency(refData.semSkuValor)}) = 
+            </span>
+            <span className="font-extrabold text-emerald-800"> {formatCurrency(refData.totalValorGeral)} (Total Geral do Período)</span>
+          </div>
+        </div>
+        <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold bg-emerald-100 text-emerald-800 border border-emerald-200">
+          100% Conciliado ({refData.totalChamadosGeral} chamados)
+        </span>
+      </div>
+
+      {/* Gráficos de Referências (Sem referências '-' ou inválidas) */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         <div className="bg-white p-5 rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col">
           <div className="flex items-center justify-between mb-4">
@@ -1914,7 +2100,10 @@ const AbaReferenciasFornecedores = ({ rawData, onOpenModal }: { rawData: any[]; 
                   barSize={18}
                   className="cursor-pointer hover:opacity-80 transition-opacity"
                   onClick={(data: any) => {
-                    if (data && data.refName) onOpenModal('REF - ' + data.refName);
+                    if (data && data.refName) {
+                      const it = refData.list.find((r) => r.refName === data.refName);
+                      onOpenModal('REF - ' + data.refName, it?.chamados);
+                    }
                   }}
                 />
               </BarChart>
@@ -1931,7 +2120,18 @@ const AbaReferenciasFornecedores = ({ rawData, onOpenModal }: { rawData: any[]; 
           </div>
           <div className="h-80 w-full">
             <ResponsiveContainer width="100%" height="100%">
-              <BarChart data={refData.list.slice(0, 6)} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
+              <BarChart
+                data={refData.list.slice(0, 6)}
+                margin={{ top: 10, right: 10, left: -10, bottom: 0 }}
+                onClick={(state: any) => {
+                  const refName = state?.activePayload?.[0]?.payload?.refName;
+                  if (refName) {
+                    const it = refData.list.find((r) => r.refName === refName);
+                    onOpenModal('REF - ' + refName, it?.chamados);
+                  }
+                }}
+                className="cursor-pointer"
+              >
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis dataKey="refName" tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} />
                 <YAxis tick={{ fontSize: 11, fill: "#64748b" }} axisLine={false} tickLine={false} />
@@ -1966,7 +2166,7 @@ const AbaReferenciasFornecedores = ({ rawData, onOpenModal }: { rawData: any[]; 
             <thead>
               <tr className="bg-slate-50/80 border-b border-slate-200/80 text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
                 <th className="px-4 py-3"># Pos</th>
-                <th className="px-4 py-3">Código / Referência</th>
+                <th className="px-4 py-3">Código / Referência (SKU)</th>
                 <th className="px-4 py-3 text-center">Chamados (Qtd)</th>
                 <th className="px-4 py-3">Valor Total (R$)</th>
                 <th className="px-4 py-3">Valor Aprovado</th>
@@ -1981,7 +2181,7 @@ const AbaReferenciasFornecedores = ({ rawData, onOpenModal }: { rawData: any[]; 
                 return (
                   <tr
                     key={item.refName}
-                    onClick={() => onOpenModal('REF - ' + item.refName)}
+                    onClick={() => onOpenModal('REF - ' + item.refName, item.chamados)}
                     className="hover:bg-emerald-50/40 transition-colors cursor-pointer group"
                   >
                     <td className="px-4 py-3 font-bold text-slate-400 group-hover:text-emerald-700">#{idx + 1}</td>
@@ -2000,9 +2200,10 @@ const AbaReferenciasFornecedores = ({ rawData, onOpenModal }: { rawData: any[]; 
                     <td className="px-4 py-3 font-semibold text-slate-600">{pctShare}%</td>
                     <td className="px-4 py-3 text-center">
                       <button
+                        type="button"
                         onClick={(e) => {
                           e.stopPropagation();
-                          onOpenModal('REF - ' + item.refName);
+                          onOpenModal('REF - ' + item.refName, item.chamados);
                         }}
                         className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-50 hover:bg-emerald-100 text-emerald-700 border border-emerald-200/80 text-xs font-semibold transition-all cursor-pointer"
                         title="Ver detalhamento e exportar relatório Excel da Referência"
@@ -2017,7 +2218,7 @@ const AbaReferenciasFornecedores = ({ rawData, onOpenModal }: { rawData: any[]; 
               {filteredList.length === 0 && (
                 <tr>
                   <td colSpan={8} className="px-4 py-8 text-center text-slate-400 font-medium">
-                    Nenhuma referência localizada com o termo pesquisado.
+                    Nenhuma referência válida localizada com o termo pesquisado.
                   </td>
                 </tr>
               )}
@@ -2214,8 +2415,8 @@ export default function Dashboard() {
     setActiveFilters(filterSelections);
   };
 
-  const handleOpenModal = (type: string) => {
-    let raw = kpis?.filteredData || [];
+  const handleOpenModal = (type: string, customData?: any[]) => {
+    let raw = customData || kpis?.filteredData || [];
     let cols = ['Chamado', 'Loja', 'CD', 'Tipo', 'Tarefa Atual', 'Status', 'Valor', 'Dt Abertura', 'Dt Finalização', 'SLA'];
     let title = `Detalhamento de Chamados - ${type}`;
 
@@ -2241,12 +2442,9 @@ export default function Dashboard() {
       {
         const etapaLower = etapaInfo.toLowerCase();
         if (etapaLower.includes('provisionamento financeiro')) {
-          cols = ['Chamado', 'Loja', 'Tipo', 'Dt Emissão NF', 'Numero da NF', 'Valor', 'Dt Abertura', 'SLA', 'Tarefa Atual'];
+          cols = ['Chamado', 'Loja', 'Tipo', 'CD', 'NF', 'Dt Emissão NF', 'Valor', 'Dt Abertura', 'SLA', 'Tarefa Atual'];
         } else {
-          const needsNF = etapaLower.includes('provision') || etapaLower.includes('pagamento');
-          cols = needsNF
-            ? ['Chamado', 'Loja', 'CD', 'NF', 'Tarefa Atual', 'Status', 'Valor', 'Dt Abertura', 'SLA']
-            : ['Chamado', 'Loja', 'CD', 'Tarefa Atual', 'Status', 'Valor', 'Dt Abertura', 'SLA'];
+          cols = ['Chamado', 'Loja', 'CD', 'NF', 'Tarefa Atual', 'Status', 'Valor', 'Dt Abertura', 'SLA'];
         }
       }
       raw = enrichBankData(raw);
@@ -2449,12 +2647,17 @@ export default function Dashboard() {
         default:
           if (type.startsWith('REF - ')) {
             const refInfo = type.replace('REF - ', '').trim().toLowerCase();
-            raw = raw.filter((d: any) => {
-              const r = String(d['referencia'] || d['Referencia'] || d['Motivo'] || '').trim().toLowerCase();
-              return r === refInfo || r.includes(refInfo);
-            });
-            cols = ['Chamado', 'Loja', 'CD', 'referencia', 'NF', 'Valor', 'Status Chamado', 'Dt Abertura', 'Motivo', 'Tarefa Atual'];
+            if (!customData) {
+              raw = raw.filter((d: any) => {
+                const r = String(d['referencia'] || d['Referencia'] || '').trim().toLowerCase();
+                return r.split(',').map((s: string) => s.trim()).includes(refInfo) || r.includes(refInfo);
+              });
+            }
+            cols = ['Chamado', 'Loja', 'CD', 'Referência', 'NF', 'Valor', 'Status Chamado', 'Dt Abertura', 'Motivo', 'Tarefa Atual'];
             title = `Detalhamento de Chamados - Referência: ${type.replace('REF - ', '')}`;
+          } else if (type.startsWith('RECALL SEM SKU')) {
+            cols = ['Chamado', 'Loja', 'CD', 'Referência', 'NF', 'Valor', 'Status Chamado', 'Dt Abertura', 'Motivo', 'Tarefa Atual'];
+            title = `Detalhamento: Chamados de Recall sem SKU Cadastrado (${raw.length} chamados)`;
           } else {
             title = 'Detalhamento de Chamados - Geral';
           }
@@ -2509,7 +2712,7 @@ export default function Dashboard() {
       case 'executivo': return <AbaVisaoExecutiva data={passData} onOpenModal={handleOpenModal} tabela={tabelaAtual} />;
       case 'operacao': return <AbaOperacao data={passData} onOpenModal={handleOpenModal} />;
       case 'financeiro': return <AbaFinanceiro data={passData} onOpenModal={handleOpenModal} filters={filterSelections} />;
-      case 'referencias': return <AbaReferenciasFornecedores rawData={rawData} onOpenModal={handleOpenModal} />;
+      case 'referencias': return <AbaReferenciasFornecedores rawData={kpis?.filteredData || rawData} onOpenModal={handleOpenModal} tabela={tabelaAtual} />;
       case 'transp_geral': return <AbaTransportadoras mode="geral" data={passData} onOpenModal={handleOpenModal} />;
       case 'conf_geral': return <AbaConferentes mode="geral" data={passData} onOpenModal={handleOpenModal} />;
       default: return <AbaVisaoExecutiva data={passData} onOpenModal={handleOpenModal} tabela={tabelaAtual} />;

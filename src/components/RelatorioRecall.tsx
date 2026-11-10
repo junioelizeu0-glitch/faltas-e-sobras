@@ -16,10 +16,11 @@ import {
   parseValorNumeric,
   formatarMoedaBR,
   getTarefaAtual,
-  FilterState
+  FilterState,
+  isValidRef
 } from "@/lib/data-processing";
 import { exportToExcel } from "@/lib/excel-export";
-import { listLojas } from "@/lib/lojas.functions";
+import { listLojas, getParceiroByLoja } from "@/lib/lojas.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { toPng } from "html-to-image";
 import DrillDownModal from "@/components/DrillDownModal";
@@ -75,8 +76,9 @@ export default function RelatorioRecall({
     tipo: "Todos",
   });
 
-  // Busca Exata em Campos Específicos (Nº Chamado, Loja, NF, Produto)
+  // Busca Exata em Campos Específicos (Nº Chamado, GLPI, Loja, NF, Produto)
   const [exactSearchChamado, setExactSearchChamado] = useState("");
+  const [exactSearchGLPI, setExactSearchGLPI] = useState("");
   const [exactSearchLoja, setExactSearchLoja] = useState("");
   const [exactSearchNF, setExactSearchNF] = useState("");
   const [exactSearchProduto, setExactSearchProduto] = useState("");
@@ -213,6 +215,10 @@ export default function RelatorioRecall({
         const val = String(item["Chamado"] || "").trim();
         if (val !== exactSearchChamado.trim()) return false;
       }
+      if (exactSearchGLPI.trim() !== "") {
+        const val = String(item["glpi"] || item["GLPI"] || "").trim();
+        if (val !== exactSearchGLPI.trim()) return false;
+      }
       if (exactSearchLoja.trim() !== "") {
         const val = String(item["Loja"] || "").trim();
         if (val !== exactSearchLoja.trim()) return false;
@@ -234,6 +240,7 @@ export default function RelatorioRecall({
     rawData,
     filters,
     exactSearchChamado,
+    exactSearchGLPI,
     exactSearchLoja,
     exactSearchNF,
     exactSearchProduto,
@@ -289,7 +296,7 @@ export default function RelatorioRecall({
 
       // Referência / Produto
       const ref = String(item["referencia"] || item["Referencia"] || "").trim();
-      if (ref) referenciasSet.add(ref);
+      if (ref && isValidRef(ref)) referenciasSet.add(ref);
 
       // Loja
       const lojaStr = String(item["Loja"] || "").trim();
@@ -507,6 +514,7 @@ export default function RelatorioRecall({
   const handleExportExcel = () => {
     const rowsToExport = filteredData.map((r) => ({
       Chamado: r["Chamado"] || "-",
+      "Chamado GLPI": r["glpi"] || r["GLPI"] || "-",
       Loja: r["Loja"] || "-",
       "Razão Social": r["razao_social"] || "-",
       Tipo: r["Tipo"] || "-",
@@ -520,7 +528,7 @@ export default function RelatorioRecall({
       Motivo: r["Motivo"] || "-",
       Transportadora: r["Transportadora"] || "-",
       Conferente: r["Conferente"] || "-",
-      Referência: r["referencia"] || r["Referencia"] || "-",
+      Referência: (r["referencia"] || r["Referencia"]) && isValidRef(r["referencia"] || r["Referencia"]) ? (r["referencia"] || r["Referencia"]) : "-",
     }));
 
     exportToExcel(rowsToExport, {
@@ -706,6 +714,17 @@ export default function RelatorioRecall({
           <div className="relative">
             <input
               type="text"
+              placeholder="Nº GLPI exato..."
+              value={exactSearchGLPI}
+              onChange={(e) => setExactSearchGLPI(e.target.value)}
+              className="w-32 rounded-xl border border-slate-200 bg-white pl-2.5 pr-7 py-1.5 text-xs text-slate-700 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none"
+            />
+            <Search className="w-3.5 h-3.5 text-slate-400 absolute right-2 top-2 pointer-events-none" />
+          </div>
+
+          <div className="relative">
+            <input
+              type="text"
               placeholder="Cód. Loja..."
               value={exactSearchLoja}
               onChange={(e) => setExactSearchLoja(e.target.value)}
@@ -725,10 +744,11 @@ export default function RelatorioRecall({
             <Search className="w-3.5 h-3.5 text-slate-400 absolute right-2 top-2 pointer-events-none" />
           </div>
 
-          {(exactSearchChamado || exactSearchLoja || exactSearchNF || exactSearchProduto || filters.cd !== "Todos" || filters.status !== "Todos") && (
+          {(exactSearchChamado || exactSearchGLPI || exactSearchLoja || exactSearchNF || exactSearchProduto || filters.cd !== "Todos" || filters.status !== "Todos") && (
             <button
               onClick={() => {
                 setExactSearchChamado("");
+                setExactSearchGLPI("");
                 setExactSearchLoja("");
                 setExactSearchNF("");
                 setExactSearchProduto("");
@@ -1270,6 +1290,7 @@ export default function RelatorioRecall({
                 <thead>
                   <tr className="bg-slate-50/80 border-b border-slate-200/80 text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
                     <th className="px-4 py-3">Chamado</th>
+                    <th className="px-4 py-3">Chamado GLPI</th>
                     <th className="px-4 py-3">Loja</th>
                     <th className="px-4 py-3">CD</th>
                     <th className="px-4 py-3">Referência / Produto</th>
@@ -1289,10 +1310,28 @@ export default function RelatorioRecall({
                     return (
                       <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
                         <td className="px-4 py-3 font-bold text-slate-800">#{r["Chamado"]}</td>
-                        <td className="px-4 py-3 font-medium text-slate-700">Loja {r["Loja"]}</td>
+                        <td className="px-4 py-3 font-semibold text-emerald-700">
+                          {r["glpi"] || r["GLPI"] ? (
+                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
+                              {r["glpi"] || r["GLPI"]}
+                            </span>
+                          ) : (
+                            <span className="text-slate-400">—</span>
+                          )}
+                        </td>
+                        <td className="px-4 py-3 font-medium text-slate-700">
+                          <div className="flex items-center gap-1.5">
+                            <span>Loja {r["Loja"]}</span>
+                            {(r["parceiro"] || getParceiroByLoja(r["Loja"])) && (
+                              <span className="text-[10px] font-mono font-bold text-emerald-700 bg-emerald-50 border border-emerald-200/60 rounded px-1.5 py-0.5" title={`Parceiro: ${r["parceiro"] || getParceiroByLoja(r["Loja"])}`}>
+                                P: {r["parceiro"] || getParceiroByLoja(r["Loja"])}
+                              </span>
+                            )}
+                          </div>
+                        </td>
                         <td className="px-4 py-3 font-semibold text-slate-600">CD {r["CD"]}</td>
                         <td className="px-4 py-3 text-slate-700 max-w-[200px] truncate" title={r["referencia"] || r["Referencia"]}>
-                          {r["referencia"] || r["Referencia"] || "—"}
+                          {((r["referencia"] || r["Referencia"]) && isValidRef(r["referencia"] || r["Referencia"])) ? (r["referencia"] || r["Referencia"]) : "—"}
                         </td>
                         <td className="px-4 py-3 text-slate-600 max-w-[180px] truncate" title={r["Motivo"]}>
                           {r["Motivo"] || "Recall"}

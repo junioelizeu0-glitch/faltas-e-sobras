@@ -1,4 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
+import { getParceiroByLoja } from "./lojas-parceiros.data";
 
 async function getSupabase() {
   const { getServerSupabase } = await import("@/integrations/supabase/server-client");
@@ -121,7 +122,7 @@ const DEFAULT_SITUACOES = [
   { nome: "Validação NF Espelho", dias_uteis: 4, aplica_faltas: true, aplica_sobras: false, aplica_recall: false, ordem: 5 },
   { nome: "Aguardando NFD", dias_uteis: 3, aplica_faltas: true, aplica_sobras: false, aplica_recall: false, ordem: 6 },
   { nome: "Emitir NFD", dias_uteis: 2, aplica_faltas: true, aplica_sobras: false, aplica_recall: false, ordem: 7 },
-  { nome: "Importação NF", dias_uteis: 2, aplica_faltas: true, aplica_sobras: false, aplica_recall: false, ordem: 8 },
+  { nome: "Importação NF", dias_uteis: 2, aplica_faltas: true, aplica_sobras: false, aplica_recall: true, ordem: 8 },
   { nome: "Dados Bancários", dias_uteis: 2, aplica_faltas: true, aplica_sobras: false, aplica_recall: false, ordem: 9 },
   { nome: "Enviada Solicitação Provisionamento", dias_uteis: 2, aplica_faltas: true, aplica_sobras: false, aplica_recall: false, ordem: 10 },
   { nome: "Pendente Provisionamento Financeiro", dias_uteis: 5, aplica_faltas: true, aplica_sobras: false, aplica_recall: false, ordem: 11 },
@@ -228,6 +229,16 @@ async function ensureDefaultSituacoes(supabase: any) {
       }));
       await supabase.from("tarefas_catalogo").insert(rows);
     }
+
+    // 3. Garante que Importação NF esteja habilitada para Recall
+    await supabase.from("tarefas_catalogo").update({ aplica_recall: true }).ilike("nome", "%importa%nf%");
+
+    // 4. Tenta adicionar a coluna glpi na tabela chamados_recall caso o RPC esteja disponível
+    try {
+      await supabase.rpc("aiiliana_run_sql", {
+        sql: "ALTER TABLE public.chamados_recall ADD COLUMN IF NOT EXISTS glpi TEXT;"
+      });
+    } catch {}
   } catch (e) {
     /* silent fallback */
   }
@@ -503,7 +514,7 @@ export const createChamadoCompleto = createServerFn({ method: "POST" })
       return d.toISOString().slice(0, 10);
     };
 
-    const chamadoRow = {
+    const chamadoRow: any = {
       chamado: nullIfEmpty(c.Chamado),
       loja: nullIfEmpty(c.Loja),
       tipo: nullIfEmpty(c.Tipo),
@@ -520,9 +531,14 @@ export const createChamadoCompleto = createServerFn({ method: "POST" })
       status_chamado: nullIfEmpty(c["Status Chamado"]),
       motivo: nullIfEmpty(c.Motivo),
       transportadora: nullIfEmpty(c.Transportadora),
-      conferente: nullIfEmpty(c.Conferente),
+      conferente: nullIfEmpty(c.conferente || c.Conferente),
       periodo: dateOrNull(c.Periodo),
+      parceiro: nullIfEmpty(c.Parceiro || c.parceiro) || (c.Loja ? getParceiroByLoja(c.Loja) : null),
     };
+
+    if (data.tabela === "recall") {
+      chamadoRow.glpi = nullIfEmpty(c.GLPI || c.glpi);
+    }
 
     // Regra: número do chamado não pode duplicar
     if (chamadoRow.chamado) {
@@ -531,11 +547,19 @@ export const createChamadoCompleto = createServerFn({ method: "POST" })
       if (dup) throw new Error(`Já existe um chamado com o número ${chamadoRow.chamado}.`);
     }
 
-    const { data: inserted, error: e1 } = await supabase
+    let { data: inserted, error: e1 } = await supabase
       .from(tblMain)
       .insert(chamadoRow)
       .select()
       .single();
+    if (e1 && (e1.message?.includes("glpi") || e1.message?.includes("parceiro") || e1.code === "PGRST204")) {
+      const rowCleaned = { ...chamadoRow };
+      if (e1.message?.includes("glpi")) delete rowCleaned.glpi;
+      if (e1.message?.includes("parceiro") || e1.code === "PGRST204") delete rowCleaned.parceiro;
+      const res = await supabase.from(tblMain).insert(rowCleaned).select().single();
+      inserted = res.data;
+      e1 = res.error;
+    }
     if (e1) {
       const msg = e1.message.includes("does not exist")
         ? `A tabela '${tblMain}' não existe no Supabase. Por favor, rode o script SQL '20260825133500_create_chamados_recall.sql' no Supabase.`
@@ -672,6 +696,7 @@ export const getChamadoCompleto = createServerFn({ method: "GET" })
     }
 
     if (!chamado) return { chamado: null, referencias: [], etapas: [] };
+    chamado.parceiro = chamado.parceiro || getParceiroByLoja(chamado.loja) || null;
 
     const cId = chamado.id;
 
@@ -742,7 +767,7 @@ export const updateChamadoCompleto = createServerFn({ method: "POST" })
       return d.toISOString().slice(0, 10);
     };
 
-    const row = {
+    const row: any = {
       chamado: nullIfEmpty(c.Chamado),
       loja: nullIfEmpty(c.Loja),
       tipo: nullIfEmpty(c.Tipo),
@@ -761,14 +786,27 @@ export const updateChamadoCompleto = createServerFn({ method: "POST" })
       transportadora: nullIfEmpty(c.Transportadora),
       conferente: nullIfEmpty(c.Conferente),
       periodo: dateOrNull(c.Periodo),
+      parceiro: nullIfEmpty(c.Parceiro || c.parceiro) || (c.Loja ? getParceiroByLoja(c.Loja) : null),
     };
+
+    if (data.tabela === "recall") {
+      row.glpi = nullIfEmpty(c.GLPI || c.glpi);
+    }
+
     // Regra: número do chamado não pode duplicar (exceto o próprio)
     if (row.chamado) {
       const { data: dup } = await supabase
         .from(tblMain).select("id").eq("chamado", row.chamado).neq("id", data.id).limit(1).maybeSingle();
       if (dup) throw new Error(`Já existe outro chamado com o número ${row.chamado}.`);
     }
-    const { error: eu } = await supabase.from(tblMain).update(row).eq("id", data.id);
+    let { error: eu } = await supabase.from(tblMain).update(row).eq("id", data.id);
+    if (eu && (eu.message?.includes("glpi") || eu.message?.includes("parceiro") || eu.code === "PGRST204")) {
+      const rowCleaned = { ...row };
+      if (eu.message?.includes("glpi")) delete rowCleaned.glpi;
+      if (eu.message?.includes("parceiro") || eu.code === "PGRST204") delete rowCleaned.parceiro;
+      const res = await supabase.from(tblMain).update(rowCleaned).eq("id", data.id);
+      eu = res.error;
+    }
     if (eu) throw new Error(eu.message);
     await upsertConferenteCD(supabase, row.conferente, row.cd);
     await upsertTransportadora(supabase, row.transportadora);
@@ -874,4 +912,115 @@ export const deleteChamado = createServerFn({ method: "POST" })
     return { ok: true, count: ids.length };
   });
 
+// ===== Alterar tarefas em lote =====
+export const updateMultipleChamadosTarefas = createServerFn({ method: "POST" })
+  .validator((data: { ids: string[]; novaTarefa: string; tabela?: "faltas" | "recall" }) => data)
+  .handler(async ({ data }) => {
+    const { requireUnlockedSession } = await import("@/lib/gate.server");
+    await requireUnlockedSession();
+    const supabase = await getSupabase();
+
+    const ids = (data.ids || []).filter(Boolean);
+    if (!ids.length) return { ok: true, count: 0 };
+    const novaTarefa = String(data.novaTarefa || "").trim();
+    if (!novaTarefa) throw new Error("A nova tarefa não pode ser vazia.");
+
+    const tblMain = data.tabela === "recall" ? "chamados_recall" : "chamados_faltas";
+    const tblEtapas = data.tabela === "recall" ? "chamados_recall_etapas" : "chamados_etapas";
+
+    // 1. Busca informação da tarefa no catálogo
+    const { data: catRows } = await supabase
+      .from("tarefas_catalogo")
+      .select("id, nome, dias_uteis")
+      .ilike("nome", novaTarefa)
+      .limit(1);
+    const catTarefa = catRows?.[0];
+
+    const todayStr = new Date().toISOString().slice(0, 10);
+    const isFinalizadoOuRecusado = /finaliz/i.test(novaTarefa) || /recusad/i.test(novaTarefa);
+
+    // 2. Atualiza situacao na tabela principal
+    const updatePayload: any = {
+      situacao: novaTarefa,
+      updated_at: new Date().toISOString(),
+    };
+    if (isFinalizadoOuRecusado) {
+      updatePayload.dt_finalizacao = todayStr;
+    }
+
+    const { error: errUpdate } = await supabase
+      .from(tblMain)
+      .update(updatePayload)
+      .in("id", ids);
+
+    if (errUpdate) {
+      throw new Error("Erro ao atualizar situação dos chamados: " + errUpdate.message);
+    }
+
+    // 3. Atualizar etapas para cada chamado
+    for (const chId of ids) {
+      try {
+        // Encerra etapas abertas
+        const { data: openEtapas } = await supabase
+          .from(tblEtapas)
+          .select("id, dt_inicio, dias_uteis_previsto")
+          .eq("chamado_id", chId)
+          .is("dt_fim", null);
+
+        if (openEtapas && openEtapas.length > 0) {
+          for (const oe of openEtapas) {
+            let diasReal = 0;
+            let sla = "Dentro do SLA";
+            if (oe.dt_inicio) {
+              const dIni = parseISO(oe.dt_inicio);
+              const dFim = parseISO(todayStr);
+              if (dIni && dFim) {
+                diasReal = diasUteisEntre(dIni, dFim);
+                if (oe.dias_uteis_previsto != null) {
+                  sla = diasReal <= oe.dias_uteis_previsto ? "Dentro do SLA" : "Fora do SLA";
+                }
+              }
+            }
+            await supabase
+              .from(tblEtapas)
+              .update({
+                dt_fim: todayStr,
+                dias_uteis_real: diasReal,
+                sla_status: sla,
+                updated_at: new Date().toISOString(),
+              })
+              .eq("id", oe.id);
+          }
+        }
+
+        // Determina a próxima ordem
+        const { data: maxOrdemData } = await supabase
+          .from(tblEtapas)
+          .select("ordem")
+          .eq("chamado_id", chId)
+          .order("ordem", { ascending: false })
+          .limit(1);
+
+        const nextOrdem = (maxOrdemData?.[0]?.ordem ?? 0) + 1;
+
+        await supabase
+          .from(tblEtapas)
+          .insert({
+            chamado_id: chId,
+            tarefa_id: catTarefa?.id || null,
+            nome_tarefa: novaTarefa,
+            dias_uteis_previsto: catTarefa?.dias_uteis ?? 2,
+            dt_inicio: todayStr,
+            dt_fim: isFinalizadoOuRecusado ? todayStr : null,
+            dias_uteis_real: isFinalizadoOuRecusado ? 0 : null,
+            sla_status: isFinalizadoOuRecusado ? "Dentro do SLA" : "Em Aberto",
+            ordem: nextOrdem,
+          });
+      } catch (err) {
+        console.warn(`[updateMultipleChamadosTarefas] Erro nas etapas do chamado ${chId}:`, err);
+      }
+    }
+
+    return { ok: true, count: ids.length, novaTarefa };
+  });
 
