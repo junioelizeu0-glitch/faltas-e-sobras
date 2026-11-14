@@ -52,16 +52,16 @@ function siglaCD(v: any): string {
 
 // Cores dinâmicas para gráficos
 const CHART_PALETTE = [
-  "#06b6d4", // ciano
-  "#22c55e", // verde
-  "#f97316", // laranja
-  "#a855f7", // roxo
-  "#eab308", // amarelo
-  "#ec4899", // rosa
-  "#3b82f6", // azul
-  "#84cc16", // verde lima
-  "#6366f1", // índigo
-  "#64748b", // slate
+  "#315C48",
+  "#6F9275",
+  "#A8BD8C",
+  "#BA8B4B",
+  "#8A9D91",
+  "#546E60",
+  "#C2A36B",
+  "#789A82",
+  "#A2AA8C",
+  "#6D7D72",
 ];
 
 export default function PainelAbertos({ rawData, isLoading, error, onChanged, tabela = "faltas" }: Props) {

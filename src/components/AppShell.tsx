@@ -1,27 +1,5 @@
 import React, { useEffect, useState } from "react";
-import {
-  ChevronDown,
-  ChevronRight,
-  ChevronLeft,
-  Plus,
-  Search,
-  BarChart2,
-  Package,
-  Truck,
-  UserCheck,
-  FileText,
-  ListChecks,
-  Layers,
-  Store,
-  History,
-  LogOut,
-  Sun,
-  Moon,
-  Sparkles,
-} from "lucide-react";
-import { useServerFn } from "@tanstack/react-start";
-import { useRouter } from "@tanstack/react-router";
-import { lockSite } from "@/lib/gate.functions";
+import { ChevronDown, ChevronLeft, Plus, Search, BarChart2, Package, Truck, UserCheck, FileText, ListChecks, Layers, Store, History, LogOut, Sun, Moon, Sparkles, PanelLeftClose, PanelLeftOpen, Menu, X, Home } from "lucide-react";
 import SessionGuard from "@/components/SessionGuard";
 
 interface AppShellProps {
@@ -31,22 +9,27 @@ interface AppShellProps {
 }
 
 const LOGO_URL = "https://iili.io/CKolF1t.png";
+const groups = [
+  { label: "Faltas", keys: ["novo", "consulta", "relatorio"], items: [{ key: "novo", label: "Novo chamado", icon: Plus }, { key: "consulta", label: "Consulta", icon: Search }, { key: "relatorio", label: "Relatórios", icon: BarChart2 }] },
+  { label: "Recall", keys: ["recall_novo", "recall_consulta", "recall_relatorio"], items: [{ key: "recall_novo", label: "Novo chamado", icon: Plus }, { key: "recall_consulta", label: "Consulta", icon: Search }, { key: "recall_relatorio", label: "Relatórios", icon: BarChart2 }] },
+  { label: "Cadastros", keys: ["cad_lojas", "cad_produtos", "cad_tarefas", "cad_etapas", "cad_transportadoras", "cad_conferentes", "cad_motivos"], items: [{ key: "cad_lojas", label: "Lojas", icon: Store }, { key: "cad_produtos", label: "Produtos", icon: Package }, { key: "cad_tarefas", label: "Situações", icon: ListChecks }, { key: "cad_etapas", label: "Etapas do fluxo", icon: Layers }, { key: "cad_transportadoras", label: "Transportadoras", icon: Truck }, { key: "cad_conferentes", label: "Conferentes", icon: UserCheck }, { key: "cad_motivos", label: "Motivos", icon: FileText }] },
+];
 
-export default function AppShell({
-  children,
-  selectedSubmenu,
-  setSelectedSubmenu,
-}: AppShellProps) {
-  const [menuAberto, setMenuAberto] = useState(false);
-  const [openFaltas, setOpenFaltas] = useState(false);
-  const [openRecall, setOpenRecall] = useState(false);
-  const [openCadastros, setOpenCadastros] = useState(false);
+function getPageTitle(selectedSubmenu: string | null) {
+  if (!selectedSubmenu) return "Visão geral";
+  for (const group of groups) {
+    const item = group.items.find((entry) => entry.key === selectedSubmenu);
+    if (item) return item.label;
+  }
+  if (selectedSubmenu === "logs") return "Log de alterações";
+  if (selectedSubmenu === "aiiliana") return "AIliana";
+  return "Visão geral";
+}
 
-  useEffect(() => {
-    if (selectedSubmenu && ["novo", "consulta", "relatorio"].includes(selectedSubmenu)) setOpenFaltas(true);
-    if (selectedSubmenu && ["recall_novo", "recall_consulta", "recall_relatorio"].includes(selectedSubmenu)) setOpenRecall(true);
-    if (selectedSubmenu && selectedSubmenu.startsWith("cad_")) setOpenCadastros(true);
-  }, [selectedSubmenu]);
+export default function AppShell({ children, selectedSubmenu, setSelectedSubmenu }: AppShellProps) {
+  const [menuAberto, setMenuAberto] = useState(true);
+  const [openGroups, setOpenGroups] = useState(["Faltas", "Recall"]);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [theme, setTheme] = useState<"light" | "dark">(() => {
     if (typeof document !== "undefined") {
       const attr = document.documentElement.getAttribute("data-theme");
@@ -54,239 +37,75 @@ export default function AppShell({
     }
     return "light";
   });
+
+  useEffect(() => {
+    if (!selectedSubmenu) return;
+    const activeGroup = groups.find((group) => group.keys.includes(selectedSubmenu));
+    if (activeGroup) setOpenGroups((current) => current.includes(activeGroup.label) ? current : [...current, activeGroup.label]);
+  }, [selectedSubmenu]);
+
   const toggleTheme = () => {
     const next = theme === "dark" ? "light" : "dark";
-    // 1) Aplica no DOM de forma síncrona (troca visual imediata via CSS vars)
     document.documentElement.setAttribute("data-theme", next);
-    // 2) Persiste
     try { localStorage.setItem("theme", next); } catch {}
-    // 3) Atualiza state apenas para re-renderizar o ícone do botão
     setTheme(next);
   };
-  const lock = useServerFn(lockSite);
-  const router = useRouter();
-  function handleLogout() {
-    setSelectedSubmenu(null);
-  }
+  const navigate = (key: string | null) => { setSelectedSubmenu(key); setMobileMenuOpen(false); };
+  const toggleGroup = (label: string) => setOpenGroups((current) => current.includes(label) ? current.filter((item) => item !== label) : [...current, label]);
 
   return (
-    <div className="min-h-screen bg-slate-100 text-slate-900 font-sans flex overflow-hidden">
-      {/* Menu Lateral Fixo à Esquerda */}
-      <div
-        onClick={() => !menuAberto && setMenuAberto(true)}
-        className={`bg-white border-r border-slate-200 flex flex-col flex-shrink-0 h-screen select-none transition-all duration-200 ease-in-out ${
-          menuAberto ? "w-[220px]" : "w-16 cursor-pointer overflow-x-hidden"
-        }`}
-      >
-        {menuAberto ? (
-          <div className="flex flex-col h-full overflow-y-auto">
-            {/* Cabeçalho */}
-            <div className="p-5 border-b border-slate-100 flex flex-col relative justify-center min-h-[72px]">
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setMenuAberto(false);
-                }}
-                className="absolute right-3 top-5 p-1 hover:bg-slate-100 rounded text-slate-400 hover:text-slate-600 transition-colors cursor-pointer"
-                title="Recolher menu"
-              >
-                <ChevronLeft className="w-4 h-4" />
-              </button>
-              <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); setSelectedSubmenu(null); }}
-                className="flex items-center gap-2 pr-6 text-left hover:opacity-80 transition-opacity cursor-pointer"
-                title="Ir para tela inicial"
-              >
-                <img
-                  src={LOGO_URL}
-                  alt="Logo"
-                  width={32}
-                  height={32}
-                  className="w-8 h-8 object-contain shrink-0"
-                  referrerPolicy="no-referrer"
-                />
-                <span className="text-base font-bold text-slate-800 tracking-tight leading-tight">
-                  Faltas e
-                  <br />
-                  Sobras
-                </span>
-              </button>
-            </div>
-
-            {/* Itens do Menu */}
-            <div className="flex-1 p-3 space-y-6">
-              {/* Grupo Faltas */}
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setOpenFaltas((v) => !v)}
-                  className={`w-full px-3 py-1 text-xs font-bold uppercase tracking-wider flex items-center justify-between transition-colors hover:text-slate-700 cursor-pointer ${
-                    selectedSubmenu && ["novo","consulta","relatorio"].includes(selectedSubmenu) ? "text-blue-600" : "text-slate-400"
-                  }`}
-                >
-                  <span>Faltas</span>
-                  {openFaltas ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-                </button>
-                {openFaltas && (
-                  <div className="mt-2 space-y-1">
-                    {[
-                      { k: "novo", label: "Novo Chamado", icon: Plus },
-                      { k: "consulta", label: "Consulta", icon: Search },
-                      { k: "relatorio", label: "Relatório", icon: BarChart2 },
-                    ].map((item) => {
-                      const Icon = item.icon;
-                      const active = selectedSubmenu === item.k;
-                      return (
-                        <button
-                          key={item.k}
-                          onClick={() => { setSelectedSubmenu(item.k); setMenuAberto(false); }}
-                          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${active ? "bg-blue-50 text-blue-600" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"} cursor-pointer`}
-                        >
-                          <Icon className="w-4 h-4 shrink-0" />
-                          <span>{item.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Grupo Recall */}
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setOpenRecall((v) => !v)}
-                  className={`w-full px-3 py-1 text-xs font-bold uppercase tracking-wider flex items-center justify-between transition-colors hover:text-slate-700 cursor-pointer ${
-                    selectedSubmenu && ["recall_novo","recall_consulta","recall_relatorio"].includes(selectedSubmenu) ? "text-blue-600" : "text-slate-400"
-                  }`}
-                >
-                  <span>Recall</span>
-                  {openRecall ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-                </button>
-                {openRecall && (
-                  <div className="mt-2 space-y-1">
-                    {[
-                      { k: "recall_novo", label: "Novo Chamado", icon: Plus },
-                      { k: "recall_consulta", label: "Consulta", icon: Search },
-                      { k: "recall_relatorio", label: "Relatório", icon: BarChart2 },
-                    ].map((item) => {
-                      const Icon = item.icon;
-                      const active = selectedSubmenu === item.k;
-                      return (
-                        <button
-                          key={item.k}
-                          onClick={() => { setSelectedSubmenu(item.k); setMenuAberto(false); }}
-                          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${active ? "bg-blue-50 text-blue-600" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"} cursor-pointer`}
-                        >
-                          <Icon className="w-4 h-4 shrink-0" />
-                          <span>{item.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Cadastros */}
-              <div>
-                <button
-                  type="button"
-                  onClick={() => setOpenCadastros((v) => !v)}
-                  className="w-full px-3 py-1 text-xs font-bold uppercase tracking-wider flex items-center justify-between text-slate-400 hover:text-slate-700 cursor-pointer"
-                >
-                  <span>Cadastros</span>
-                  {openCadastros ? <ChevronDown className="w-3.5 h-3.5" /> : <ChevronRight className="w-3.5 h-3.5" />}
-                </button>
-                {openCadastros && (
-                  <div className="mt-2 space-y-1">
-                    {[
-                      { k: "cad_lojas", label: "Lojas", icon: Store },
-                      { k: "cad_produtos", label: "Produtos", icon: Package },
-                      { k: "cad_tarefas", label: "Situações (Tarefa Atual)", icon: ListChecks },
-                      { k: "cad_etapas", label: "Etapas do Fluxo", icon: Layers },
-                      { k: "cad_transportadoras", label: "Transportadoras", icon: Truck },
-                      { k: "cad_conferentes", label: "Conferentes", icon: UserCheck },
-                      { k: "cad_motivos", label: "Motivos", icon: FileText },
-                    ].map((item) => {
-                      const Icon = item.icon;
-                      const active = selectedSubmenu === item.k;
-                      return (
-                        <button
-                          key={item.k}
-                          onClick={() => { setSelectedSubmenu(item.k); setMenuAberto(false); }}
-                          className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${active ? "bg-blue-50 text-blue-600" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"} cursor-pointer`}
-                        >
-                          <Icon className="w-4 h-4 shrink-0" />
-                          <span>{item.label}</span>
-                        </button>
-                      );
-                    })}
-                  </div>
-                )}
-              </div>
-
-              {/* Sistema */}
-              <div>
-                <div className="w-full px-3 py-1 text-xs font-bold uppercase tracking-wider text-slate-400">Sistema</div>
-                <div className="mt-2 space-y-1">
-                  <button
-                    onClick={() => { setSelectedSubmenu("aiiliana"); setMenuAberto(false); }}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${selectedSubmenu === "aiiliana" ? "bg-blue-50 text-blue-600" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"} cursor-pointer`}
-                  >
-                    <Sparkles className="w-4 h-4 shrink-0" />
-                    <span>AIliana (IA)</span>
-                  </button>
-                  <button
-                    onClick={() => { setSelectedSubmenu("logs"); setMenuAberto(false); }}
-                    className={`w-full flex items-center gap-2.5 px-3 py-2 rounded-lg text-xs font-semibold transition-all ${selectedSubmenu === "logs" ? "bg-blue-50 text-blue-600" : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"} cursor-pointer`}
-                  >
-                    <History className="w-4 h-4 shrink-0" />
-                    <span>Log de Alterações</span>
-                  </button>
-                </div>
-              </div>
-
-            </div>
-          </div>
-        ) : (
-          <div className="flex flex-col h-full items-center justify-center gap-1">
-            <img
-              src={LOGO_URL}
-              alt="Logo"
-              width={32}
-              height={32}
-              className="w-8 h-8 object-contain shrink-0"
-              referrerPolicy="no-referrer"
-            />
-            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">
-              Menu
-            </span>
-          </div>
-        )}
-      </div>
-
-      {/* Área de Conteúdo à Direita com Barra de Rolagem Vertical */}
-      <div className="flex-1 flex flex-col min-w-0 h-screen bg-slate-50 overflow-y-auto relative">
-        <div className="flex justify-end items-center gap-3 px-4 py-2 border-b border-slate-200 bg-white sticky top-0 z-30 shadow-2xs">
-          <button
-            onClick={toggleTheme}
-            className="inline-flex items-center gap-1.5 text-xs text-slate-600 hover:text-slate-900"
-            title={theme === "dark" ? "Trocar para tema claro" : "Trocar para tema escuro"}
-          >
-            {theme === "dark" ? <Sun className="w-3.5 h-3.5" /> : <Moon className="w-3.5 h-3.5" />}
-            {theme === "dark" ? "Claro" : "Escuro"}
+    <div className={`app-shell ${menuAberto ? "app-shell-expanded" : "app-shell-collapsed"}`}>
+      {mobileMenuOpen && <button className="app-sidebar-backdrop" aria-label="Fechar menu" onClick={() => setMobileMenuOpen(false)} />}
+      <aside className={`app-sidebar ${mobileMenuOpen ? "app-sidebar-mobile-open" : ""}`} aria-label="Navegação principal">
+        <div className="app-brand-row">
+          <button type="button" onClick={() => navigate(null)} className="app-brand" title="Ir para visão geral">
+            <span className="app-brand-mark"><img src={LOGO_URL} alt="" referrerPolicy="no-referrer" /></span>
+            <span className="app-brand-name">Faltas <span>&amp; Sobras</span></span>
           </button>
-          <button
-            onClick={handleLogout}
-            className="inline-flex items-center gap-1.5 text-xs text-slate-600 hover:text-slate-900"
-            title="Sair"
-          >
-            <LogOut className="w-3.5 h-3.5" />
-            Sair
-          </button>
+          <button className="app-icon-button app-sidebar-collapse" onClick={() => setMenuAberto(false)} aria-label="Recolher navegação"><PanelLeftClose /></button>
+          <button className="app-icon-button app-mobile-close" onClick={() => setMobileMenuOpen(false)} aria-label="Fechar navegação"><X /></button>
         </div>
-        {children}
+        <nav className="app-navigation">
+          <button type="button" onClick={() => navigate(null)} className={`app-nav-home ${selectedSubmenu === null ? "is-active" : ""}`}><Home /><span>Visão geral</span></button>
+          {groups.map((group) => {
+            const isOpen = openGroups.includes(group.label);
+            const isGroupActive = group.keys.includes(selectedSubmenu || "");
+            return <section className="app-nav-group" key={group.label}>
+              <button type="button" className={`app-nav-group-title ${isGroupActive ? "has-active" : ""}`} onClick={() => toggleGroup(group.label)} aria-expanded={isOpen}>
+                <span>{group.label}</span><ChevronDown className={isOpen ? "" : "is-closed"} />
+              </button>
+              {isOpen && <div className="app-nav-items">{group.items.map((item) => {
+                const Icon = item.icon;
+                const active = selectedSubmenu === item.key;
+                return <button type="button" key={item.key} onClick={() => navigate(item.key)} className={`app-nav-item ${active ? "is-active" : ""}`} aria-current={active ? "page" : undefined}>
+                  <Icon /><span>{item.label}</span>{active && <span className="app-nav-indicator" />}
+                </button>;
+              })}</div>}
+            </section>;
+          })}
+          <section className="app-nav-group">
+            <div className="app-nav-group-title app-nav-label"><span>Sistema</span></div>
+            <div className="app-nav-items">
+              <button type="button" onClick={() => navigate("aiiliana")} className={`app-nav-item ${selectedSubmenu === "aiiliana" ? "is-active" : ""}`}><Sparkles /><span>AIliana</span></button>
+              <button type="button" onClick={() => navigate("logs")} className={`app-nav-item ${selectedSubmenu === "logs" ? "is-active" : ""}`}><History /><span>Log de alterações</span></button>
+            </div>
+          </section>
+        </nav>
+        <div className="app-sidebar-footer"><div className="app-status-dot" /><div><strong>Operação ativa</strong><span>Sistema disponível</span></div></div>
+      </aside>
+      <div className="app-main-column">
+        <header className="app-topbar">
+          <div className="app-topbar-left">
+            <button className="app-icon-button app-mobile-menu" onClick={() => setMobileMenuOpen(true)} aria-label="Abrir navegação"><Menu /></button>
+            {!menuAberto && <button className="app-icon-button app-expand-button" onClick={() => setMenuAberto(true)} aria-label="Expandir navegação"><PanelLeftOpen /></button>}
+            <div className="app-breadcrumb"><span>Operação</span><ChevronLeft /><strong>{getPageTitle(selectedSubmenu)}</strong></div>
+          </div>
+          <div className="app-topbar-actions"><span className="app-sync-status"><span /> Dados atualizados</span><span className="app-topbar-divider" />
+            <button onClick={toggleTheme} className="app-topbar-action" title={theme === "dark" ? "Trocar para tema claro" : "Trocar para tema escuro"} aria-label="Alternar tema">{theme === "dark" ? <Sun /> : <Moon />}</button>
+            <button onClick={() => navigate(null)} className="app-topbar-action app-logout" title="Voltar à visão geral"><LogOut /><span>Sair</span></button>
+          </div>
+        </header>
+        <main className="app-content">{children}</main>
       </div>
       <SessionGuard />
     </div>

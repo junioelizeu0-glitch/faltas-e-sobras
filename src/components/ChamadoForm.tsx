@@ -818,7 +818,7 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
         <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Identificação</h2>
         <div className="flex flex-wrap gap-3">
           <Field label="Chamado *" className="w-[110px]"><input type="number" value={form.Chamado} onChange={(e) => setField("Chamado", e.target.value.slice(0, 8))} className={inputCls} required /></Field>
-          {tabela === "recall" && (
+          {isImportacaoNFRecall && (
             <Field label="Nº Chamado GLPI" className="w-[140px]">
               <input
                 type="text"

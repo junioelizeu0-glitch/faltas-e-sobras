@@ -76,9 +76,8 @@ export default function RelatorioRecall({
     tipo: "Todos",
   });
 
-  // Busca Exata em Campos Específicos (Nº Chamado, GLPI, Loja, NF, Produto)
+  // Busca Exata em Campos Específicos (Nº Chamado, Loja, NF, Produto)
   const [exactSearchChamado, setExactSearchChamado] = useState("");
-  const [exactSearchGLPI, setExactSearchGLPI] = useState("");
   const [exactSearchLoja, setExactSearchLoja] = useState("");
   const [exactSearchNF, setExactSearchNF] = useState("");
   const [exactSearchProduto, setExactSearchProduto] = useState("");
@@ -215,10 +214,6 @@ export default function RelatorioRecall({
         const val = String(item["Chamado"] || "").trim();
         if (val !== exactSearchChamado.trim()) return false;
       }
-      if (exactSearchGLPI.trim() !== "") {
-        const val = String(item["glpi"] || item["GLPI"] || "").trim();
-        if (val !== exactSearchGLPI.trim()) return false;
-      }
       if (exactSearchLoja.trim() !== "") {
         const val = String(item["Loja"] || "").trim();
         if (val !== exactSearchLoja.trim()) return false;
@@ -240,7 +235,6 @@ export default function RelatorioRecall({
     rawData,
     filters,
     exactSearchChamado,
-    exactSearchGLPI,
     exactSearchLoja,
     exactSearchNF,
     exactSearchProduto,
@@ -714,17 +708,6 @@ export default function RelatorioRecall({
           <div className="relative">
             <input
               type="text"
-              placeholder="Nº GLPI exato..."
-              value={exactSearchGLPI}
-              onChange={(e) => setExactSearchGLPI(e.target.value)}
-              className="w-32 rounded-xl border border-slate-200 bg-white pl-2.5 pr-7 py-1.5 text-xs text-slate-700 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none"
-            />
-            <Search className="w-3.5 h-3.5 text-slate-400 absolute right-2 top-2 pointer-events-none" />
-          </div>
-
-          <div className="relative">
-            <input
-              type="text"
               placeholder="Cód. Loja..."
               value={exactSearchLoja}
               onChange={(e) => setExactSearchLoja(e.target.value)}
@@ -744,11 +727,10 @@ export default function RelatorioRecall({
             <Search className="w-3.5 h-3.5 text-slate-400 absolute right-2 top-2 pointer-events-none" />
           </div>
 
-          {(exactSearchChamado || exactSearchGLPI || exactSearchLoja || exactSearchNF || exactSearchProduto || filters.cd !== "Todos" || filters.status !== "Todos") && (
+          {(exactSearchChamado || exactSearchLoja || exactSearchNF || exactSearchProduto || filters.cd !== "Todos" || filters.status !== "Todos") && (
             <button
               onClick={() => {
                 setExactSearchChamado("");
-                setExactSearchGLPI("");
                 setExactSearchLoja("");
                 setExactSearchNF("");
                 setExactSearchProduto("");
@@ -1290,7 +1272,6 @@ export default function RelatorioRecall({
                 <thead>
                   <tr className="bg-slate-50/80 border-b border-slate-200/80 text-slate-500 font-semibold uppercase tracking-wider text-[10px]">
                     <th className="px-4 py-3">Chamado</th>
-                    <th className="px-4 py-3">Chamado GLPI</th>
                     <th className="px-4 py-3">Loja</th>
                     <th className="px-4 py-3">CD</th>
                     <th className="px-4 py-3">Referência / Produto</th>
@@ -1310,15 +1291,6 @@ export default function RelatorioRecall({
                     return (
                       <tr key={idx} className="hover:bg-slate-50/60 transition-colors">
                         <td className="px-4 py-3 font-bold text-slate-800">#{r["Chamado"]}</td>
-                        <td className="px-4 py-3 font-semibold text-emerald-700">
-                          {r["glpi"] || r["GLPI"] ? (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
-                              {r["glpi"] || r["GLPI"]}
-                            </span>
-                          ) : (
-                            <span className="text-slate-400">—</span>
-                          )}
-                        </td>
                         <td className="px-4 py-3 font-medium text-slate-700">
                           <div className="flex items-center gap-1.5">
                             <span>Loja {r["Loja"]}</span>

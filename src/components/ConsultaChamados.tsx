@@ -69,7 +69,6 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
   const [busca, setBusca] = useState("");
   const [filtroLoja, setFiltroLoja] = useState("");
   const [filtroChamado, setFiltroChamado] = useState("");
-  const [filtroGLPI, setFiltroGLPI] = useState("");
   const [filtroNF, setFiltroNF] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("Todos");
   const [filtroTarefa, setFiltroTarefa] = useState("Todas");
@@ -198,26 +197,21 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
           if (!isMatchExato(cham, filtroChamado)) return false;
         }
 
-        if (tabela === "recall" && filtroGLPI.trim()) {
-          const glpi = r.glpi ?? r.GLPI;
-          if (!isMatchExato(glpi, filtroGLPI)) return false;
-        }
-
         if (filtroNF.trim()) {
           const nf = r.NF ?? r["Nº Nfe"] ?? r.nfe;
           if (!isMatchExato(nf, filtroNF)) return false;
         }
 
         if (!fGlobal) return true;
-        return [r.Chamado, r.glpi, r.GLPI, r.Loja, r.parceiro, getParceiroByLoja(r.Loja), r.NF, r.CD, r.Transportadora, r.Conferente, t]
+        return [r.Chamado, r.Loja, r.parceiro, getParceiroByLoja(r.Loja), r.NF, r.CD, r.Transportadora, r.Conferente, t]
           .map((v) => String(v ?? "").toLowerCase()).some((s) => s.includes(fGlobal));
       })
       .sort((a: any, b: any) => (parseDataBR(b["Dt Abertura"])?.getTime() ?? 0) - (parseDataBR(a["Dt Abertura"])?.getTime() ?? 0));
-  }, [rawData, busca, filtroStatus, filtroTarefa, filtroLoja, filtroChamado, filtroGLPI, filtroNF, tabela]);
+  }, [rawData, busca, filtroStatus, filtroTarefa, filtroLoja, filtroChamado, filtroNF, tabela]);
 
 
 
-  useEffect(() => { setPage(0); }, [busca, filtroStatus, filtroTarefa, filtroLoja, filtroChamado, filtroGLPI, filtroNF]);
+  useEffect(() => { setPage(0); }, [busca, filtroStatus, filtroTarefa, filtroLoja, filtroChamado, filtroNF]);
   const totalPages = Math.max(1, Math.ceil(linhas.length / PAGE_SIZE));
   const paginadas = useMemo(() => linhas.slice(page * PAGE_SIZE, (page + 1) * PAGE_SIZE), [linhas, page]);
 
@@ -234,14 +228,13 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
     setSelected(next);
   };
 
-  const temFiltroAtivo = Boolean(busca || filtroStatus !== "Todos" || filtroTarefa !== "Todas" || filtroLoja || filtroChamado || filtroGLPI || filtroNF);
+  const temFiltroAtivo = Boolean(busca || filtroStatus !== "Todos" || filtroTarefa !== "Todas" || filtroLoja || filtroChamado || filtroNF);
   const limparFiltros = () => {
     setBusca("");
     setFiltroStatus("Todos");
     setFiltroTarefa("Todas");
     setFiltroLoja("");
     setFiltroChamado("");
-    setFiltroGLPI("");
     setFiltroNF("");
   };
 
@@ -374,30 +367,6 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
             </div>
           </div>
 
-          {tabela === "recall" && (
-            <div className="flex flex-col min-w-[140px] flex-1 max-w-[180px]">
-              <label className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider flex items-center justify-between">
-                <span>Nº GLPI</span>
-                <span className="text-[9px] text-emerald-600 font-normal uppercase">Exato</span>
-              </label>
-              <div className="relative flex items-center">
-                <input
-                  value={filtroGLPI}
-                  onChange={(e) => setFiltroGLPI(e.target.value)}
-                  placeholder="Ex: 987654"
-                  className="w-full pl-3 pr-8 py-2 text-xs border border-slate-200 rounded-xl bg-white focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium"
-                />
-                <button
-                  type="button"
-                  title="Buscar GLPI Exato"
-                  className="absolute right-2 text-slate-400 hover:text-emerald-700 transition-colors p-1 cursor-pointer"
-                >
-                  <Search className="w-3.5 h-3.5" />
-                </button>
-              </div>
-            </div>
-          )}
-
           <div className="flex flex-col min-w-[140px] flex-1 max-w-[180px]">
             <label className="text-[10px] font-bold text-slate-500 mb-1 uppercase tracking-wider flex items-center justify-between">
               <span>Loja</span>
@@ -504,7 +473,6 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
                 <tr className="bg-slate-100">
                   <th className="sticky top-0 z-20 bg-slate-100 w-8 px-3 py-3"><input type="checkbox" checked={allSelected} onChange={toggleAll} className="cursor-pointer" /></th>
                   <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 font-bold">Chamado</th>
-                  {tabela === "recall" && <th className="sticky top-0 z-20 bg-slate-100 px-3 py-3 font-bold text-slate-700">GLPI</th>}
                   <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 font-bold">Loja</th>
                   {tabela === "recall" && <th className="text-left px-3 py-2 font-semibold">Ref</th>}
                   <th className="text-left px-3 py-2 font-semibold">NF</th>
@@ -534,17 +502,6 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
                         <input type="checkbox" checked={idStr ? selected.has(idStr) : false} onChange={() => idStr && toggleOne(idStr)} className="cursor-pointer" />
                       </td>
                       <td className="px-3 py-2 font-bold text-slate-900 whitespace-nowrap">{r.Chamado || "—"}</td>
-                      {tabela === "recall" && (
-                        <td className="px-3 py-2 whitespace-nowrap font-semibold text-emerald-700">
-                          {r.glpi || r.GLPI ? (
-                            <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
-                              {r.glpi || r.GLPI}
-                            </span>
-                          ) : (
-                            <span className="text-slate-400">—</span>
-                          )}
-                        </td>
-                      )}
                       <td className="px-3 py-2 whitespace-nowrap font-medium text-slate-800">
                         <div className="flex items-center gap-1.5">
                           <span>{r.Loja || "—"}</span>
