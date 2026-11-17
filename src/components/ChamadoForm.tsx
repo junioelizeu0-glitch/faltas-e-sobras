@@ -558,12 +558,12 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   if (loading) return <div className="flex items-center justify-center p-10 text-slate-500"><Loader2 className="w-5 h-5 animate-spin mr-2" />Carregando...</div>;
 
   return (
-    <div className={compact ? "h-full flex flex-col" : "flex-1 overflow-auto bg-slate-50 p-4"}>
-      <div className={compact ? "h-full flex flex-col" : "w-full min-h-full"}>
-        {!compact ? (
-          <header className="mb-4 flex items-center justify-between">
+    <div className={compact ? "flex-1 min-h-0 flex flex-col overflow-hidden bg-white" : "flex-1 flex flex-col bg-slate-50 p-3 sm:p-4 md:p-6 min-h-0 overflow-hidden"}>
+      <div className={compact ? "flex-1 min-h-0 flex flex-col overflow-hidden" : "w-full max-w-5xl mx-auto flex-1 flex flex-col min-h-0 bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_10px_rgba(0,0,0,0.03)] overflow-hidden"}>
+        {!compact && (
+          <header className="shrink-0 px-4 sm:px-6 py-4 border-b border-slate-200/80 bg-slate-50 flex items-center justify-between">
             <div>
-              <h1 className="text-xl font-bold text-slate-800 tracking-tight">
+              <h1 className="text-base sm:text-lg font-bold text-slate-900 tracking-tight">
                 {mode === "editar"
                   ? (tabela === "recall" ? `Editar Chamado de Recall nº ${form.Chamado}` : `Editar Chamado nº ${form.Chamado}`)
                   : (tabela === "recall" ? "Novo Chamado de Recall" : `Novo Chamado — ${tabela === "sobras" ? "Sobras" : "Faltas"}`)}
@@ -580,7 +580,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
                 title="Iniciar o cadastro de um novo chamado"
               >
                 <Plus className="w-3.5 h-3.5" />
-                Incluir Novo Chamado
+                Incluir Novo
               </button>
 
               {(onCancel || onClose) && (
@@ -595,30 +595,11 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
               )}
             </div>
           </header>
-        ) : (
-          <div className="flex items-center justify-between mb-3 px-1">
-            <button
-              type="button"
-              onClick={handleResetParaNovo}
-              className="inline-flex items-center gap-1 px-2.5 py-1 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 rounded-lg transition-all cursor-pointer"
-              title="Iniciar o cadastro de um novo chamado"
-            >
-              <Plus className="w-3.5 h-3.5" />
-              Incluir Novo Chamado
-            </button>
-          </div>
         )}
 
-        {feedback && (
-          <div className={`mb-3 flex items-start gap-2 rounded-md border px-3 py-2 text-sm ${feedback.type === "ok" ? "border-green-300 bg-green-50 text-green-800" : "border-red-200 bg-red-50 text-red-700"}`}>
-            {feedback.type === "ok" ? <CheckCircle2 className="w-4 h-4 mt-0.5" /> : <AlertCircle className="w-4 h-4 mt-0.5" />}
-            <span>{feedback.msg}</span>
-            <button onClick={() => setFeedback(null)} className="ml-auto text-xs opacity-60">✕</button>
-          </div>
-        )}
-
-        <div className={`bg-white rounded-xl border border-slate-200 shadow-sm ${compact ? "h-full flex flex-col" : "min-h-[calc(100vh-180px)]"}`}>
-          <div className="sticky top-0 z-20 flex border-b border-slate-200 bg-white/95 backdrop-blur rounded-t-xl">
+        {/* BARRA DE ABAS FIXA (LOGO ABAIXO DO CABEÇALHO) */}
+        <div className="shrink-0 flex items-center justify-between border-b border-slate-200 bg-white px-4 sm:px-6 z-10">
+          <div className="flex items-center gap-1 overflow-x-auto hide-scrollbar">
             {[
               { k: "cadastro", label: "Cadastro" },
               ...(tabela !== "recall" ? [
@@ -628,95 +609,132 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
             ].map((t) => (
               <button
                 key={t.k}
+                type="button"
                 onClick={() => setTab(t.k as any)}
-                className={`px-4 py-2.5 text-sm font-semibold border-b-2 -mb-px transition-colors ${tab === t.k ? "border-blue-600 text-blue-600" : "border-transparent text-slate-500 hover:text-slate-700"}`}
-              >{t.label}</button>
+                className={`px-4 py-3 text-xs sm:text-sm font-semibold border-b-2 transition-colors cursor-pointer whitespace-nowrap ${
+                  tab === t.k
+                    ? "border-emerald-600 text-emerald-700 font-bold bg-emerald-50/40"
+                    : "border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+                }`}
+              >
+                {t.label}
+              </button>
             ))}
           </div>
 
-          <div className={`p-5 ${compact ? "flex-1 flex flex-col min-h-0" : ""}`}>
-            {tab === "cadastro" && (
-              <CadastroTab form={form} setField={setField} statusPagamento={statusPagamento} sla={slaCalc}
-                transp={transp} confs={confs} motivos={motivos} precisaTranspConf={precisaTranspConf} precisaMotivo={precisaMotivo}
-                statusChamado={statusChamado} onManage={setManage}
-                lojaInfo={lojaInfo} onEditLoja={() => setLojaOpen(true)} tabela={tabela}
-                situacaoOpcoes={situacaoOpcoes} statusOpcoes={statusOpcoes}
-              />
+          {compact && (
+            <button
+              type="button"
+              onClick={handleResetParaNovo}
+              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 rounded-xl transition-all shadow-xs cursor-pointer shrink-0"
+              title="Iniciar o cadastro de um novo chamado"
+            >
+              <Plus className="w-3.5 h-3.5" />
+              Incluir Novo
+            </button>
+          )}
+        </div>
+
+        {/* FEEDBACK BANNER (FIXO ACIMA DO CORPO SE HOUVER) */}
+        {feedback && (
+          <div className={`shrink-0 mx-4 sm:mx-6 mt-3 flex items-start gap-2 rounded-xl border px-3 py-2 text-xs font-medium ${
+            feedback.type === "ok" ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-rose-200 bg-rose-50 text-rose-700"
+          }`}>
+            {feedback.type === "ok" ? <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" /> : <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />}
+            <span>{feedback.msg}</span>
+            <button onClick={() => setFeedback(null)} className="ml-auto text-xs opacity-60 hover:opacity-100">✕</button>
+          </div>
+        )}
+
+        {/* CORPO DO FORMULÁRIO COM ROLAGEM INDEPENDENTE */}
+        <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6 space-y-5 pb-8">
+          {tab === "cadastro" && (
+            <CadastroTab
+              form={form} setField={setField} statusPagamento={statusPagamento} sla={slaCalc}
+              transp={transp} confs={confs} motivos={motivos} precisaTranspConf={precisaTranspConf} precisaMotivo={precisaMotivo}
+              statusChamado={statusChamado} onManage={setManage}
+              lojaInfo={lojaInfo} onEditLoja={() => setLojaOpen(true)} tabela={tabela}
+              situacaoOpcoes={situacaoOpcoes} statusOpcoes={statusOpcoes}
+            />
+          )}
+          {tabela !== "recall" && tab === "referencias" && (
+            <ReferenciasTab
+              refs={refs} setRef={setRef} addRef={addRef} rmRef={rmRef} buscar={buscarProduto}
+              onSalvarParcial={() => submit("Referências salvas com sucesso.", { partial: true })} salvando={submitting}
+            />
+          )}
+          {tabela !== "recall" && tab === "etapas" && (
+            <EtapasTab
+              etapas={etapas} setEt={setEt} addEtapa={addEtapa} rmEtapa={rmEtapa}
+              tarefas={etapasCatalogo.length > 0 ? etapasCatalogo : tarefas}
+              onSalvarParcial={() => submit("Etapas salvas com sucesso.", { partial: true })} salvando={submitting}
+            />
+          )}
+        </div>
+
+        {/* RODAPÉ FIXO NA PARTE INFERIOR: SEMPRE VISÍVEL EM TODAS AS ABAS */}
+        <div className="shrink-0 flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 py-3.5 border-t border-slate-200 bg-slate-50/90 z-10">
+          <div className="flex flex-wrap items-center gap-2">
+            {mode === "editar" && chamadoId && (
+              <button
+                type="button"
+                onClick={async () => {
+                  if (!confirm("Excluir este chamado? Esta ação não pode ser desfeita.")) return;
+                  try {
+                    await delFn({ data: { ids: [chamadoId], tabela: (tabela === "recall" ? "recall" : "faltas") } });
+                    toast.success("Chamado excluído");
+                    onDeleted?.();
+                  } catch (e: any) { toast.error(e?.message || "Erro ao excluir chamado"); }
+                }}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200 rounded-xl hover:bg-rose-100 transition-colors cursor-pointer"
+              >
+                <Trash2 className="w-3.5 h-3.5" />Excluir chamado
+              </button>
             )}
-            {tabela !== "recall" && tab === "referencias" && (
-              <ReferenciasTab refs={refs} setRef={setRef} addRef={addRef} rmRef={rmRef} buscar={buscarProduto}
-                onSalvarParcial={() => submit("Referências salvas com sucesso.", { partial: true })} salvando={submitting} />
-            )}
-            {tabela !== "recall" && tab === "etapas" && (
-              <EtapasTab etapas={etapas} setEt={setEt} addEtapa={addEtapa} rmEtapa={rmEtapa} tarefas={etapasCatalogo.length > 0 ? etapasCatalogo : tarefas}
-                onSalvarParcial={() => submit("Etapas salvas com sucesso.", { partial: true })} salvando={submitting} />
+            {podeMonitorar && (
+              <button
+                type="button"
+                onClick={handleOpenMonitorAsk}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200/80 rounded-xl hover:bg-emerald-100 cursor-pointer transition-colors"
+                title="Registrar resultado do monitoramento"
+              >
+                <ClipboardCheck className="w-3.5 h-3.5 text-emerald-600" />Resultado do monitoramento
+              </button>
             )}
           </div>
-
-          {tab === "cadastro" && (
-            <div className="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-5 py-3 border-t border-slate-100 bg-white">
-              <div className="flex flex-wrap items-center gap-2">
-                {mode === "editar" && chamadoId && (
-                  <button
-                    type="button"
-                    onClick={async () => {
-                      if (!confirm("Excluir este chamado? Esta ação não pode ser desfeita.")) return;
-                      try {
-                        await delFn({ data: { ids: [chamadoId], tabela: (tabela === "recall" ? "recall" : "faltas") } });
-                        toast.success("Chamado excluído");
-                        onDeleted?.();
-                      } catch (e: any) { toast.error(e?.message || "Erro ao excluir chamado"); }
-                    }}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 cursor-pointer"
-                  >
-                    <Trash2 className="w-4 h-4" />Excluir chamado
-                  </button>
-                )}
-                {podeMonitorar && (
-                  <button
-                    type="button"
-                    onClick={handleOpenMonitorAsk}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200/80 rounded-md hover:bg-emerald-100 cursor-pointer transition-colors"
-                    title="Registrar resultado do monitoramento"
-                  >
-                    <ClipboardCheck className="w-4 h-4 text-emerald-600" />Resultado do monitoramento
-                  </button>
-                )}
-              </div>
-              <div className="flex flex-wrap items-center gap-2 ml-auto">
-                {(onCancel || mode === "novo") && (
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (onCancel) return onCancel();
-                      if (!confirm("Cancelar a inclusão? Os dados preenchidos serão descartados.")) return;
-                      setForm({
-                        Chamado: "", GLPI: "", Loja: "", Tipo: "", NF: "",
-                        "Dt Emissão": "", CD: "", "Situação ": "",
-                        "Dt Abertura": hojeISO(), "Dt Finalização": "", "Dt Pagamento": "",
-                        "Status Chamado": "",
-                        Motivo: "", Transportadora: "", Conferente: "",
-                        _valor: "", Referencia: "",
-                      });
-                      setRefs([]); setEtapas([]); setFeedback(null);
-                      toast.info("Inclusão cancelada");
-                    }}
-                    className="px-3 py-2 text-sm text-slate-600 hover:text-slate-900 border border-slate-200 rounded-md hover:bg-slate-50 cursor-pointer"
-                  >
-                    Cancelar
-                  </button>
-                )}
-                <button
-                  type="button" onClick={() => submit()} disabled={submitting}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-semibold disabled:opacity-50 cursor-pointer shadow-xs"
-                >
-                  {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
-                  {mode === "editar" ? "Salvar alterações" : "Incluir chamado"}
-                </button>
-              </div>
-            </div>
-          )}
-
+          <div className="flex items-center gap-2.5 ml-auto">
+            {(onCancel || mode === "novo") && (
+              <button
+                type="button"
+                onClick={() => {
+                  if (onCancel) return onCancel();
+                  if (!confirm("Cancelar a inclusão? Os dados preenchidos serão descartados.")) return;
+                  setForm({
+                    Chamado: "", GLPI: "", Loja: "", Tipo: "", NF: "",
+                    "Dt Emissão": "", CD: "", "Situação ": "",
+                    "Dt Abertura": hojeISO(), "Dt Finalização": "", "Dt Pagamento": "",
+                    "Status Chamado": "",
+                    Motivo: "", Transportadora: "", Conferente: "",
+                    _valor: "", Referencia: "",
+                  });
+                  setRefs([]); setEtapas([]); setFeedback(null);
+                  toast.info("Inclusão cancelada");
+                }}
+                className="px-4 py-2 text-xs font-semibold text-slate-700 hover:bg-slate-100 border border-slate-200 bg-white rounded-xl transition-colors cursor-pointer"
+              >
+                Cancelar
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={() => submit()}
+              disabled={submitting}
+              className="inline-flex items-center gap-2 px-5 py-2 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-bold shadow-xs transition-all disabled:opacity-50 cursor-pointer"
+            >
+              {submitting ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
+              {mode === "editar" ? "Salvar alterações" : "Incluir chamado"}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -789,7 +807,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
   );
 }
 
-const inputCls = "w-full text-sm rounded-md border border-slate-300 px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-blue-500";
+const inputCls = "w-full text-xs rounded-xl border border-slate-200 bg-white px-3 py-2 text-slate-800 shadow-2xs focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 font-medium";
 
 function Field({ label, children, className = "", style }: { label: string; children: React.ReactNode; className?: string; style?: React.CSSProperties }) {
   return (
@@ -804,7 +822,7 @@ function Field({ label, children, className = "", style }: { label: string; chil
 function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, motivos, precisaTranspConf, precisaMotivo, statusChamado, onManage, lojaInfo, onEditLoja, tabela, situacaoOpcoes, statusOpcoes }: any) {
   const ManageBtn = ({ onClick, title }: { onClick: () => void; title: string }) => (
     <button type="button" onClick={onClick} title={title}
-      className="inline-flex items-center justify-center p-0.5 text-blue-600 hover:text-blue-800 hover:bg-blue-50 rounded">
+      className="inline-flex items-center justify-center p-1 text-emerald-700 hover:text-emerald-900 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer">
       <Pencil className="w-3 h-3" />
     </button>
   );
@@ -1030,10 +1048,10 @@ function ReferenciasTab({ refs, setRef, addRef, rmRef, buscar, onSalvarParcial, 
       <div className="flex justify-between items-center">
         <p className="text-xs text-slate-500">Adicione uma ou mais referências. Digite a referência e clique em buscar para auto-preencher descrição e fornecedor.</p>
         <div className="flex items-center gap-2">
-          <button type="button" onClick={addRef} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md">
+          <button type="button" onClick={addRef} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 rounded-xl transition-colors cursor-pointer shadow-2xs">
             <Plus className="w-3.5 h-3.5" />Adicionar
           </button>
-          <button type="button" onClick={onSalvarParcial} disabled={salvando} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-md disabled:opacity-50">
+          <button type="button" onClick={onSalvarParcial} disabled={salvando} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl transition-colors cursor-pointer disabled:opacity-50 shadow-2xs">
             {salvando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}Salvar referências
           </button>
         </div>
@@ -1109,10 +1127,10 @@ function EtapasTab({ etapas, setEt, addEtapa, rmEtapa, tarefas, onSalvarParcial,
       <div className="flex justify-between items-center sticky top-0 z-20 bg-white/95 backdrop-blur py-2 -mx-1 px-1 border-b border-slate-100">
         <p className="text-xs text-slate-500">Etapas do fluxo. Data prevista e SLA são calculados automaticamente em dias úteis.</p>
         <div className="flex items-center gap-2">
-          <button type="button" onClick={addEtapa} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-blue-700 bg-blue-50 hover:bg-blue-100 border border-blue-200 rounded-md">
+          <button type="button" onClick={addEtapa} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-emerald-700 bg-emerald-50 hover:bg-emerald-100 border border-emerald-200/80 rounded-xl transition-colors cursor-pointer shadow-2xs">
             <Plus className="w-3.5 h-3.5" />Adicionar
           </button>
-          <button type="button" onClick={onSalvarParcial} disabled={salvando} className="inline-flex items-center gap-1 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-300 rounded-md disabled:opacity-50">
+          <button type="button" onClick={onSalvarParcial} disabled={salvando} className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-slate-700 bg-white hover:bg-slate-50 border border-slate-200 rounded-xl transition-colors cursor-pointer disabled:opacity-50 shadow-2xs">
             {salvando ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}Salvar etapas
           </button>
         </div>

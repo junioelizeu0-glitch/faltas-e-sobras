@@ -1044,7 +1044,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
             </div>
 
             {/* Rodapé do Modal */}
-            <div className="px-6 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-end">
+            <div className="shrink-0 px-6 py-3 border-t border-slate-200 bg-slate-50 flex items-center justify-end">
               <button
                 onClick={() => setIsDrillOpen(false)}
                 className="px-4 py-2 bg-slate-200 hover:bg-slate-300 text-slate-700 rounded-xl font-bold text-xs transition-colors cursor-pointer"
@@ -1071,7 +1071,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="flex-1 overflow-y-auto min-h-0 p-3 sm:p-5 md:p-6 pb-8">
+            <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
               <ErrorBoundary fallbackTitle="Erro ao carregar o formulário de edição">
                 <ChamadoForm
                   mode="editar"

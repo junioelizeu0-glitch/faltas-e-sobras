@@ -546,7 +546,7 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
               </div>
               <button onClick={() => setEditingId(null)} className="text-slate-400 hover:text-slate-700 p-1.5 hover:bg-slate-200/60 rounded-xl transition-colors cursor-pointer"><X className="w-5 h-5" /></button>
             </div>
-            <div className="flex-1 min-h-0 p-3 sm:p-4 md:p-5 overflow-y-auto pb-8">
+            <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
               <ErrorBoundary fallbackTitle="Erro ao carregar o formulário de edição">
                 <ChamadoForm
                   mode="editar" chamadoId={String(editingId)} compact tabela={tabela}
@@ -567,7 +567,7 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
               <h2 className="text-base font-bold text-slate-800">{tabela === "recall" ? "Novo Chamado de Recall" : "Novo Chamado"}</h2>
               <button onClick={() => setCreating(false)} className="text-slate-400 hover:text-slate-700 p-1.5 hover:bg-slate-200/60 rounded-xl transition-colors cursor-pointer"><X className="w-5 h-5" /></button>
             </div>
-            <div className="flex-1 min-h-0 p-3 sm:p-4 md:p-5 overflow-y-auto pb-8">
+            <div className="flex-1 min-h-0 flex flex-col overflow-hidden">
               <ErrorBoundary fallbackTitle="Erro ao carregar o formulário de inclusão">
                 <ChamadoForm
                   mode="novo" compact tabela={tabela}

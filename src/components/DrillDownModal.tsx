@@ -173,8 +173,8 @@ export default function DrillDownModal({
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-2 sm:p-4">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[98vw] sm:max-w-[95vw] max-h-[94vh] sm:max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-slate-200">
-        <div className="flex justify-between items-start p-4 sm:p-5 border-b border-slate-200">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[98vw] sm:max-w-6xl max-h-[92vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-slate-200">
+        <div className="shrink-0 flex justify-between items-start p-4 sm:p-5 border-b border-slate-200 bg-white">
           <div>
             <div className="text-[10px] font-bold text-slate-400 mb-1 flex items-center gap-1 uppercase tracking-wider">
               <span>Dashboard</span>
@@ -197,7 +197,7 @@ export default function DrillDownModal({
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="p-3 sm:p-4 border-b border-slate-100 flex flex-wrap gap-2.5 sm:gap-4 items-center justify-between bg-slate-50">
+        <div className="shrink-0 p-3 sm:p-4 border-b border-slate-100 flex flex-wrap gap-2.5 sm:gap-4 items-center justify-between bg-slate-50">
           <div className="relative w-full sm:flex-1 sm:max-w-md">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
@@ -412,7 +412,7 @@ export default function DrillDownModal({
         </div>
 
         {filtered.length > 0 && (
-          <div className="border-t border-slate-200 bg-white p-4 flex items-center justify-between text-sm">
+          <div className="shrink-0 border-t border-slate-200 bg-white p-4 flex items-center justify-between text-sm">
             <span className="text-slate-500">
               Mostrando de <span className="font-semibold text-slate-700">{startIndex + 1}</span> a{" "}
               <span className="font-semibold text-slate-700">
