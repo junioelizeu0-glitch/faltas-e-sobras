@@ -122,40 +122,40 @@ export default function AuditLogViewer() {
   useEffect(() => { load(); }, []);
 
   return (
-    <div className="flex-1 overflow-auto bg-slate-50 p-4">
-      <header className="mb-4 flex items-center justify-between">
-        <h1 className="text-xl font-bold text-slate-800">Log de Alterações</h1>
-        <button onClick={load} className="inline-flex items-center gap-1 px-3 py-2 text-sm text-slate-700 bg-white border border-slate-200 rounded-md hover:bg-slate-50">
-          <RefreshCcw className="w-4 h-4" />Atualizar
+    <div className="flex-1 overflow-auto bg-[#F4F6F5] p-3 sm:p-4 md:p-6 min-w-0">
+      <header className="mb-4 flex flex-wrap items-center justify-between gap-2">
+        <h1 className="text-xl font-bold text-slate-900 tracking-tight">Log de Alterações</h1>
+        <button onClick={load} className="inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200/80 rounded-xl hover:bg-slate-50 shadow-2xs cursor-pointer">
+          <RefreshCcw className="w-3.5 h-3.5" />Atualizar
         </button>
       </header>
 
-      <div className="bg-white p-3 rounded-lg border border-slate-200 mb-3 flex flex-wrap gap-2 items-end">
-        <label className="flex flex-col text-xs font-semibold text-slate-600">Tabela
-          <select value={table} onChange={(e) => setTable(e.target.value)} className="mt-1 text-sm border border-slate-300 rounded-md px-2 py-1.5">
+      <div className="bg-white p-3.5 sm:p-4 rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] mb-4 flex flex-wrap gap-3 items-end">
+        <label className="flex flex-col text-xs font-semibold text-slate-600 flex-1 min-w-[140px]">Tabela
+          <select value={table} onChange={(e) => setTable(e.target.value)} className="mt-1 text-xs border border-slate-200 bg-white rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 cursor-pointer">
             {TABLES.map((t) => <option key={t} value={t}>{t ? labelTable(t) : "Todas"}</option>)}
           </select>
         </label>
-        <label className="flex flex-col text-xs font-semibold text-slate-600">Ação
-          <select value={action} onChange={(e) => setAction(e.target.value)} className="mt-1 text-sm border border-slate-300 rounded-md px-2 py-1.5">
+        <label className="flex flex-col text-xs font-semibold text-slate-600 flex-1 min-w-[120px]">Ação
+          <select value={action} onChange={(e) => setAction(e.target.value)} className="mt-1 text-xs border border-slate-200 bg-white rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 cursor-pointer">
             {ACTIONS.map((t) => <option key={t} value={t}>{t ? actionLabel(t) : "Todas"}</option>)}
           </select>
         </label>
-        <label className="flex flex-col text-xs font-semibold text-slate-600">Chamado
-          <input value={chamado} onChange={(e) => setChamado(e.target.value)} className="mt-1 text-sm border border-slate-300 rounded-md px-2 py-1.5" placeholder="ex: 123456" />
+        <label className="flex flex-col text-xs font-semibold text-slate-600 flex-1 min-w-[120px]">Chamado
+          <input value={chamado} onChange={(e) => setChamado(e.target.value)} className="mt-1 text-xs border border-slate-200 bg-white rounded-xl px-3 py-2 outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500" placeholder="Ex.: 12345" />
         </label>
-        <button onClick={load} className="inline-flex items-center gap-1 px-3 py-1.5 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-md">
-          <Search className="w-4 h-4"/>Filtrar
+        <button onClick={load} className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl shadow-xs transition-colors cursor-pointer w-full sm:w-auto">
+          <Search className="w-3.5 h-3.5"/>Filtrar
         </button>
       </div>
 
-      <div className="bg-white rounded-lg border border-slate-200 overflow-x-auto w-full">
+      <div className="bg-white rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] overflow-x-auto w-full">
         {loading ? (
-          <div className="p-6 flex justify-center text-slate-500"><Loader2 className="w-5 h-5 animate-spin mr-2"/>Carregando...</div>
+          <div className="p-8 flex justify-center items-center text-slate-500 text-xs font-medium"><Loader2 className="w-5 h-5 animate-spin mr-2 text-emerald-600"/>Carregando registros...</div>
         ) : rows.length === 0 ? (
-          <div className="p-6 text-center text-slate-400 text-sm">Nenhum registro.</div>
+          <div className="p-8 text-center text-slate-400 text-xs font-medium">Nenhum registro encontrado.</div>
         ) : (
-          <table className="w-full text-xs">
+          <table className="w-full text-xs min-w-[620px]">
             <thead className="bg-slate-50 text-slate-600 uppercase text-[10px]">
               <tr>
                 <th className="px-3 py-2 text-left w-40">Data</th>

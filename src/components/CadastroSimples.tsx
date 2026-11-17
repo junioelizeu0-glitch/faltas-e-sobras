@@ -159,15 +159,15 @@ export default function CadastroSimples({ titulo, descricao, listFn, upsertFn, d
       </div>
 
       {editing && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-200">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
+            <div className="shrink-0 flex items-center justify-between px-4 sm:px-6 py-4 border-b border-slate-200 bg-slate-50">
               <h3 className="font-bold text-slate-900">{editing.id ? "Editar" : "Novo"} registro</h3>
               <button onClick={() => setEditing(null)} className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer">
                 <X className="w-5 h-5"/>
               </button>
             </div>
-            <div className="p-6 space-y-4 text-xs">
+            <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6 space-y-4 text-xs pb-8">
               {err && <div className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-xl p-3 font-semibold">{err}</div>}
               <label className="block">
                 <span className="font-semibold text-slate-600">{nomeLabel} *</span>
@@ -187,7 +187,7 @@ export default function CadastroSimples({ titulo, descricao, listFn, upsertFn, d
                 </label>
               ))}
             </div>
-            <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-200 bg-slate-50">
+            <div className="shrink-0 flex justify-end gap-3 px-4 sm:px-6 py-3.5 border-t border-slate-200 bg-slate-50">
               <button onClick={() => setEditing(null)} className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer">
                 Cancelar
               </button>
@@ -196,7 +196,6 @@ export default function CadastroSimples({ titulo, descricao, listFn, upsertFn, d
                 <span>Salvar</span>
               </button>
             </div>
-
           </div>
         </div>
       )}

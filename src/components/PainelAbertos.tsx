@@ -967,8 +967,8 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
             </div>
 
             {/* Tabela do Modal Pré-Lista com Rolagem Limpa */}
-            <div className="flex-1 overflow-y-auto px-6 pb-6 pt-0">
-              <table className="w-full text-left text-xs border-collapse">
+            <div className="flex-1 overflow-y-auto overflow-x-auto px-4 sm:px-6 pb-6 pt-0">
+              <table className="w-full text-left text-xs border-collapse min-w-[760px]">
                 <thead className="sticky top-0 z-20 bg-slate-100 shadow-2xs">
                   <tr className="bg-slate-100">
                     <th className="sticky top-0 z-20 bg-slate-100 px-3 py-3 text-slate-700 font-bold uppercase tracking-wider text-[10px] border-b border-slate-200">Chamado</th>
@@ -1060,9 +1060,9 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
       {/* 4. MODAL DE EDIÇÃO DE CHAMADO                                             */}
       {/* ========================================================================= */}
       {editingId && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl shadow-2xl w-full max-w-[95vw] max-h-[90vh] overflow-auto border border-slate-200">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 sticky top-0 bg-white z-10">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col overflow-hidden border border-slate-200">
+            <div className="shrink-0 flex items-center justify-between px-4 sm:px-6 py-3.5 border-b border-slate-200 bg-slate-50/80">
               <h2 className="text-base font-bold text-slate-900">Editar Chamado</h2>
               <button
                 onClick={() => setEditingId(null)}
@@ -1071,7 +1071,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
                 <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="p-5 md:p-6">
+            <div className="flex-1 overflow-y-auto min-h-0 p-3 sm:p-5 md:p-6 pb-8">
               <ErrorBoundary fallbackTitle="Erro ao carregar o formulário de edição">
                 <ChamadoForm
                   mode="editar"

@@ -39,10 +39,12 @@ export default function CadastroProdutos() {
 
   const save = async () => {
     if (!editing?.referencia) return;
-    await up({ data: {
-      id: editing.id, referencia: editing.referencia!, cor: editing.cor || "",
-      descricao: editing.descricao || "", nome_parceiro: editing.nome_parceiro || "",
-    }});
+    await up({
+      data: {
+        id: editing.id, referencia: editing.referencia!, cor: editing.cor || "",
+        descricao: editing.descricao || "", nome_parceiro: editing.nome_parceiro || "",
+      }
+    });
     setEditing(null); await load();
   };
   const remove = async (id: string) => {
@@ -95,27 +97,27 @@ export default function CadastroProdutos() {
             <p className="text-xs text-slate-500 mt-1">Total: {total.toLocaleString("pt-BR")} produtos cadastrados</p>
           </div>
           <div className="flex gap-2 flex-wrap">
-            <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={(e) => e.target.files?.[0] && doImport(e.target.files[0])}/>
+            <input ref={fileRef} type="file" accept=".xlsx,.xls,.csv" className="hidden" onChange={(e) => e.target.files?.[0] && doImport(e.target.files[0])} />
             <button
               onClick={() => fileRef.current?.click()}
               disabled={importing}
               className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl disabled:opacity-50 transition-colors cursor-pointer"
             >
-              {importing ? <Loader2 className="w-4 h-4 animate-spin"/> : <Upload className="w-4 h-4 text-emerald-700"/>}
+              {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Upload className="w-4 h-4 text-emerald-700" />}
               <span>Importar</span>
             </button>
             <button
               onClick={doExport}
               className="inline-flex items-center gap-1.5 px-3 py-2 text-xs font-semibold text-slate-700 bg-white border border-slate-200 hover:bg-slate-50 rounded-xl transition-colors cursor-pointer"
             >
-              <Download className="w-4 h-4 text-emerald-700"/>
+              <Download className="w-4 h-4 text-emerald-700" />
               <span>Exportar</span>
             </button>
             <button
               onClick={() => setEditing({})}
               className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl cursor-pointer shadow-xs transition-colors"
             >
-              <Plus className="w-4 h-4"/>
+              <Plus className="w-4 h-4" />
               <span>Novo Produto</span>
             </button>
           </div>
@@ -136,7 +138,7 @@ export default function CadastroProdutos() {
         <div className="bg-white border border-slate-200/80 rounded-xl shadow-xs overflow-x-auto w-full">
           {loading ? (
             <div className="p-12 text-center text-slate-500">
-              <Loader2 className="inline w-6 h-6 animate-spin mr-2 text-emerald-600"/>
+              <Loader2 className="inline w-6 h-6 animate-spin mr-2 text-emerald-600" />
               <span>Carregando produtos...</span>
             </div>
           ) : (
@@ -159,10 +161,10 @@ export default function CadastroProdutos() {
                     <td className="px-4 py-3 text-slate-600">{r.nome_parceiro || "—"}</td>
                     <td className="px-4 py-3 text-right space-x-1">
                       <button onClick={() => setEditing(r)} title="Editar" className="inline-flex items-center p-1.5 text-emerald-700 hover:bg-emerald-50 rounded-lg transition-colors cursor-pointer">
-                        <Pencil className="w-3.5 h-3.5"/>
+                        <Pencil className="w-3.5 h-3.5" />
                       </button>
                       <button onClick={() => remove(r.id)} title="Excluir" className="inline-flex items-center p-1.5 text-rose-600 hover:bg-rose-50 rounded-lg transition-colors cursor-pointer">
-                        <Trash2 className="w-3.5 h-3.5"/>
+                        <Trash2 className="w-3.5 h-3.5" />
                       </button>
                     </td>
                   </tr>
@@ -183,15 +185,15 @@ export default function CadastroProdutos() {
       </div>
 
       {editing && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg overflow-hidden border border-slate-200">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
+            <div className="shrink-0 flex items-center justify-between px-4 sm:px-6 py-4 border-b border-slate-200 bg-slate-50">
               <h3 className="font-bold text-slate-900">{editing.id ? "Editar" : "Novo"} Produto</h3>
               <button onClick={() => setEditing(null)} className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer">
-                <X className="w-5 h-5"/>
+                <X className="w-5 h-5" />
               </button>
             </div>
-            <div className="p-6 space-y-4 text-xs">
+            <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6 space-y-4 text-xs pb-8">
               <label className="block">
                 <span className="font-semibold text-slate-600">Referência *</span>
                 <input
@@ -229,12 +231,12 @@ export default function CadastroProdutos() {
                 />
               </label>
             </div>
-            <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-200 bg-slate-50">
+            <div className="shrink-0 flex justify-end gap-3 px-4 sm:px-6 py-3.5 border-t border-slate-200 bg-slate-50">
               <button onClick={() => setEditing(null)} className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer">
                 Cancelar
               </button>
               <button onClick={save} disabled={saving} className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl disabled:opacity-50 transition-colors cursor-pointer shadow-xs">
-                {saving ? <Loader2 className="w-4 h-4 animate-spin"/> : <Save className="w-4 h-4"/>}
+                {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                 <span>Salvar</span>
               </button>
             </div>

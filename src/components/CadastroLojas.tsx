@@ -207,9 +207,9 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
 
       {/* Modal de visualização somente-leitura */}
       {viewing && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] overflow-auto border border-slate-200">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
+            <div className="shrink-0 flex items-center justify-between px-4 sm:px-6 py-4 border-b border-slate-200 bg-slate-50">
               <h3 className="font-bold text-slate-900 flex items-center gap-2">
                 <Lock className="w-4 h-4 text-slate-400"/>
                 <span>Loja {viewing.numero} {viewing.parceiro ? `(Parceiro: ${viewing.parceiro})` : ""} — Detalhes Cadastrais</span>
@@ -218,7 +218,7 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
                 <X className="w-5 h-5"/>
               </button>
             </div>
-            <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5 sm:gap-4 text-xs">
+            <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5 sm:gap-4 text-xs">
               {[
                 ["Número da Loja", viewing.numero],
                 ["Cód. Parceiro", viewing.parceiro],
@@ -230,15 +230,15 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
                 ["Conta", viewing.conta ? `${viewing.conta}${viewing.conta_dig ? "-" + viewing.conta_dig : ""}` : null],
                 ["Observação", viewing.observacao],
               ].map(([label, val]) => (
-                <div key={label as string} className={label === "Razão Social" || label === "Observação" ? "col-span-2" : ""}>
+                <div key={label as string} className={label === "Razão Social" || label === "Observação" ? "col-span-1 sm:col-span-2" : ""}>
                   <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">{label}</div>
-                  <div className="mt-1 rounded-xl bg-slate-50 border border-slate-200 px-3.5 py-2.5 text-slate-800 font-medium min-h-[38px] flex items-center">
+                  <div className="mt-1 rounded-xl bg-slate-50 border border-slate-200 px-3.5 py-2.5 text-slate-800 font-medium min-h-[38px] flex items-center break-words">
                     {val || "—"}
                   </div>
                 </div>
               ))}
             </div>
-            <div className="flex justify-end gap-2 px-6 py-4 border-t border-slate-200 bg-slate-50">
+            <div className="shrink-0 flex justify-end gap-2 px-4 sm:px-6 py-3.5 border-t border-slate-200 bg-slate-50">
               <button onClick={() => { setEditing(viewing); setViewing(null); }} className="inline-flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-emerald-700 hover:bg-emerald-50 rounded-xl cursor-pointer border border-emerald-200/60">
                 <Pencil className="w-3.5 h-3.5"/> Editar
               </button>
@@ -252,15 +252,15 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
 
       {/* Modal de edição/criação */}
       {editing && (
-        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-4">
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[92vh] overflow-auto border border-slate-200">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200 bg-slate-50">
+        <div className="fixed inset-0 z-50 bg-slate-900/40 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-4xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
+            <div className="shrink-0 flex items-center justify-between px-4 sm:px-6 py-4 border-b border-slate-200 bg-slate-50">
               <h3 className="font-bold text-slate-900">{editing.id ? "Editar" : "Nova"} loja</h3>
               <button onClick={() => setEditing(null)} className="p-1 rounded-lg text-slate-400 hover:text-slate-600 cursor-pointer">
                 <X className="w-5 h-5"/>
               </button>
             </div>
-            <div className="p-6 space-y-5">
+            <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6 space-y-5 pb-8">
               {err && <div className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-xl p-3 font-semibold">{err}</div>}
               
               <div className="flex flex-wrap items-end gap-3 sm:gap-4">
@@ -430,7 +430,7 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
               {field("Observação", "observacao")}
             </div>
 
-            <div className="flex justify-end gap-3 px-6 py-4 border-t border-slate-200 bg-slate-50">
+            <div className="shrink-0 flex justify-end gap-3 px-4 sm:px-6 py-3.5 border-t border-slate-200 bg-slate-50">
               <button onClick={() => setEditing(null)} className="px-4 py-2 text-xs font-semibold text-slate-600 hover:bg-slate-100 rounded-xl cursor-pointer">
                 Cancelar
               </button>

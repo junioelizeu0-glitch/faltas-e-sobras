@@ -1184,3 +1184,95 @@ button, input, select, textarea { font-family: inherit; }
     padding: 0 10px;
   }
 }
+
+/* =============================================================
+ * PADRÕES ESTRUTURAIS GLOBAIS DE RESPONSIVIDADE
+ * Modais, Formulários, Tabelas e Containers
+ * ============================================================= */
+
+/* Modais Estruturais com Cabeçalho e Rodapé Fixos e Rolagem Interna Limpa */
+.app-modal-overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0.75rem;
+  background-color: rgba(15, 23, 42, 0.48);
+  backdrop-filter: blur(4px);
+  -webkit-backdrop-filter: blur(4px);
+}
+
+.app-modal-card {
+  background-color: #ffffff;
+  border-radius: 1rem;
+  box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
+  width: 100%;
+  max-width: 56rem;
+  max-height: 90vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  border: 1px solid rgba(226, 232, 240, 0.9);
+}
+
+.app-modal-header {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+  background-color: #f8fafc;
+}
+
+.app-modal-body {
+  flex: 1 1 auto;
+  overflow-y: auto;
+  min-height: 0;
+  padding: 1.25rem 1.5rem 2rem 1.5rem;
+}
+
+.app-modal-footer {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 0.75rem;
+  padding: 1rem 1.5rem;
+  border-top: 1px solid rgba(226, 232, 240, 0.8);
+  background-color: #f8fafc;
+}
+
+@media (max-width: 640px) {
+  .app-modal-card {
+    max-height: 94vh;
+    border-radius: 0.875rem;
+  }
+  .app-modal-header {
+    padding: 0.875rem 1rem;
+  }
+  .app-modal-body {
+    padding: 1rem 1rem 1.5rem 1rem;
+  }
+  .app-modal-footer {
+    padding: 0.875rem 1rem;
+    flex-wrap: wrap;
+  }
+}
+
+/* Container Universal de Tabelas com Rolagem Contida */
+.app-table-wrapper {
+  width: 100%;
+  overflow-x: auto;
+  -webkit-overflow-scrolling: touch;
+}
+
+/* Prevenção de corte em Popups e Dropdowns */
+.combobox-popover,
+.select-popover {
+  z-index: 99 !important;
+  max-height: 14rem;
+  overflow-y: auto;
+}

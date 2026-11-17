@@ -721,17 +721,17 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
       </div>
 
       {manage && (
-        <div className="fixed inset-0 z-[70] bg-black/50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) { setManage(null); loadListas(); } }}>
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-[98vw] h-[96vh] overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between px-4 py-3 border-b bg-slate-50">
-              <h3 className="font-semibold text-slate-800">
+        <div className="fixed inset-0 z-[70] bg-black/50 flex items-center justify-center p-3 sm:p-4" onClick={(e) => { if (e.target === e.currentTarget) { setManage(null); loadListas(); } }}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[92vh] h-full sm:h-[88vh] overflow-hidden flex flex-col border border-slate-200">
+            <div className="shrink-0 flex items-center justify-between px-4 sm:px-6 py-3.5 border-b bg-slate-50">
+              <h3 className="font-bold text-slate-800 text-sm">
                 {manage === "transp" && "Cadastro de Transportadoras"}
                 {manage === "conf" && "Cadastro de Conferentes"}
                 {manage === "motivo" && "Cadastro de Motivos"}
               </h3>
-              <button onClick={() => { setManage(null); loadListas(); }} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5" /></button>
+              <button onClick={() => { setManage(null); loadListas(); }} className="text-slate-400 hover:text-slate-700 p-1 hover:bg-slate-200/60 rounded-xl transition-colors cursor-pointer"><X className="w-5 h-5" /></button>
             </div>
-            <div className="flex-1 overflow-auto">
+            <div className="flex-1 overflow-auto min-h-0">
               {manage === "transp" && (
                 <CadastroSimples titulo="Transportadoras" listFn={listTransportadoras} upsertFn={upsertTransportadora} deleteFn={deleteTransportadora} />
               )}
@@ -748,24 +748,23 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
       )}
 
       {lojaOpen && (
-        <div className="fixed inset-0 z-[70] bg-black/50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) setLojaOpen(false); }}>
-          <div className="bg-white rounded-xl shadow-2xl w-full max-w-[98vw] h-[96vh] overflow-hidden flex flex-col">
-            <div className="flex items-center justify-between px-4 py-3 border-b bg-slate-50">
-              <h3 className="font-semibold text-slate-800">Cadastro de Lojas</h3>
-              <button onClick={() => setLojaOpen(false)} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5" /></button>
+        <div className="fixed inset-0 z-[70] bg-black/50 flex items-center justify-center p-3 sm:p-4" onClick={(e) => { if (e.target === e.currentTarget) setLojaOpen(false); }}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[92vh] h-full sm:h-[88vh] overflow-hidden flex flex-col border border-slate-200">
+            <div className="shrink-0 flex items-center justify-between px-4 sm:px-6 py-3.5 border-b bg-slate-50">
+              <h3 className="font-bold text-slate-800 text-sm">Cadastro de Lojas</h3>
+              <button onClick={() => setLojaOpen(false)} className="text-slate-400 hover:text-slate-700 p-1 hover:bg-slate-200/60 rounded-xl transition-colors cursor-pointer"><X className="w-5 h-5" /></button>
             </div>
-            <div className="flex-1 overflow-auto">
+            <div className="flex-1 overflow-auto min-h-0">
               <CadastroLojas buscaInicial={form.Loja || ""} />
             </div>
           </div>
         </div>
       )}
 
-
       {monitorAsk && (
-        <div className="fixed inset-0 z-[80] bg-black/50 flex items-center justify-center p-4" onClick={(e) => { if (e.target === e.currentTarget) setMonitorAsk(false); }}>
-          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden border border-slate-100">
-            <div className="px-6 py-6 text-center">
+        <div className="fixed inset-0 z-[80] bg-black/50 flex items-center justify-center p-3 sm:p-4" onClick={(e) => { if (e.target === e.currentTarget) setMonitorAsk(false); }}>
+          <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md max-h-[90vh] flex flex-col overflow-hidden border border-slate-100">
+            <div className="flex-1 overflow-y-auto min-h-0 px-4 sm:px-6 py-6 text-center">
               <div className="w-12 h-12 rounded-full bg-emerald-50 border border-emerald-100 flex items-center justify-center mx-auto mb-3 text-emerald-600">
                 <ClipboardCheck className="w-6 h-6" />
               </div>
@@ -778,7 +777,7 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
                 <div><span className="font-semibold text-slate-700">Motivo:</span> {form.Motivo || "—"}</div>
               </div>
             </div>
-            <div className="flex items-center justify-end gap-2 px-6 py-3 border-t bg-slate-50">
+            <div className="shrink-0 flex items-center justify-end gap-2 px-4 sm:px-6 py-3 border-t bg-slate-50">
               <button onClick={() => setMonitorAsk(false)} className="px-3.5 py-2 text-xs font-medium text-slate-600 hover:text-slate-800 rounded-lg">Cancelar</button>
               <button onClick={() => aplicarResultadoMonitoramento(false)} className="px-4 py-2 text-xs font-semibold text-rose-700 bg-rose-50 border border-rose-200/80 rounded-lg hover:bg-rose-100 transition-colors">Não (Recusar)</button>
               <button onClick={() => aplicarResultadoMonitoramento(true)} className="px-4 py-2 text-xs font-semibold text-white bg-emerald-600 hover:bg-emerald-700 rounded-lg transition-colors shadow-xs">Sim (Aprovar)</button>
@@ -1004,20 +1003,20 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
 
 function ItemEditModal({ title, onClose, onAdd, children }: { title: string; onClose: () => void; onAdd?: () => void; children: React.ReactNode }) {
   return (
-    <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-4">
-      <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-xl shadow-2xl w-full max-w-2xl">
-        <div className="flex items-center justify-between px-4 py-3 border-b">
-          <h3 className="font-semibold text-slate-800">{title}</h3>
-          <button onClick={onClose} className="text-slate-400 hover:text-slate-700"><X className="w-5 h-5" /></button>
+    <div className="fixed inset-0 z-[60] bg-black/40 flex items-center justify-center p-3 sm:p-4">
+      <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[90vh] flex flex-col overflow-hidden border border-slate-200">
+        <div className="shrink-0 flex items-center justify-between px-4 sm:px-6 py-3.5 border-b bg-slate-50">
+          <h3 className="font-bold text-slate-800 text-sm">{title}</h3>
+          <button onClick={onClose} className="text-slate-400 hover:text-slate-700 p-1 hover:bg-slate-200/50 rounded-lg cursor-pointer"><X className="w-5 h-5" /></button>
         </div>
-        <div className="p-4">{children}</div>
-        <div className="flex justify-between items-center px-4 py-3 border-t bg-slate-50">
+        <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6 pb-8">{children}</div>
+        <div className="shrink-0 flex justify-between items-center px-4 sm:px-6 py-3 border-t bg-slate-50">
           {onAdd ? (
-            <button onClick={() => { onAdd(); onClose(); }} className="inline-flex items-center gap-1 px-3 py-2 text-sm font-semibold text-blue-700 bg-blue-50 border border-blue-200 hover:bg-blue-100 rounded-md">
+            <button onClick={() => { onAdd(); onClose(); }} className="inline-flex items-center gap-1 px-3 py-2 text-xs font-semibold text-emerald-700 bg-emerald-50 border border-emerald-200 hover:bg-emerald-100 rounded-xl cursor-pointer">
               <Plus className="w-4 h-4" />Adicionar novo
             </button>
           ) : <span />}
-          <button onClick={onClose} className="inline-flex items-center gap-1 px-3 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-md"><Save className="w-4 h-4" />Concluir</button>
+          <button onClick={onClose} className="inline-flex items-center gap-1 px-4 py-2 text-xs font-semibold text-white bg-emerald-700 hover:bg-emerald-800 rounded-xl cursor-pointer shadow-xs"><Save className="w-4 h-4" />Concluir</button>
         </div>
       </div>
     </div>

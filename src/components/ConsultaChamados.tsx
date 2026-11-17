@@ -538,7 +538,7 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
 
       {editingId && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4">
-          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl shadow-2xl w-full max-w-[98vw] sm:max-w-5xl max-h-[96vh] h-full sm:h-[94vh] flex flex-col overflow-hidden border border-slate-200">
+          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl shadow-2xl w-full max-w-[98vw] sm:max-w-5xl max-h-[94vh] h-full sm:h-[92vh] flex flex-col overflow-hidden border border-slate-200">
             <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-slate-200 bg-slate-50/80 shrink-0">
               <div className="flex items-center gap-2">
                 <FileText className="w-5 h-5 text-emerald-700" />
@@ -546,7 +546,7 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
               </div>
               <button onClick={() => setEditingId(null)} className="text-slate-400 hover:text-slate-700 p-1.5 hover:bg-slate-200/60 rounded-xl transition-colors cursor-pointer"><X className="w-5 h-5" /></button>
             </div>
-            <div className="flex-1 min-h-0 p-3 sm:p-4 overflow-y-auto">
+            <div className="flex-1 min-h-0 p-3 sm:p-4 md:p-5 overflow-y-auto pb-8">
               <ErrorBoundary fallbackTitle="Erro ao carregar o formulário de edição">
                 <ChamadoForm
                   mode="editar" chamadoId={String(editingId)} compact tabela={tabela}
@@ -562,12 +562,12 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
 
       {creating && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-2 sm:p-4">
-          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl shadow-2xl w-full max-w-[98vw] sm:max-w-5xl max-h-[96vh] h-full sm:h-[94vh] flex flex-col overflow-hidden border border-slate-200">
+          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl shadow-2xl w-full max-w-[98vw] sm:max-w-5xl max-h-[94vh] h-full sm:h-[92vh] flex flex-col overflow-hidden border border-slate-200">
             <div className="flex items-center justify-between px-4 sm:px-6 py-3 border-b border-slate-200 bg-slate-50/80 shrink-0">
               <h2 className="text-base font-bold text-slate-800">{tabela === "recall" ? "Novo Chamado de Recall" : "Novo Chamado"}</h2>
               <button onClick={() => setCreating(false)} className="text-slate-400 hover:text-slate-700 p-1.5 hover:bg-slate-200/60 rounded-xl transition-colors cursor-pointer"><X className="w-5 h-5" /></button>
             </div>
-            <div className="flex-1 min-h-0 p-3 sm:p-4 overflow-y-auto">
+            <div className="flex-1 min-h-0 p-3 sm:p-4 md:p-5 overflow-y-auto pb-8">
               <ErrorBoundary fallbackTitle="Erro ao carregar o formulário de inclusão">
                 <ChamadoForm
                   mode="novo" compact tabela={tabela}
@@ -582,10 +582,10 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
 
       {modalMudarTarefa && (
         <div className="fixed inset-0 z-50 bg-black/50 backdrop-blur-xs flex items-center justify-center p-3 sm:p-4">
-          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-lg max-h-[90vh] overflow-y-auto animate-in fade-in zoom-in-95 flex flex-col">
-            <div className="flex items-center justify-between px-6 py-4 border-b border-slate-100 bg-slate-50/50">
+          <div onClick={(e) => e.stopPropagation()} className="bg-white rounded-2xl border border-slate-200 shadow-2xl w-full max-w-lg max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95">
+            <div className="shrink-0 flex items-center justify-between px-4 sm:px-6 py-3.5 border-b border-slate-100 bg-slate-50/50">
               <div className="flex items-center gap-2.5">
-                <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-200/60">
+                <div className="w-9 h-9 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-200/60 shrink-0">
                   <Workflow className="w-5 h-5 text-emerald-700" />
                 </div>
                 <div>
@@ -601,7 +601,7 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
               </button>
             </div>
 
-            <div className="p-6 space-y-4">
+            <div className="flex-1 overflow-y-auto min-h-0 p-4 sm:p-6 space-y-4 pb-8">
               <div className="flex items-center justify-between bg-emerald-50/60 border border-emerald-200/60 rounded-xl px-4 py-2.5">
                 <span className="text-xs font-medium text-emerald-800">Chamados selecionados:</span>
                 <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-bold bg-emerald-100 text-emerald-800 border border-emerald-300/60">
@@ -647,7 +647,7 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
               </div>
             </div>
 
-            <div className="flex items-center justify-end gap-2.5 px-6 py-4 border-t border-slate-100 bg-slate-50/50">
+            <div className="shrink-0 flex items-center justify-end gap-2.5 px-4 sm:px-6 py-3.5 border-t border-slate-100 bg-slate-50/50">
               <button
                 type="button"
                 onClick={() => setModalMudarTarefa(false)}
