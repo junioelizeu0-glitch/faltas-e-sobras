@@ -76,17 +76,17 @@ export default function AIliana() {
   }
 
   return (
-    <div className="flex-1 min-h-screen bg-[#F4F6F5] p-4 md:p-6 flex flex-col font-sans text-slate-800">
-      <div className="w-full flex-1 bg-white rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col overflow-hidden">
+    <div className="flex-1 min-h-screen bg-[#F4F6F5] p-3 sm:p-4 md:p-6 flex flex-col font-sans text-slate-800 min-w-0">
+      <div className="w-full flex-1 bg-white rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col overflow-hidden min-w-0">
         {/* Header compacto */}
-        <div className="px-6 py-4 border-b border-slate-100 bg-slate-50 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="px-4 sm:px-6 py-3 sm:py-4 border-b border-slate-100 bg-slate-50 flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-3 min-w-0">
             <Avatar />
-            <div className="leading-tight">
-              <div className="text-sm font-bold text-slate-900 tracking-tight">
+            <div className="leading-tight min-w-0">
+              <div className="text-sm font-bold text-slate-900 tracking-tight truncate">
                 Assistente Nativo Antigravity AI
               </div>
-              <div className="text-[11px] text-slate-500 font-medium">
+              <div className="text-[11px] text-slate-500 font-medium truncate">
                 Inteligência Artificial Analítica · Leitura em Tempo Real
               </div>
             </div>
@@ -94,7 +94,7 @@ export default function AIliana() {
           {messages.length > 0 && (
             <button
               onClick={() => setMessages([])}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer"
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-rose-600 hover:bg-rose-50 rounded-xl transition-colors cursor-pointer ml-auto"
             >
               <Trash2 className="w-3.5 h-3.5" /> Limpar Histórico
             </button>
@@ -102,10 +102,10 @@ export default function AIliana() {
         </div>
 
         {/* Transcript */}
-        <div className="flex-1 overflow-y-auto p-6 space-y-6">
-          <div className="max-w-3xl mx-auto space-y-6">
+        <div className="flex-1 overflow-y-auto p-3 sm:p-6 space-y-4 sm:space-y-6 min-w-0">
+          <div className="max-w-3xl mx-auto space-y-4 sm:space-y-6">
             {messages.length === 0 && (
-              <div className="mt-8 text-center space-y-4">
+              <div className="mt-8 text-center space-y-4 px-2">
                 <div className="inline-flex items-center justify-center p-3 bg-emerald-50 rounded-2xl border border-emerald-200/60 shadow-xs">
                   <Sparkles className="w-8 h-8 text-emerald-700" />
                 </div>
@@ -115,7 +115,7 @@ export default function AIliana() {
                 <p className="text-xs text-slate-500 max-w-md mx-auto">
                   Consulte informações em tempo real sobre chamados, prazos de SLA, transportadoras, lojas e métricas operacionais.
                 </p>
-                <div className="grid sm:grid-cols-2 gap-3 text-left pt-4 max-w-2xl mx-auto">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 text-left pt-4 max-w-2xl mx-auto">
                   {SUGESTOES.map((s) => (
                     <button
                       key={s}
@@ -132,14 +132,14 @@ export default function AIliana() {
             {messages.map((m, i) =>
               m.role === "user" ? (
                 <div key={i} className="flex justify-end">
-                  <div className="rounded-2xl rounded-tr-xs px-4 py-3 max-w-[78%] text-xs font-medium bg-emerald-700 text-white shadow-xs leading-relaxed">
+                  <div className="rounded-2xl rounded-tr-xs px-4 py-3 max-w-[88%] sm:max-w-[78%] text-xs font-medium bg-emerald-700 text-white shadow-xs leading-relaxed">
                     {m.content}
                   </div>
                 </div>
               ) : (
-                <div key={i} className="flex gap-3 items-start">
+                <div key={i} className="flex gap-2.5 sm:gap-3 items-start min-w-0">
                   <Avatar />
-                  <div className="flex-1 text-xs leading-relaxed text-slate-800 bg-slate-50 rounded-2xl rounded-tl-xs p-4 border border-slate-200/80 shadow-xs prose prose-slate max-w-none">
+                  <div className="flex-1 min-w-0 text-xs leading-relaxed text-slate-800 bg-slate-50 rounded-2xl rounded-tl-xs p-3.5 sm:p-4 border border-slate-200/80 shadow-xs prose prose-slate max-w-none break-words overflow-hidden">
                     <ReactMarkdown>{m.content}</ReactMarkdown>
                   </div>
                 </div>
@@ -160,9 +160,9 @@ export default function AIliana() {
         </div>
 
         {/* Input pill */}
-        <div className="p-4 bg-slate-50 border-t border-slate-100">
+        <div className="p-3 sm:p-4 bg-slate-50 border-t border-slate-100">
           <div className="max-w-3xl mx-auto">
-            <div className="flex items-center gap-2 rounded-2xl pl-4 pr-2 py-2 border border-slate-200 bg-white shadow-xs focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all">
+            <div className="flex items-center gap-2 rounded-2xl pl-3 sm:pl-4 pr-2 py-2 border border-slate-200 bg-white shadow-xs focus-within:border-emerald-500 focus-within:ring-2 focus-within:ring-emerald-500/20 transition-all">
               <textarea
                 ref={inputRef}
                 value={input}

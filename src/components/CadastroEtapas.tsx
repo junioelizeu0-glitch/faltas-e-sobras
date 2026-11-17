@@ -222,7 +222,7 @@ export default function CadastroEtapas() {
           </div>
         )}
 
-        <div className="bg-white border border-slate-200/80 rounded-xl shadow-xs overflow-hidden">
+        <div className="bg-white border border-slate-200/80 rounded-xl shadow-xs overflow-x-auto w-full">
           {loading ? (
             <div className="p-12 text-center text-slate-500">
               <Loader2 className="inline w-6 h-6 animate-spin mr-2 text-emerald-600"/>

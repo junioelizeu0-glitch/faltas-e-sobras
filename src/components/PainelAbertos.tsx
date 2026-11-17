@@ -398,10 +398,10 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
 
         {/* Conteúdo Expandível dos Gráficos */}
         {isGraficosOpen && (
-          <div className="p-5 md:p-6 grid grid-cols-1 lg:grid-cols-3 gap-6 bg-slate-50/40">
+          <div className="p-4 sm:p-5 md:p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 bg-slate-50/40 min-w-0">
 
             {/* GRÁFICO 1: CONTROLE DE CHAMADOS (NÃO FINALIZADOS E APENAS MESES COM DADOS) */}
-            <div ref={chart1Ref} className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between relative">
+            <div ref={chart1Ref} className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between relative min-w-0 w-full">
               <div className="flex items-start justify-between mb-2">
                 <div>
                   <h3 className="text-base font-bold text-slate-800">Controle de Chamados (Não Finalizados)</h3>
@@ -464,7 +464,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
             </div>
 
             {/* GRÁFICO 2: TAREFAS EM ABERTO */}
-            <div ref={chart2Ref} className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between relative">
+            <div ref={chart2Ref} className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between relative min-w-0 w-full">
               <div className="flex items-start justify-between mb-2">
                 <div>
                   <h3 className="text-base font-bold text-slate-800">Tarefas em Aberto</h3>
@@ -526,7 +526,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
             </div>
 
             {/* GRÁFICO 3: CHAMADOS POR TIPO DE LOJA (FRANQUIA VS PRÓPRIA) */}
-            <div ref={chart3Ref} className="bg-white p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between relative">
+            <div ref={chart3Ref} className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between relative min-w-0 w-full md:col-span-2 xl:col-span-1">
               <div className="flex items-start justify-between mb-2">
                 <div>
                   <h3 className="text-base font-bold text-slate-800">Chamados por Tipo de Loja</h3>
@@ -770,7 +770,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
               </div>
 
               {/* Seletor de Quantidade de Chamados na Tela */}
-              <div className="flex items-center gap-1.5 ml-auto">
+              <div className="flex items-center gap-1.5 w-full sm:w-auto sm:ml-auto">
                 <span className="text-slate-500 text-[11px]">Exibir:</span>
                 <select
                   value={pageSize}
@@ -786,7 +786,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
             </div>
 
             {/* TABELA DE ATIVIDADES RESTRITA A APENAS AS COLUNAS SOLICITADAS */}
-            <div className="w-full overflow-auto min-h-[500px] max-h-[780px] border border-slate-200/80 rounded-xl bg-white shadow-xs">
+            <div className="w-full overflow-x-auto overflow-y-auto min-h-[400px] max-h-[780px] border border-slate-200/80 rounded-xl bg-white shadow-xs">
               <table className="w-full text-left text-xs border-collapse">
                 <thead className="sticky top-0 z-20 bg-slate-100 shadow-2xs">
                   <tr className="bg-slate-100">

@@ -96,7 +96,25 @@ export default function AppShell({
   selectedSubmenu,
   setSelectedSubmenu,
 }: AppShellProps) {
-  const [menuAberto, setMenuAberto] = useState(true);
+  // Desktop (> 1024px): menu expandido normalmente
+  // Tablet (<= 1024px): menu recolhível (inicia recolhido para otimizar espaço de tabelas e gráficos)
+  const [menuAberto, setMenuAberto] = useState(() => {
+    if (typeof window !== "undefined") {
+      return window.innerWidth > 1024;
+    }
+    return true;
+  });
+
+  // Fecha drawer mobile ao redimensionar tela
+  useEffect(() => {
+    const handleResize = () => {
+      if (typeof window !== "undefined" && window.innerWidth <= 768) {
+        setMobileMenuOpen(false);
+      }
+    };
+    window.addEventListener("resize", handleResize);
+    return () => window.removeEventListener("resize", handleResize);
+  }, []);
 
   // Inicialmente fechados: as opções SÓ aparecem se clicarem no menu!
   // Se houver rota selecionada, abre o grupo daquela rota.

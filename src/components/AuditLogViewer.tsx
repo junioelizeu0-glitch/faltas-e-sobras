@@ -149,7 +149,7 @@ export default function AuditLogViewer() {
         </button>
       </div>
 
-      <div className="bg-white rounded-lg border border-slate-200 overflow-hidden">
+      <div className="bg-white rounded-lg border border-slate-200 overflow-x-auto w-full">
         {loading ? (
           <div className="p-6 flex justify-center text-slate-500"><Loader2 className="w-5 h-5 animate-spin mr-2"/>Carregando...</div>
         ) : rows.length === 0 ? (

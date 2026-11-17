@@ -553,15 +553,15 @@ export default function RelatorioRecall({
   };
 
   return (
-    <div className="flex-1 flex flex-col overflow-hidden bg-[#F4F6F5] min-h-screen text-slate-800 font-sans">
+    <div className="flex-1 flex flex-col overflow-hidden bg-[#F4F6F5] min-h-screen text-slate-800 font-sans min-w-0">
       {/* CABAÇALHO CORPORATIVO EXECUTIVO (MODERNO / AMANAH STYLE) */}
-      <header className="h-16 bg-white border-b border-slate-200/80 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex items-center justify-between px-6 flex-shrink-0 z-30">
-        <div className="flex items-center gap-3">
-          <div className="w-9 h-9 rounded-xl bg-emerald-50 border border-emerald-200/60 flex items-center justify-center text-emerald-700 shadow-xs">
+      <header className="min-h-16 py-3 bg-white border-b border-slate-200/80 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-wrap items-center justify-between gap-3 px-4 sm:px-6 flex-shrink-0 z-30">
+        <div className="flex items-center gap-3 min-w-0">
+          <div className="w-9 h-9 shrink-0 rounded-xl bg-emerald-50 border border-emerald-200/60 flex items-center justify-center text-emerald-700 shadow-xs">
             <ShieldAlert className="w-5 h-5" />
           </div>
-          <div>
-            <div className="flex items-center gap-2">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2">
               <h1 className="text-base font-bold text-slate-900 tracking-tight">
                 Relatório & Analytics de Recall
               </h1>
@@ -570,13 +570,13 @@ export default function RelatorioRecall({
                 Visão Executiva
               </span>
             </div>
-            <p className="text-xs text-slate-500 font-medium">
+            <p className="text-xs text-slate-500 font-medium truncate">
               Indicadores de Qualidade, SLA de Recolhimento e Impacto Financeiro
             </p>
           </div>
         </div>
 
-        <div className="flex items-center gap-2.5">
+        <div className="flex flex-wrap items-center gap-2">
           <button
             onClick={handleExportExcel}
             className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl bg-emerald-700 hover:bg-emerald-800 text-white text-xs font-semibold shadow-xs transition-all cursor-pointer"
@@ -611,15 +611,15 @@ export default function RelatorioRecall({
       </header>
 
       {/* BARRA DE FILTROS GLOBAIS & BUSCA EXATA */}
-      <div className="bg-white border-b border-slate-200/80 px-6 py-3.5 flex flex-wrap items-center justify-between gap-3 text-xs flex-shrink-0 z-20 shadow-2xs">
+      <div className="bg-white border-b border-slate-200/80 px-4 sm:px-6 py-3.5 flex flex-wrap items-center justify-between gap-3 text-xs flex-shrink-0 z-20 shadow-2xs">
         <div className="flex flex-wrap items-center gap-2.5 flex-1 min-w-0">
           {/* Data Ref */}
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 flex-1 sm:flex-none min-w-[120px]">
             <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Ref. Data</span>
             <select
               value={filters.dateRef}
               onChange={(e) => setFilters({ ...filters, dateRef: e.target.value })}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none cursor-pointer"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none cursor-pointer"
             >
               <option>Ref: Data de Abertura</option>
               <option>Ref: Data de Finalização</option>
@@ -628,12 +628,12 @@ export default function RelatorioRecall({
           </div>
 
           {/* Período */}
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 flex-1 sm:flex-none min-w-[120px]">
             <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Período</span>
             <select
               value={filters.periodo}
               onChange={(e) => setFilters({ ...filters, periodo: e.target.value })}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none cursor-pointer"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none cursor-pointer"
             >
               <option value="Todos">Todos os Períodos</option>
               <option value="Últimos 7 dias">Últimos 7 dias</option>
@@ -643,12 +643,12 @@ export default function RelatorioRecall({
           </div>
 
           {/* CD */}
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 flex-1 sm:flex-none min-w-[100px]">
             <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">CD</span>
             <select
               value={filters.cd}
               onChange={(e) => setFilters({ ...filters, cd: e.target.value })}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none cursor-pointer"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none cursor-pointer"
             >
               <option value="Todos">Todos os CDs</option>
               {filterOptions.cds.map((cd) => (
@@ -660,12 +660,12 @@ export default function RelatorioRecall({
           </div>
 
           {/* Transportadora */}
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 flex-1 sm:flex-none min-w-[130px]">
             <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Transportadora</span>
             <select
               value={filters.transp}
               onChange={(e) => setFilters({ ...filters, transp: e.target.value })}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none cursor-pointer max-w-[170px]"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none cursor-pointer max-w-full sm:max-w-[170px]"
             >
               <option value="Todas">Todas</option>
               {filterOptions.transps.map((t) => (
@@ -677,12 +677,12 @@ export default function RelatorioRecall({
           </div>
 
           {/* Status */}
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col gap-1 flex-1 sm:flex-none min-w-[120px]">
             <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">Status</span>
             <select
               value={filters.status}
               onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-              className="rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none cursor-pointer"
+              className="w-full rounded-xl border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-700 shadow-xs focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none cursor-pointer"
             >
               <option value="Todos">Todos os Status</option>
               <option value="Aprovado">Aprovado</option>
@@ -693,36 +693,36 @@ export default function RelatorioRecall({
         </div>
 
         {/* BUSCA EXATA ESPECÍFICA (Conforme Regra do Projeto: Ícone Lupa + Filtro Exato) */}
-        <div className="flex items-center gap-2 border-l border-slate-200 pl-3">
-          <div className="relative">
+        <div className="flex flex-wrap items-center gap-2 sm:border-l sm:border-slate-200 sm:pl-3 w-full lg:w-auto">
+          <div className="relative flex-1 sm:flex-none min-w-[120px]">
             <input
               type="text"
               placeholder="Nº Chamado exato..."
               value={exactSearchChamado}
               onChange={(e) => setExactSearchChamado(e.target.value)}
-              className="w-32 rounded-xl border border-slate-200 bg-white pl-2.5 pr-7 py-1.5 text-xs text-slate-700 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none"
+              className="w-full sm:w-32 rounded-xl border border-slate-200 bg-white pl-2.5 pr-7 py-1.5 text-xs text-slate-700 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none"
             />
             <Search className="w-3.5 h-3.5 text-slate-400 absolute right-2 top-2 pointer-events-none" />
           </div>
 
-          <div className="relative">
+          <div className="relative flex-1 sm:flex-none min-w-[100px]">
             <input
               type="text"
               placeholder="Cód. Loja..."
               value={exactSearchLoja}
               onChange={(e) => setExactSearchLoja(e.target.value)}
-              className="w-28 rounded-xl border border-slate-200 bg-white pl-2.5 pr-7 py-1.5 text-xs text-slate-700 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none"
+              className="w-full sm:w-28 rounded-xl border border-slate-200 bg-white pl-2.5 pr-7 py-1.5 text-xs text-slate-700 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none"
             />
             <Search className="w-3.5 h-3.5 text-slate-400 absolute right-2 top-2 pointer-events-none" />
           </div>
 
-          <div className="relative">
+          <div className="relative flex-1 sm:flex-none min-w-[130px]">
             <input
               type="text"
               placeholder="Ref. Produto / Lote..."
               value={exactSearchProduto}
               onChange={(e) => setExactSearchProduto(e.target.value)}
-              className="w-36 rounded-xl border border-slate-200 bg-white pl-2.5 pr-7 py-1.5 text-xs text-slate-700 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none"
+              className="w-full sm:w-36 rounded-xl border border-slate-200 bg-white pl-2.5 pr-7 py-1.5 text-xs text-slate-700 focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 outline-none"
             />
             <Search className="w-3.5 h-3.5 text-slate-400 absolute right-2 top-2 pointer-events-none" />
           </div>
@@ -755,7 +755,7 @@ export default function RelatorioRecall({
       </div>
 
       {/* ABA DE NAVEGAÇÃO INTERNA */}
-      <div className="bg-white border-b border-slate-200/80 px-6 flex items-center gap-1 flex-shrink-0 z-10">
+      <div className="bg-white border-b border-slate-200/80 px-4 sm:px-6 flex items-center gap-1 flex-shrink-0 z-10 overflow-x-auto whitespace-nowrap hide-scrollbar">
         {[
           { id: "resumo", label: "Visão Executiva & KPIs", icon: LayoutGrid },
           { id: "origem", label: "Análise de Motivos & Origem", icon: Layers },
@@ -782,9 +782,9 @@ export default function RelatorioRecall({
       </div>
 
       {/* ÁREA DE CONTEÚDO PRINCIPAL COM SCROLL */}
-      <div className="flex-1 overflow-y-auto p-6 space-y-6" ref={dashboardRef}>
+      <div className="flex-1 overflow-y-auto p-3 sm:p-4 md:p-6 space-y-4 sm:space-y-6 min-w-0" ref={dashboardRef}>
         {/* CARDS DE KPI EXECUTIVOS (ESTILO AMANAH - BANCO DE CARDS BRANCO COM BORDA DELICADA) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-6 gap-3.5 sm:gap-4 min-w-0">
           {/* Card 1: Total Chamados */}
           <div
             onClick={() => handleDrillDown("Todos os Recalls", filteredData)}
@@ -953,10 +953,10 @@ export default function RelatorioRecall({
 
         {/* ABA 1: VISÃO EXECUTIVA & KPIS */}
         {activeTab === "resumo" && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+          <div className="space-y-6 min-w-0">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 min-w-0">
               {/* Gráfico 1: Evolução Mensal do Recall (Volume vs Valor Bruto) */}
-              <div className="lg:col-span-2 bg-white p-5 rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col">
+              <div className="lg:col-span-2 bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col min-w-0">
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h3 className="text-sm font-bold text-slate-900">Evolução Mensal do Recall</h3>
@@ -966,7 +966,7 @@ export default function RelatorioRecall({
                     Histórico
                   </span>
                 </div>
-                <div className="h-72 w-full">
+                <div className="h-72 w-full min-w-0">
                   <ResponsiveContainer width="100%" height="100%">
                     <ComposedChart data={metrics.mensaisList} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -989,14 +989,14 @@ export default function RelatorioRecall({
               </div>
 
               {/* Gráfico 2: Distribuição por Status do Recall */}
-              <div className="bg-white p-5 rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col">
+              <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col min-w-0">
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h3 className="text-sm font-bold text-slate-900">Status dos Chamados</h3>
                     <p className="text-xs text-slate-500">Proporção Aprovado vs Pendente vs Recusado</p>
                   </div>
                 </div>
-                <div className="h-64 w-full flex items-center justify-center">
+                <div className="h-64 w-full min-w-0 flex items-center justify-center">
                   <ResponsiveContainer width="100%" height="100%">
                     <PieChart>
                       <Pie
@@ -1031,14 +1031,14 @@ export default function RelatorioRecall({
             </div>
 
             {/* Gráfico 3: Impacto Financeiro por CD */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] min-w-0">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="text-sm font-bold text-slate-900">Impacto Financeiro por CD (Centro de Distribuição)</h3>
                   <p className="text-xs text-slate-500">Comparativo entre CDs ES, PB, TO e outros</p>
                 </div>
               </div>
-              <div className="h-72 w-full">
+              <div className="h-72 w-full min-w-0">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={metrics.cdsList} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                     <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -1061,17 +1061,17 @@ export default function RelatorioRecall({
 
         {/* ABA 2: ANÁLISE DE MOTIVOS & ORIGEM */}
         {activeTab === "origem" && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="space-y-6 min-w-0">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-w-0">
               {/* Top Motivos de Recall */}
-              <div className="bg-white p-5 rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+              <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] min-w-0">
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h3 className="text-sm font-bold text-slate-900">Principais Motivos de Recall</h3>
                     <p className="text-xs text-slate-500">Ranking por valor total acumulado</p>
                   </div>
                 </div>
-                <div className="h-80 w-full">
+                <div className="h-80 w-full min-w-0">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart layout="vertical" data={metrics.topMotivos} margin={{ top: 0, right: 20, left: 40, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
@@ -1088,7 +1088,7 @@ export default function RelatorioRecall({
               </div>
 
               {/* Top Lojas Afetadas por Recall */}
-              <div className="bg-white p-5 rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col">
+              <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col min-w-0">
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h3 className="text-sm font-bold text-slate-900">Top Lojas com Ocorrências de Recall</h3>
@@ -1096,7 +1096,7 @@ export default function RelatorioRecall({
                   </div>
                 </div>
 
-                <div className="divide-y divide-slate-100 flex-1 overflow-y-auto">
+                <div className="divide-y divide-slate-100 flex-1 overflow-y-auto max-h-[300px]">
                   {metrics.topLojas.map((item, idx) => (
                     <div key={idx} className="py-2.5 flex items-center justify-between hover:bg-slate-50/60 px-2 rounded-xl transition-colors">
                       <div className="flex items-center gap-3">
@@ -1121,14 +1121,14 @@ export default function RelatorioRecall({
             </div>
 
             {/* Transportadoras com maior volume */}
-            <div className="bg-white p-5 rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+            <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] min-w-0">
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h3 className="text-sm font-bold text-slate-900">Ocorrências por Transportadora</h3>
                   <p className="text-xs text-slate-500">Movimentação logística dos lotes recolhidos</p>
                 </div>
               </div>
-              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3.5 sm:gap-4 min-w-0">
                 {metrics.topTransp.map((t, idx) => (
                   <div key={idx} className="p-3.5 rounded-xl border border-slate-200/70 bg-slate-50/50 flex items-center justify-between">
                     <div className="flex items-center gap-3">
@@ -1150,10 +1150,10 @@ export default function RelatorioRecall({
 
         {/* ABA 3: SLA, AGING & RISCOS */}
         {activeTab === "sla" && (
-          <div className="space-y-6">
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+          <div className="space-y-6 min-w-0">
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 min-w-0">
               {/* Aging dos Chamados em Aberto */}
-              <div className="bg-white p-5 rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)]">
+              <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] min-w-0">
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h3 className="text-sm font-bold text-slate-900">Aging dos Recalls em Aberto</h3>
@@ -1163,7 +1163,7 @@ export default function RelatorioRecall({
                     Prazos
                   </span>
                 </div>
-                <div className="h-72 w-full">
+                <div className="h-72 w-full min-w-0">
                   <ResponsiveContainer width="100%" height="100%">
                     <BarChart data={metrics.agingData} margin={{ top: 10, right: 10, left: -10, bottom: 0 }}>
                       <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
@@ -1185,7 +1185,7 @@ export default function RelatorioRecall({
               </div>
 
               {/* Tabela de Matriz de Risco (Chamados Críticos) */}
-              <div className="bg-white p-5 rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col">
+              <div className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col min-w-0">
                 <div className="flex items-center justify-between mb-4">
                   <div>
                     <h3 className="text-sm font-bold text-slate-900">Chamados em Risco de SLA (&gt;45 dias)</h3>
@@ -1196,7 +1196,7 @@ export default function RelatorioRecall({
                   </span>
                 </div>
 
-                <div className="overflow-x-auto flex-1">
+                <div className="overflow-x-auto flex-1 w-full">
                   <table className="w-full text-left border-collapse text-xs">
                     <thead>
                       <tr className="bg-slate-50/80 border-b border-slate-200/80 text-slate-500 font-semibold uppercase tracking-wider text-[10px]">

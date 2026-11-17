@@ -2789,8 +2789,8 @@ export default function Dashboard() {
             </header>
 
             {/* Global Filters Bar */}
-            <div className="bg-white border-b border-slate-200 px-6 py-4 flex flex-wrap items-end gap-4 text-xs flex-shrink-0 z-20 shadow-sm relative">
-               <div className="flex flex-col gap-1.5">
+            <div className="bg-white border-b border-slate-200 px-3 sm:px-6 py-3 sm:py-4 flex flex-wrap items-end gap-2.5 sm:gap-4 text-xs flex-shrink-0 z-20 shadow-sm relative">
+               <div className="flex flex-col gap-1.5 flex-1 min-w-[140px] sm:max-w-[200px]">
                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Tipo de Data</label>
                   <select value={filterSelections.dateRef} onChange={(e) => setFilterSelections({...filterSelections, dateRef: e.target.value})} className="bg-white border border-slate-300 text-slate-700 h-9 px-3 rounded shadow-sm outline-none focus:ring-1 focus:ring-blue-500 font-semibold cursor-pointer text-xs appearance-none pr-8 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23475569%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[right_10px_center] bg-[length:8px_8px]">
                      <option>Ref: Data de Abertura</option>
@@ -2799,7 +2799,7 @@ export default function Dashboard() {
                   </select>
                </div>
 
-               <div className="flex flex-col gap-1.5">
+               <div className="flex flex-col gap-1.5 flex-1 min-w-[120px] sm:max-w-[160px]">
                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Período</label>
                   <select value={filterSelections.periodo} onChange={handlePeriodoChange} className="bg-white border border-slate-300 text-slate-700 h-9 px-3 rounded shadow-sm outline-none focus:ring-1 focus:ring-blue-500 font-semibold cursor-pointer text-xs appearance-none pr-8 bg-[url('data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23475569%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E')] bg-no-repeat bg-[right_10px_center] bg-[length:8px_8px]">
                      <option value="Todos">Todos</option>
@@ -2809,17 +2809,17 @@ export default function Dashboard() {
                   </select>
                </div>
 
-               <div className="flex flex-col gap-1.5">
+               <div className="flex flex-col gap-1.5 flex-1 min-w-[120px] sm:max-w-[140px]">
                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Data Inicial</label>
-                  <input type="date" value={filterSelections.dataInicio} onChange={(e) => setFilterSelections({...filterSelections, dataInicio: e.target.value, periodo: 'Todos'})} className="bg-white border border-slate-300 h-9 px-2 rounded shadow-sm outline-none text-slate-700 text-xs font-semibold cursor-pointer max-w-[130px]" />
+                  <input type="date" value={filterSelections.dataInicio} onChange={(e) => setFilterSelections({...filterSelections, dataInicio: e.target.value, periodo: 'Todos'})} className="bg-white border border-slate-300 h-9 px-2 rounded shadow-sm outline-none text-slate-700 text-xs font-semibold cursor-pointer w-full" />
                </div>
 
-               <div className="flex flex-col gap-1.5">
+               <div className="flex flex-col gap-1.5 flex-1 min-w-[120px] sm:max-w-[140px]">
                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Data Final</label>
-                  <input type="date" value={filterSelections.dataFim} onChange={(e) => setFilterSelections({...filterSelections, dataFim: e.target.value, periodo: 'Todos'})} className="bg-white border border-slate-300 h-9 px-2 rounded shadow-sm outline-none text-slate-700 text-xs font-semibold cursor-pointer max-w-[130px]" />
+                  <input type="date" value={filterSelections.dataFim} onChange={(e) => setFilterSelections({...filterSelections, dataFim: e.target.value, periodo: 'Todos'})} className="bg-white border border-slate-300 h-9 px-2 rounded shadow-sm outline-none text-slate-700 text-xs font-semibold cursor-pointer w-full" />
                </div>
 
-               <div className="flex flex-col gap-1.5">
+               <div className="flex flex-col gap-1.5 flex-1 min-w-[110px] sm:max-w-[140px]">
                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Tipo</label>
                   <select value={filterSelections.tipo} onChange={(e) => setFilterSelections({...filterSelections, tipo: e.target.value})} className="bg-white border border-slate-300 text-slate-700 h-9 px-3 rounded shadow-sm outline-none focus:ring-1 focus:ring-blue-500 font-medium cursor-pointer text-xs">
                      <option>Todos</option>
@@ -2827,7 +2827,7 @@ export default function Dashboard() {
                   </select>
                </div>
 
-               <div className="flex flex-col gap-1.5">
+               <div className="flex flex-col gap-1.5 flex-1 min-w-[90px] sm:max-w-[110px]">
                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">CD</label>
                   <select value={filterSelections.cd} onChange={(e) => setFilterSelections({...filterSelections, cd: e.target.value})} className="bg-white border border-slate-300 text-slate-700 h-9 px-3 rounded shadow-sm outline-none focus:ring-1 focus:ring-blue-500 font-medium cursor-pointer text-xs">
                      <option>Todos</option>
@@ -2836,16 +2836,16 @@ export default function Dashboard() {
                </div>
 
                {tabelaAtual !== 'recall' && (
-                 <div className="flex flex-col gap-1.5">
+                 <div className="flex flex-col gap-1.5 flex-1 min-w-[140px] sm:max-w-[200px]">
                     <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Transportadora</label>
-                    <select value={filterSelections.transp} onChange={(e) => setFilterSelections({...filterSelections, transp: e.target.value})} className="bg-white border border-slate-300 text-slate-700 h-9 px-3 rounded shadow-sm outline-none focus:ring-1 focus:ring-blue-500 font-medium cursor-pointer text-xs max-w-[200px]">
+                    <select value={filterSelections.transp} onChange={(e) => setFilterSelections({...filterSelections, transp: e.target.value})} className="bg-white border border-slate-300 text-slate-700 h-9 px-3 rounded shadow-sm outline-none focus:ring-1 focus:ring-blue-500 font-medium cursor-pointer text-xs">
                        <option>Todas</option>
                        {filterOptions?.transps?.map((t: string) => <option key={t} value={t}>{t}</option>)}
                     </select>
                  </div>
                )}
                
-               <div className="flex flex-col gap-1.5">
+               <div className="flex flex-col gap-1.5 flex-1 min-w-[120px] sm:max-w-[150px]">
                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Status do Chamado</label>
                   <select value={filterSelections.status} onChange={(e) => setFilterSelections({...filterSelections, status: e.target.value})} className="bg-white border border-slate-300 text-slate-700 h-9 px-3 rounded shadow-sm outline-none focus:ring-1 focus:ring-blue-500 font-medium cursor-pointer text-xs">
                      <option>Todos</option>
@@ -2855,7 +2855,7 @@ export default function Dashboard() {
                   </select>
                </div>
 
-               <div className="flex flex-col gap-1.5">
+               <div className="flex flex-col gap-1.5 flex-1 min-w-[130px] sm:max-w-[180px]">
                   <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wide">Ref / Produto</label>
                   <div className="relative">
                     <input
@@ -2864,26 +2864,26 @@ export default function Dashboard() {
                       value={filterSelections.ref || ''}
                       onChange={(e) => setFilterSelections({...filterSelections, ref: e.target.value})}
                       onKeyDown={(e) => { if (e.key === 'Enter') handleSearch(); }}
-                      className="bg-white border border-slate-300 text-slate-700 h-9 pl-7 pr-3 rounded shadow-sm outline-none focus:ring-1 focus:ring-blue-500 font-medium text-xs max-w-[150px]"
+                      className="bg-white border border-slate-300 text-slate-700 h-9 pl-7 pr-3 rounded shadow-sm outline-none focus:ring-1 focus:ring-blue-500 font-medium text-xs w-full"
                     />
                     <Search className="w-3.5 h-3.5 text-slate-400 absolute left-2 top-1/2 -translate-y-1/2 pointer-events-none" />
                   </div>
                </div>
 
-               <button onClick={handleSearch} disabled={isLoading} className="ml-auto flex items-center gap-2 bg-blue-600 hover:bg-blue-500 text-white font-bold h-9 px-6 rounded border border-blue-500 transition-colors shadow-sm focus:ring-2 focus:ring-blue-500 focus:ring-offset-1 disabled:opacity-50 cursor-pointer">
+               <button onClick={handleSearch} disabled={isLoading} className="w-full sm:w-auto sm:ml-auto flex items-center justify-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white font-bold h-9 px-6 rounded-xl border border-emerald-800 transition-colors shadow-xs focus:ring-2 focus:ring-emerald-500 focus:ring-offset-1 disabled:opacity-50 cursor-pointer">
                   <Search className="w-4 h-4" /> Buscar
                </button>
             </div>
 
             {/* Navegação por Abas */}
-            <div className="bg-slate-50 border-b border-slate-200 px-6 pt-3 flex overflow-x-auto hide-scrollbar flex-shrink-0 z-10">
+            <div className="bg-slate-50 border-b border-slate-200 px-3 sm:px-6 pt-2.5 sm:pt-3 flex overflow-x-auto hide-scrollbar flex-shrink-0 z-10">
                {tabs.map(tab => (
                   <button 
                      key={tab.id}
-                     className={`px-4 py-2.5 font-bold text-[11px] uppercase tracking-wider border-b-[3px] whitespace-nowrap flex items-center gap-2 transition-all group ${activeTab === tab.id ? 'border-blue-600 text-blue-700 bg-white shadow-[0_-2px_6px_rgba(0,0,0,0.02)] rounded-t-md' : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100 hover:border-slate-300'}`}
+                     className={`px-3.5 sm:px-4 py-2 sm:py-2.5 font-bold text-[11px] uppercase tracking-wider border-b-[3px] whitespace-nowrap flex items-center gap-2 transition-all group ${activeTab === tab.id ? 'border-emerald-700 text-emerald-800 bg-white shadow-[0_-2px_6px_rgba(0,0,0,0.02)] rounded-t-md' : 'border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-100 hover:border-slate-300'}`}
                      onClick={() => setActiveTab(tab.id)}
                   >
-                     <tab.icon className={`w-4 h-4 ${activeTab === tab.id ? 'text-blue-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
+                     <tab.icon className={`w-4 h-4 ${activeTab === tab.id ? 'text-emerald-700' : 'text-slate-400 group-hover:text-slate-600'}`} />
                      {tab.label}
                   </button>
                ))}
@@ -2891,7 +2891,7 @@ export default function Dashboard() {
 
             {/* Main Layout Content Area */}
             <div className="flex-1 overflow-auto bg-slate-100">
-              <main ref={dashboardRef} className="p-6 w-full max-w-[1600px] mx-auto bg-slate-100 min-h-max">
+              <main ref={dashboardRef} className="p-3 sm:p-4 md:p-6 w-full max-w-[1600px] mx-auto bg-slate-100 min-h-max min-w-0">
                 {renderContent()}
               </main>
             </div>

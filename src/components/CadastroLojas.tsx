@@ -140,7 +140,7 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
           />
         </div>
 
-        <div className="bg-white border border-slate-200/80 rounded-xl shadow-xs overflow-hidden">
+        <div className="bg-white border border-slate-200/80 rounded-xl shadow-xs overflow-x-auto w-full">
           {loading ? (
             <div className="p-12 text-center text-slate-500">
               <Loader2 className="inline w-6 h-6 animate-spin mr-2 text-emerald-600"/>
@@ -218,7 +218,7 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
                 <X className="w-5 h-5"/>
               </button>
             </div>
-            <div className="p-6 grid grid-cols-2 md:grid-cols-3 gap-4 text-xs">
+            <div className="p-4 sm:p-6 grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3.5 sm:gap-4 text-xs">
               {[
                 ["Número da Loja", viewing.numero],
                 ["Cód. Parceiro", viewing.parceiro],
@@ -263,8 +263,8 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
             <div className="p-6 space-y-5">
               {err && <div className="text-xs text-rose-700 bg-rose-50 border border-rose-200 rounded-xl p-3 font-semibold">{err}</div>}
               
-              <div className="flex flex-wrap items-end gap-4">
-                <div className="w-36 shrink-0">
+              <div className="flex flex-wrap items-end gap-3 sm:gap-4">
+                <div className="w-full sm:w-36 shrink-0">
                   <label className="block">
                     <span className="text-xs font-semibold text-slate-600">Número da Loja *</span>
                     <input
@@ -291,7 +291,7 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
                   </label>
                 </div>
 
-                <div className="w-36 shrink-0">
+                <div className="w-full sm:w-36 shrink-0">
                   <label className="block">
                     <span className="text-xs font-semibold text-slate-600 flex items-center justify-between">
                       <span>Nº Parceiro</span>

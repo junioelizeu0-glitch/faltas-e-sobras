@@ -654,8 +654,8 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
           </div>
 
           {tab === "cadastro" && (
-            <div className="flex items-center justify-between gap-2 px-5 py-3 border-t border-slate-100">
-              <div>
+            <div className="flex flex-wrap items-center justify-between gap-3 px-4 sm:px-5 py-3 border-t border-slate-100 bg-white">
+              <div className="flex flex-wrap items-center gap-2">
                 {mode === "editar" && chamadoId && (
                   <button
                     type="button"
@@ -667,23 +667,23 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
                         onDeleted?.();
                       } catch (e: any) { toast.error(e?.message || "Erro ao excluir chamado"); }
                     }}
-                    className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100"
+                    className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-red-700 bg-red-50 border border-red-200 rounded-md hover:bg-red-100 cursor-pointer"
                   >
                     <Trash2 className="w-4 h-4" />Excluir chamado
                   </button>
                 )}
+                {podeMonitorar && (
+                  <button
+                    type="button"
+                    onClick={handleOpenMonitorAsk}
+                    className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200/80 rounded-md hover:bg-emerald-100 cursor-pointer transition-colors"
+                    title="Registrar resultado do monitoramento"
+                  >
+                    <ClipboardCheck className="w-4 h-4 text-emerald-600" />Resultado do monitoramento
+                  </button>
+                )}
               </div>
-              {podeMonitorar && (
-                <button
-                  type="button"
-                  onClick={handleOpenMonitorAsk}
-                  className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-semibold text-emerald-800 bg-emerald-50 border border-emerald-200/80 rounded-md hover:bg-emerald-100 cursor-pointer transition-colors"
-                  title="Registrar resultado do monitoramento"
-                >
-                  <ClipboardCheck className="w-4 h-4 text-emerald-600" />Resultado do monitoramento
-                </button>
-              )}
-              <div className="flex items-center gap-2">
+              <div className="flex flex-wrap items-center gap-2 ml-auto">
                 {(onCancel || mode === "novo") && (
                   <button
                     type="button"
@@ -701,14 +701,14 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
                       setRefs([]); setEtapas([]); setFeedback(null);
                       toast.info("Inclusão cancelada");
                     }}
-                    className="px-3 py-2 text-sm text-slate-600 hover:text-slate-900 border border-slate-200 rounded-md hover:bg-slate-50"
+                    className="px-3 py-2 text-sm text-slate-600 hover:text-slate-900 border border-slate-200 rounded-md hover:bg-slate-50 cursor-pointer"
                   >
                     Cancelar
                   </button>
                 )}
                 <button
                   type="button" onClick={() => submit()} disabled={submitting}
-                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-blue-600 hover:bg-blue-700 text-white text-sm font-semibold disabled:opacity-50 cursor-pointer"
+                  className="inline-flex items-center gap-2 px-4 py-2 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white text-sm font-semibold disabled:opacity-50 cursor-pointer shadow-xs"
                 >
                   {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />}
                   {mode === "editar" ? "Salvar alterações" : "Incluir chamado"}
@@ -816,10 +816,10 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
     <div className="space-y-5">
       <section>
         <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Identificação</h2>
-        <div className="flex flex-wrap gap-3">
-          <Field label="Chamado *" className="w-[110px]"><input type="number" value={form.Chamado} onChange={(e) => setField("Chamado", e.target.value.slice(0, 8))} className={inputCls} required /></Field>
+        <div className="flex flex-wrap gap-2.5 sm:gap-3">
+          <Field label="Chamado *" className="w-full sm:w-auto flex-1 min-w-[110px] sm:max-w-[140px]"><input type="number" value={form.Chamado} onChange={(e) => setField("Chamado", e.target.value.slice(0, 8))} className={inputCls} required /></Field>
           {isImportacaoNFRecall && (
-            <Field label="Nº Chamado GLPI" className="w-[140px]">
+            <Field label="Nº Chamado GLPI" className="w-full sm:w-auto flex-1 min-w-[130px] sm:max-w-[160px]">
               <input
                 type="text"
                 value={form.GLPI || ""}
@@ -829,8 +829,8 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
               />
             </Field>
           )}
-          <Field label="Loja *" className="w-[90px]"><input type="number" value={form.Loja} onChange={(e) => setField("Loja", e.target.value.slice(0, 5))} className={inputCls} required /></Field>
-          <Field label="Parceiro" className="w-[105px]">
+          <Field label="Loja *" className="w-full sm:w-auto flex-1 min-w-[90px] sm:max-w-[120px]"><input type="number" value={form.Loja} onChange={(e) => setField("Loja", e.target.value.slice(0, 5))} className={inputCls} required /></Field>
+          <Field label="Parceiro" className="w-full sm:w-auto flex-1 min-w-[100px] sm:max-w-[130px]">
             <input
               type="text"
               value={lojaInfo?.parceiro || (form.Loja ? getParceiroByLoja(form.Loja) : "") || "—"}
@@ -839,13 +839,13 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
               className={inputCls + " bg-slate-50 text-emerald-800 font-bold font-mono cursor-default border-slate-200"}
             />
           </Field>
-          <Field label="Tipo *" className="w-[130px]"><select value={form.Tipo} onChange={(e) => setField("Tipo", e.target.value)} className={inputCls} required><option value="">— Selecionar —</option>{TIPO_OPCOES.map((o) => <option key={o}>{o}</option>)}</select></Field>
-          <Field label="CD *" className="w-[80px]"><select value={form.CD} onChange={(e) => setField("CD", e.target.value)} className={inputCls} required><option value="">—</option>{CD_OPCOES.map((o) => <option key={o}>{o}</option>)}</select></Field>
-          <Field label={isImportacaoNFRecall ? "NF *" : "NF"} className="w-[130px]"><input type="number" value={form.NF} onChange={(e) => setField("NF", e.target.value.slice(0, 10))} className={inputCls} /></Field>
-          <Field label={isImportacaoNFRecall ? "Data Emissão *" : "Data Emissão"} className="w-[140px]"><input type="date" value={form["Dt Emissão"]} onChange={(e) => setField("Dt Emissão", e.target.value)} className={inputCls} /></Field>
-          <Field label={isImportacaoNFRecall ? "Valor *" : "Valor"} className="w-[130px]"><input type="number" step="0.01" value={form._valor} onChange={(e) => setField("_valor", e.target.value.slice(0, 14))} className={inputCls} /></Field>
+          <Field label="Tipo *" className="w-full sm:w-auto flex-1 min-w-[130px] sm:max-w-[160px]"><select value={form.Tipo} onChange={(e) => setField("Tipo", e.target.value)} className={inputCls} required><option value="">— Selecionar —</option>{TIPO_OPCOES.map((o) => <option key={o}>{o}</option>)}</select></Field>
+          <Field label="CD *" className="w-full sm:w-auto flex-1 min-w-[80px] sm:max-w-[110px]"><select value={form.CD} onChange={(e) => setField("CD", e.target.value)} className={inputCls} required><option value="">—</option>{CD_OPCOES.map((o) => <option key={o}>{o}</option>)}</select></Field>
+          <Field label={isImportacaoNFRecall ? "NF *" : "NF"} className="w-full sm:w-auto flex-1 min-w-[120px] sm:max-w-[150px]"><input type="number" value={form.NF} onChange={(e) => setField("NF", e.target.value.slice(0, 10))} className={inputCls} /></Field>
+          <Field label={isImportacaoNFRecall ? "Data Emissão *" : "Data Emissão"} className="w-full sm:w-auto flex-1 min-w-[135px] sm:max-w-[165px]"><input type="date" value={form["Dt Emissão"]} onChange={(e) => setField("Dt Emissão", e.target.value)} className={inputCls} /></Field>
+          <Field label={isImportacaoNFRecall ? "Valor *" : "Valor"} className="w-full sm:w-auto flex-1 min-w-[120px] sm:max-w-[150px]"><input type="number" step="0.01" value={form._valor} onChange={(e) => setField("_valor", e.target.value.slice(0, 14))} className={inputCls} /></Field>
           {tabela === "recall" && (
-            <Field label={isImportacaoNFRecall ? "Ref *" : "Ref"} className="w-[140px]">
+            <Field label={isImportacaoNFRecall ? "Ref *" : "Ref"} className="w-full sm:w-auto flex-1 min-w-[130px] sm:max-w-[160px]">
               <input
                 type="text"
                 value={form.Referencia || ""}
@@ -859,18 +859,18 @@ function CadastroTab({ form, setField, statusPagamento, sla, transp, confs, moti
       </section>
       <section>
         <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 mb-3">Status e Datas</h2>
-        <div className="flex flex-wrap gap-3">
-          <Field label="Data Abertura *" className="w-[140px]"><input type="date" value={form["Dt Abertura"]} onChange={(e) => setField("Dt Abertura", e.target.value)} className={inputCls} required /></Field>
-          <Field label="Data Finalização" className="w-[140px]"><input type="date" value={form["Dt Finalização"]} onChange={(e) => setField("Dt Finalização", e.target.value)} className={inputCls} /></Field>
-          <Field label="Data Pagamento" className="w-[140px]"><input type="date" value={form["Dt Pagamento"]} onChange={(e) => setField("Dt Pagamento", e.target.value)} className={inputCls} /></Field>
-          <Field label="Status Pagamento (auto)" className="w-[140px]"><input value={statusPagamento} readOnly className={inputCls + " bg-slate-50 text-slate-500"} /></Field>
-          <Field label="Situação (tarefa atual) *" className="w-[240px]">
+        <div className="flex flex-wrap gap-2.5 sm:gap-3">
+          <Field label="Data Abertura *" className="w-full sm:w-auto flex-1 min-w-[135px] sm:max-w-[165px]"><input type="date" value={form["Dt Abertura"]} onChange={(e) => setField("Dt Abertura", e.target.value)} className={inputCls} required /></Field>
+          <Field label="Data Finalização" className="w-full sm:w-auto flex-1 min-w-[135px] sm:max-w-[165px]"><input type="date" value={form["Dt Finalização"]} onChange={(e) => setField("Dt Finalização", e.target.value)} className={inputCls} /></Field>
+          <Field label="Data Pagamento" className="w-full sm:w-auto flex-1 min-w-[135px] sm:max-w-[165px]"><input type="date" value={form["Dt Pagamento"]} onChange={(e) => setField("Dt Pagamento", e.target.value)} className={inputCls} /></Field>
+          <Field label="Status Pagamento (auto)" className="w-full sm:w-auto flex-1 min-w-[135px] sm:max-w-[165px]"><input value={statusPagamento} readOnly className={inputCls + " bg-slate-50 text-slate-500"} /></Field>
+          <Field label="Situação (tarefa atual) *" className="w-full sm:w-auto flex-1 min-w-[200px] sm:max-w-[280px]">
             <select value={form["Situação "]} onChange={(e) => setField("Situação ", e.target.value)} className={inputCls} required><option value="">— Selecionar —</option>{situacaoOpcoes.map((o: string) => <option key={o}>{o}</option>)}</select>
           </Field>
-          <Field label="Status Chamado *" className="w-[180px]">
+          <Field label="Status Chamado *" className="w-full sm:w-auto flex-1 min-w-[160px] sm:max-w-[200px]">
             <select value={form["Status Chamado"]} onChange={(e) => setField("Status Chamado", e.target.value)} className={inputCls} required><option value="">— Selecionar —</option>{statusOpcoes.map((o: string) => <option key={o}>{o}</option>)}</select>
           </Field>
-          <Field label="SLA (auto, dias úteis)" className="w-[150px]"><input value={sla || "—"} readOnly className={inputCls + " bg-slate-50 text-slate-500"} /></Field>
+          <Field label="SLA (auto, dias úteis)" className="w-full sm:w-auto flex-1 min-w-[140px] sm:max-w-[170px]"><input value={sla || "—"} readOnly className={inputCls + " bg-slate-50 text-slate-500"} /></Field>
         </div>
       </section>
       {tabela !== "recall" && (
@@ -1040,9 +1040,9 @@ function ReferenciasTab({ refs, setRef, addRef, rmRef, buscar, onSalvarParcial, 
         </div>
       </div>
       {refs.length === 0 && <div className="text-center py-8 text-slate-400 text-sm border border-dashed rounded-lg">Nenhuma referência ainda.</div>}
-      <div className="space-y-2">
+      <div className="space-y-2 overflow-x-auto pb-2">
         {refs.map((r: Referencia, idx: number) => (
-          <div key={idx} className="grid grid-cols-[minmax(140px,1.6fr)_minmax(80px,1fr)_minmax(160px,1.8fr)_minmax(110px,1.2fr)_70px_80px_auto] gap-2 items-end p-3 border border-slate-200 rounded-lg bg-slate-50/50">
+          <div key={idx} className="min-w-[680px] grid grid-cols-[minmax(140px,1.6fr)_minmax(80px,1fr)_minmax(160px,1.8fr)_minmax(110px,1.2fr)_70px_80px_auto] gap-2 items-end p-3 border border-slate-200 rounded-lg bg-slate-50/50">
             <Field label="Referência">
               <div className="flex gap-1">
                 <input
@@ -1119,7 +1119,7 @@ function EtapasTab({ etapas, setEt, addEtapa, rmEtapa, tarefas, onSalvarParcial,
         </div>
       </div>
       {etapas.length === 0 && <div className="text-center py-8 text-slate-400 text-sm border border-dashed rounded-lg">Nenhuma etapa ainda.</div>}
-      <div ref={listRef} className="space-y-2">
+      <div ref={listRef} className="space-y-2 overflow-x-auto pb-2">
         {etapas.map((e: Etapa, idx: number) => {
           const dtPrev = calcDataPrevista(e.dt_inicio, e.dias_uteis_previsto);
           const ini = parseISO(e.dt_inicio); const fim = parseISO(e.dt_fim);
@@ -1130,7 +1130,7 @@ function EtapasTab({ etapas, setEt, addEtapa, rmEtapa, tarefas, onSalvarParcial,
             sla = { texto: ok ? `Dentro (${diasReal}d)` : `Atrasado (${diasReal}d)`, cor: ok ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700" };
           } else if (ini && !fim) sla = { texto: "Em aberto", cor: "bg-amber-100 text-amber-700" };
           return (
-            <div key={idx} className="etapa-row grid grid-cols-[minmax(200px,2.4fr)_90px_130px_130px_130px_auto] gap-2 items-end p-3 border border-slate-200 rounded-lg">
+            <div key={idx} className="min-w-[720px] etapa-row grid grid-cols-[minmax(200px,2.4fr)_90px_130px_130px_130px_auto] gap-2 items-end p-3 border border-slate-200 rounded-lg">
               <Field label="Tarefa *">
                 <select
                   value={e.nome_tarefa || ""}

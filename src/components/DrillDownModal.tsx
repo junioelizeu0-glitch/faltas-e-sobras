@@ -172,50 +172,50 @@ export default function DrillDownModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-3">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-[95vw] max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200">
-        <div className="flex justify-between items-start p-5 border-b border-slate-200">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-slate-900/50 backdrop-blur-sm p-2 sm:p-4">
+      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-[98vw] sm:max-w-[95vw] max-h-[94vh] sm:max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 border border-slate-200">
+        <div className="flex justify-between items-start p-4 sm:p-5 border-b border-slate-200">
           <div>
             <div className="text-[10px] font-bold text-slate-400 mb-1 flex items-center gap-1 uppercase tracking-wider">
               <span>Dashboard</span>
               <span className="text-slate-300">/</span>
-              <span className="text-blue-500">
+              <span className="text-emerald-700">
                 {title?.replace("Detalhamento de Chamados - ", "")?.replace("Detalhamento de Chamados ", "") ||
                   "Indicador"}
               </span>
               <span className="text-slate-300">/</span>
               <span className="text-slate-600">Detalhamento</span>
             </div>
-            <h2 className="text-xl font-bold text-slate-800">
+            <h2 className="text-lg sm:text-xl font-bold text-slate-800">
               {title || "Detalhamento de Chamados"}
             </h2>
           </div>
           <button
             onClick={onClose}
-            className="p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors"
+            className="p-1.5 sm:p-2 text-slate-400 hover:text-slate-600 hover:bg-slate-100 rounded-lg transition-colors cursor-pointer"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
-        <div className="p-4 border-b border-slate-100 flex flex-wrap gap-4 items-center justify-between bg-slate-50">
-          <div className="relative flex-1 max-w-md">
+        <div className="p-3 sm:p-4 border-b border-slate-100 flex flex-wrap gap-2.5 sm:gap-4 items-center justify-between bg-slate-50">
+          <div className="relative w-full sm:flex-1 sm:max-w-md">
             <Search className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
               placeholder="Pesquisar..."
               value={searchTerm}
               onChange={handleSearchChange}
-              className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:outline-none"
+              className="w-full pl-9 pr-4 py-2 text-sm border border-slate-300 rounded-lg focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 focus:outline-none bg-white font-medium"
             />
           </div>
           <button
             onClick={exportCSV}
-            className="flex items-center gap-2 bg-emerald-600 hover:bg-emerald-700 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-colors"
+            className="w-full sm:w-auto flex items-center justify-center gap-2 bg-emerald-700 hover:bg-emerald-800 text-white px-4 py-2 rounded-xl text-sm font-semibold transition-colors cursor-pointer shadow-xs"
           >
             <Download className="w-4 h-4" /> Exportar Excel
           </button>
         </div>
-        <div className="flex-1 overflow-auto bg-white px-4">
+        <div className="flex-1 overflow-x-auto overflow-y-auto bg-white px-2 sm:px-4">
           <table className="w-full text-left text-sm whitespace-nowrap relative border-collapse">
             <thead className="bg-slate-100 text-slate-600 sticky top-0 z-20 shadow-xs after:content-[''] after:absolute after:bottom-0 after:left-0 after:right-0 after:border-b after:border-slate-200">
               <tr>
