@@ -523,14 +523,14 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
   useEffect(() => { setPage(1); }, [query, cdFilter, alertaFilter, statusFilter, tarefaFilter, lojaFilter, pageSize]);
 
   return (
-    <div className="min-h-screen bg-[#F4F6F5] p-4 md:p-6 space-y-6 text-slate-800 font-sans">
+    <div className="min-h-screen bg-[#F4F6F5] p-3 md:p-4 space-y-3 text-slate-800 font-sans">
 
       {/* ========================================================================= */}
       {/* 0. SELETOR DE MÓDULOS (SEGMENTED CONTROL NO ESTILO EXECUTIVO)             */}
       {/* ========================================================================= */}
       {modulos.length > 0 && (
-        <div className="flex flex-wrap items-center justify-between gap-3 pt-0.5">
-          <div className="inline-flex items-center p-1.5 bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_10px_rgba(0,0,0,0.03)] gap-1.5 max-w-full overflow-x-auto">
+        <div className="flex flex-wrap items-center justify-between gap-2 pt-0.5">
+          <div className="inline-flex items-center p-1 bg-white rounded-xl border border-slate-200/80 shadow-[0_2px_10px_rgba(0,0,0,0.03)] gap-1 max-w-full overflow-x-auto">
             {modulos.map((mod) => {
               const isActive = mod.id === activeModulo;
               return (
@@ -538,7 +538,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
                   key={mod.id}
                   type="button"
                   onClick={() => handleSelectModulo(mod.id)}
-                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
+                  className={`inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
                     isActive
                       ? "bg-[#20352d] text-white shadow-xs"
                       : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
@@ -571,13 +571,13 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
       {/* ========================================================================= */}
       <section className="bg-white rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] transition-all overflow-hidden">
         {/* Cabeçalho do Card Gráficos */}
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white select-none">
+        <div className="px-4 py-2.5 border-b border-slate-100 flex items-center justify-between bg-white select-none">
           <div className="flex items-center gap-2.5">
-            <h2 className="text-xl font-bold text-slate-900 tracking-tight">Gráficos</h2>
+            <h2 className="text-sm font-bold text-slate-900 tracking-tight">Gráficos</h2>
           </div>
           <button
             onClick={() => setIsGraficosOpen(!isGraficosOpen)}
-            className="w-8 h-8 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors shadow-xs cursor-pointer"
+            className="w-7 h-7 rounded-lg bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors shadow-xs cursor-pointer"
             title={isGraficosOpen ? "Recolher Gráficos" : "Expandir Gráficos"}
           >
             <ChevronDown className={`w-5 h-5 transition-transform duration-200 ${isGraficosOpen ? "" : "rotate-180"}`} />
@@ -586,13 +586,13 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
 
         {/* Conteúdo Expandível dos Gráficos */}
         {isGraficosOpen && (
-          <div className="p-4 sm:p-5 md:p-6 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-4 sm:gap-6 bg-slate-50/40 min-w-0">
+          <div className="p-3 grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-3 bg-slate-50/40 min-w-0">
 
             {/* GRÁFICO 1: CONTROLE DE CHAMADOS (NÃO FINALIZADOS E APENAS MESES COM DADOS) */}
-            <div ref={chart1Ref} className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between relative min-w-0 w-full">
+            <div ref={chart1Ref} className="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between relative min-w-0 w-full">
               <div className="flex items-start justify-between mb-2">
                 <div>
-                  <h3 className="text-base font-bold text-slate-800">Controle de Chamados (Não Finalizados)</h3>
+                  <h3 className="text-sm font-bold text-slate-800 leading-tight">Controle de Chamados (Não Finalizados)</h3>
                   <p className="text-xs text-slate-500">Volume por mês de abertura e controle SLA (&gt;60D)</p>
                 </div>
                 <button
@@ -604,7 +604,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
                 </button>
               </div>
 
-              <div className="h-60 w-full mt-2 cursor-pointer">
+              <div className="h-44 w-full mt-1 cursor-pointer">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={controleChamadosData} margin={{ top: 20, right: 10, left: -20, bottom: 25 }}>
                     <CartesianGrid strokeDasharray="2 2" vertical={false} stroke="#e2e8f0" />
@@ -652,10 +652,10 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
             </div>
 
             {/* GRÁFICO 2: TAREFAS EM ABERTO */}
-            <div ref={chart2Ref} className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between relative min-w-0 w-full">
+            <div ref={chart2Ref} className="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between relative min-w-0 w-full">
               <div className="flex items-start justify-between mb-2">
                 <div>
-                  <h3 className="text-base font-bold text-slate-800">Tarefas em Aberto</h3>
+                  <h3 className="text-sm font-bold text-slate-800 leading-tight">Tarefas em Aberto</h3>
                   <p className="text-xs text-slate-500">Distribuição de chamados pendentes por etapa</p>
                 </div>
                 <button
@@ -667,7 +667,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
                 </button>
               </div>
 
-              <div className="h-60 w-full mt-2 cursor-pointer">
+              <div className="h-44 w-full mt-1 cursor-pointer">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={tarefasEmAbertoData} margin={{ top: 20, right: 10, left: -20, bottom: 35 }}>
                     <CartesianGrid strokeDasharray="2 2" vertical={false} stroke="#e2e8f0" />
@@ -714,10 +714,10 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
             </div>
 
             {/* GRÁFICO 3: CHAMADOS POR TIPO DE LOJA (FRANQUIA VS PRÓPRIA) */}
-            <div ref={chart3Ref} className="bg-white p-4 sm:p-5 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between relative min-w-0 w-full md:col-span-2 xl:col-span-1">
+            <div ref={chart3Ref} className="bg-white p-3 rounded-2xl border border-slate-200/80 shadow-xs flex flex-col justify-between relative min-w-0 w-full md:col-span-2 xl:col-span-1">
               <div className="flex items-start justify-between mb-2">
                 <div>
-                  <h3 className="text-base font-bold text-slate-800">Chamados por Tipo de Loja</h3>
+                  <h3 className="text-sm font-bold text-slate-800 leading-tight">Chamados por Tipo de Loja</h3>
                   <p className="text-xs text-slate-500">Franquias vs Lojas Próprias</p>
                 </div>
                 <button
@@ -729,7 +729,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
                 </button>
               </div>
 
-              <div className="h-60 w-full mt-2 cursor-pointer">
+              <div className="h-44 w-full mt-1 cursor-pointer">
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart data={chamadosPorTipoLojaData} margin={{ top: 25, right: 20, left: 0, bottom: 20 }}>
                     <CartesianGrid strokeDasharray="2 2" vertical={false} stroke="#e2e8f0" />
@@ -785,9 +785,9 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
       <section className="bg-white rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] transition-all overflow-hidden">
 
         {/* Cabeçalho Limpo: Mantida APENAS a Setinha de Atualizar e o Botão de Recolher */}
-        <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between bg-white select-none">
+        <div className="px-4 py-2.5 border-b border-slate-100 flex items-center justify-between bg-white select-none">
           <div className="flex items-center gap-3">
-            <h2 className="text-xl font-bold text-slate-900 tracking-tight">
+            <h2 className="text-sm font-bold text-slate-900 tracking-tight">
               Atividades a serem realizadas
             </h2>
           </div>
@@ -823,7 +823,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
 
         {/* Conteúdo Expandível da Tabela (Grid Exibido de Forma Fluida Sem Truncamento) */}
         {isAtividadesOpen && (
-          <div className="p-5 md:p-6 space-y-4 bg-white">
+          <div className="p-3 md:p-4 space-y-3 bg-white">
 
             {/* Barra Superior de KPIs de Status + Campo Pesquisar */}
             <div className="flex flex-wrap items-center justify-between gap-4 pb-2 border-b border-slate-100">
