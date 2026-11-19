@@ -70,12 +70,13 @@ function toApiShape(row: any) {
 }
 
 export const fetchDashboardData = createServerFn({ method: "GET" })
-  .validator((data?: { tabela?: "faltas" | "recall" }) => data ?? {})
+  .validator((data?: { tabela?: string }) => data ?? {})
   .handler(
     async ({ data: inputData }) => {
       const { requireUnlockedSession } = await import("@/lib/gate.server"); await requireUnlockedSession();
       const supabase = await getSupabase();
-      const targetTable = inputData?.tabela === "recall" ? "chamados_recall" : "chamados_faltas";
+      const rawTabela = inputData?.tabela || "faltas";
+      const targetTable = rawTabela === "recall" ? "chamados_recall" : (rawTabela.startsWith("chamados_") ? rawTabela : `chamados_${rawTabela}`);
       const refsTable = inputData?.tabela === "recall" ? "chamados_recall_referencias" : "chamados_referencias";
       const selectQuery = `*, ${refsTable}(referencia)`;
       const all: any[] = [];
@@ -116,6 +117,81 @@ export const fetchDashboardData = createServerFn({ method: "GET" })
       }
     },
   );
+
+
+export type ModuloComAbertos = {
+  id: string;
+  label: string;
+  table: string;
+  countAbertos: number;
+};
+
+export const getModulosComChamadosAbertos = createServerFn({ method: "GET" })
+  .handler(async () => {
+    const { requireUnlockedSession } = await import("@/lib/gate.server");
+    await requireUnlockedSession();
+    const supabase = await getSupabase();
+
+    // 1. Descobrir dinamicamente no banco todas as tabelas principais de chamados
+    let tables: string[] = [];
+    try {
+      const { data: tblData, error: tblErr } = await supabase.rpc("aiiliana_run_sql", {
+        sql: "SELECT table_name FROM information_schema.tables WHERE table_schema = 'public' AND table_name LIKE 'chamados_%' AND table_name NOT LIKE '%_etapas' AND table_name NOT LIKE '%_referencias' ORDER BY table_name;"
+      });
+      if (!tblErr && Array.isArray(tblData)) {
+        tables = tblData.map((t: any) => String(t.table_name));
+      }
+    } catch (e) {
+      console.warn("[getModulosComChamadosAbertos] Erro ao consultar information_schema:", e);
+    }
+
+    if (!tables.includes("chamados_faltas")) tables.unshift("chamados_faltas");
+    if (!tables.includes("chamados_recall")) tables.push("chamados_recall");
+
+    tables = Array.from(new Set(tables));
+
+    // 2. Para cada tabela, consultar os chamados em aberto (não finalizados)
+    const result: ModuloComAbertos[] = [];
+
+    for (const tbl of tables) {
+      const rawId = tbl.replace(/^chamados_/, "");
+      let label = "";
+      if (rawId === "faltas") {
+        label = "Faltas e Sobras";
+      } else if (rawId === "recall") {
+        label = "Recall";
+      } else {
+        label = rawId.charAt(0).toUpperCase() + rawId.slice(1).replace(/_/g, " ");
+      }
+
+      try {
+        const { data: rows, error } = await supabase
+          .from(tbl)
+          .select("id, dt_finalizacao");
+
+        if (!error && Array.isArray(rows)) {
+          const abertos = rows.filter((r: any) => {
+            const dtFin = String(r.dt_finalizacao || "").trim();
+            return dtFin === "" || dtFin === "-";
+          }).length;
+
+          // Se um módulo não tiver nenhum chamado em aberto, não mostra o botão
+          if (abertos > 0) {
+            result.push({
+              id: rawId,
+              label,
+              table: tbl,
+              countAbertos: abertos,
+            });
+          }
+        }
+      } catch (err) {
+        console.warn(`[getModulosComChamadosAbertos] Erro ao consultar tabela ${tbl}:`, err);
+      }
+    }
+
+    return result;
+  });
 
 export type NovoChamadoPayload = {
   aba: "FALTAS" | "SOBRA" | "RECALL" | "GATO";

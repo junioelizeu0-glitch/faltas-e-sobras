@@ -11,6 +11,7 @@ import { parseDataBR, getBusinessDays, parseValorNumeric, formatarMoedaBR } from
 import ChamadoForm from "./ChamadoForm";
 import ErrorBoundary from "./ErrorBoundary";
 import { listLojas, type Loja } from "@/lib/lojas.functions";
+import { getModulosComChamadosAbertos, type ModuloComAbertos, fetchDashboardData } from "@/lib/dashboard.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { toPng } from "html-to-image";
 import { exportToExcel } from "@/lib/excel-export";
@@ -23,6 +24,8 @@ type Props = {
   onChanged?: () => void;
   tabela?: "faltas" | "recall";
 };
+
+const STORAGE_KEY = "visao_geral_modulo_ativo";
 
 const SLA_LIMITE = 60; // dias úteis
 const SLA_ATENCAO = 45;
@@ -67,6 +70,88 @@ const CHART_PALETTE = [
 ];
 
 export default function PainelAbertos({ rawData, isLoading, error, onChanged, tabela = "faltas" }: Props) {
+  // Estados para seleção dinâmica de módulos
+  const fetchModulosFn = useServerFn(getModulosComChamadosAbertos);
+  const fetchDashboardDataFn = useServerFn(fetchDashboardData);
+
+  const [modulos, setModulos] = useState<ModuloComAbertos[]>([]);
+  const [activeModulo, setActiveModulo] = useState<string>(() => {
+    if (typeof window !== "undefined") {
+      try {
+        return localStorage.getItem(STORAGE_KEY) || "";
+      } catch {}
+    }
+    return "";
+  });
+  const [moduloData, setModuloData] = useState<any[] | null>(null);
+  const [isLoadingModulo, setIsLoadingModulo] = useState(false);
+  const [isInitialLoading, setIsInitialLoading] = useState(true);
+
+  // Carregar dados de um módulo específico diretamente no banco
+  const carregarDadosDoModulo = async (modId: string) => {
+    setIsLoadingModulo(true);
+    try {
+      const res = await fetchDashboardDataFn({ data: { tabela: modId } });
+      setModuloData(res || []);
+    } catch (err) {
+      console.error("Erro ao carregar dados do módulo:", err);
+      toast.error("Erro ao carregar chamados do módulo selecionado.");
+    } finally {
+      setIsLoadingModulo(false);
+    }
+  };
+
+  // Carregar lista de módulos que têm chamados abertos
+  const carregarModulos = async () => {
+    try {
+      const mods = await fetchModulosFn();
+      const lista = Array.isArray(mods) ? mods : [];
+      setModulos(lista);
+
+      if (lista.length > 0) {
+        let targetId = activeModulo;
+        const found = lista.find((m) => m.id === targetId);
+        if (!found) {
+          // Seleciona o que tem maior número de chamados em aberto na primeira vez
+          const sorted = [...lista].sort((a, b) => b.countAbertos - a.countAbertos);
+          targetId = sorted[0].id;
+        }
+        setActiveModulo(targetId);
+        try {
+          localStorage.setItem(STORAGE_KEY, targetId);
+        } catch {}
+        await carregarDadosDoModulo(targetId);
+      } else {
+        setModuloData([]);
+      }
+    } catch (err) {
+      console.error("Erro ao carregar módulos:", err);
+    } finally {
+      setIsInitialLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    carregarModulos();
+  }, []);
+
+  const handleSelectModulo = (modId: string) => {
+    if (modId === activeModulo && moduloData !== null) return;
+    setActiveModulo(modId);
+    try {
+      localStorage.setItem(STORAGE_KEY, modId);
+    } catch {}
+    carregarDadosDoModulo(modId);
+  };
+
+  const handleAtualizar = async () => {
+    await carregarModulos();
+    onChanged?.();
+  };
+
+  const effectiveData = moduloData !== null ? moduloData : (rawData || []);
+  const effectiveLoading = isLoadingModulo || (isInitialLoading && isLoading);
+  const effectiveTabela = (activeModulo === "recall" ? "recall" : "faltas") as "faltas" | "recall";
   // Estados dos painéis retráteis
   const [isGraficosOpen, setIsGraficosOpen] = useState(true);
   const [isAtividadesOpen, setIsAtividadesOpen] = useState(true);
@@ -186,7 +271,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
         };
       })
       .sort((a, b) => b.dias - a.dias);
-  }, [rawData, lojasMap]);
+  }, [effectiveData, lojasMap]);
 
   // Opções de seletores
   const statusOpts = useMemo(() => {
@@ -258,7 +343,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
         "Valor (R$)": r.valor ?? 0,
       };
 
-      if (tabela === "recall") {
+      if (effectiveTabela === "recall") {
         rowObj["Referência / SKU"] = r.referencia || r.raw?.Referencia || r.raw?.referencia || "—";
       }
 
@@ -280,7 +365,8 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
 
     const dataHoje = new Date().toISOString().slice(0, 10);
     const sufixoFiltro = alertaFilter !== "todos" ? `_${alertaFilter}` : "";
-    const filename = `Atividades_Em_Aberto_${tabela === "recall" ? "Recall_" : ""}${dataHoje}${sufixoFiltro}.xlsx`;
+    const moduloNome = modulos.find((m) => m.id === activeModulo)?.label || (effectiveTabela === "recall" ? "Recall" : "Faltas e Sobras");
+    const filename = `Atividades_Em_Aberto_${moduloNome.replace(/\s+/g, "_")}_${dataHoje}${sufixoFiltro}.xlsx`;
 
     exportToExcel(exportRows, {
       filename,
@@ -438,6 +524,47 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
 
   return (
     <div className="min-h-screen bg-[#F4F6F5] p-4 md:p-6 space-y-6 text-slate-800 font-sans">
+
+      {/* ========================================================================= */}
+      {/* 0. SELETOR DE MÓDULOS (SEGMENTED CONTROL NO ESTILO EXECUTIVO)             */}
+      {/* ========================================================================= */}
+      {modulos.length > 0 && (
+        <div className="flex flex-wrap items-center justify-between gap-3 pt-0.5">
+          <div className="inline-flex items-center p-1.5 bg-white rounded-2xl border border-slate-200/80 shadow-[0_2px_10px_rgba(0,0,0,0.03)] gap-1.5 max-w-full overflow-x-auto">
+            {modulos.map((mod) => {
+              const isActive = mod.id === activeModulo;
+              return (
+                <button
+                  key={mod.id}
+                  type="button"
+                  onClick={() => handleSelectModulo(mod.id)}
+                  className={`inline-flex items-center gap-2 px-4 py-2 rounded-xl text-xs sm:text-sm font-bold transition-all cursor-pointer whitespace-nowrap ${
+                    isActive
+                      ? "bg-[#20352d] text-white shadow-xs"
+                      : "text-slate-600 hover:text-slate-900 hover:bg-slate-100"
+                  }`}
+                >
+                  <span>{mod.label}</span>
+                  <span
+                    className={`inline-flex items-center justify-center px-2 py-0.5 rounded-full text-xs font-bold transition-colors ${
+                      isActive ? "bg-white/20 text-white" : "bg-slate-100 text-slate-700"
+                    }`}
+                  >
+                    {mod.countAbertos}
+                  </span>
+                </button>
+              );
+            })}
+          </div>
+
+          {effectiveLoading && (
+            <div className="inline-flex items-center gap-2 text-xs font-semibold text-slate-500 bg-white px-3 py-1.5 rounded-xl border border-slate-200/60 shadow-2xs">
+              <Loader2 className="w-3.5 h-3.5 animate-spin text-emerald-700" />
+              <span>Atualizando dados...</span>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ========================================================================= */}
       {/* 1. SEÇÃO RETRÁTIL: GRÁFICOS LIMPOS (APENAS COM INFORMAÇÃO REAL)           */}
@@ -872,7 +999,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
                   <tr className="bg-slate-100">
                     <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 text-center min-w-[130px] text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Chamado</th>
                     <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 min-w-[130px] text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Tipo</th>
-                    {tabela === "recall" && <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 min-w-[120px] text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Ref</th>}
+                    {effectiveTabela === "recall" && <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 min-w-[120px] text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Ref</th>}
                     <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 w-28 text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Data abertura</th>
                     <th className="sticky top-0 z-20 bg-slate-100 px-3 py-3 w-24 text-center text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">CD</th>
                     <th className="sticky top-0 z-20 bg-slate-100 px-4 py-3 min-w-[180px] text-slate-700 font-bold uppercase tracking-wider text-[11px] border-b border-slate-200">Tarefa atual</th>
@@ -881,32 +1008,32 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100 bg-white">
-                  {isLoading && (
+                  {effectiveLoading && (
                     <tr>
-                      <td colSpan={7} className="py-12 text-center text-slate-500">
+                      <td colSpan={effectiveTabela === "recall" ? 8 : 7} className="py-12 text-center text-slate-500">
                         <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2 text-emerald-600" />
                         <span>Carregando atividades em aberto...</span>
                       </td>
                     </tr>
                   )}
 
-                  {!isLoading && error && (
+                  {!effectiveLoading && error && (
                     <tr>
-                      <td colSpan={7} className="py-10 text-center text-rose-600 font-medium">
+                      <td colSpan={effectiveTabela === "recall" ? 8 : 7} className="py-10 text-center text-rose-600 font-medium">
                         Não foi possível carregar os chamados. Tente recarregar.
                       </td>
                     </tr>
                   )}
 
-                  {!isLoading && !error && pageRows.length === 0 && (
+                  {!effectiveLoading && !error && pageRows.length === 0 && (
                     <tr>
-                      <td colSpan={7} className="py-10 text-center text-slate-400">
+                      <td colSpan={effectiveTabela === "recall" ? 8 : 7} className="py-10 text-center text-slate-400">
                         Nenhuma atividade encontrada com os filtros selecionados.
                       </td>
                     </tr>
                   )}
 
-                  {!isLoading && !error && pageRows.map((r, i) => {
+                  {!effectiveLoading && !error && pageRows.map((r, i) => {
                     return (
                       <tr
                         key={`${r.chamado}-${i}`}

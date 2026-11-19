@@ -400,9 +400,9 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
       referencias: tabela === "recall"
         ? (form.Referencia?.trim() ? [{ referencia: form.Referencia.trim() }] : [])
         : refs.map((r) => ({
-            referencia: r.referencia, cor: r.cor, descricao: r.descricao,
-            fornecedor: r.fornecedor, tamanho: r.tamanho, quantidade: r.quantidade,
-          })),
+          referencia: r.referencia, cor: r.cor, descricao: r.descricao,
+          fornecedor: r.fornecedor, tamanho: r.tamanho, quantidade: r.quantidade,
+        })),
       etapas: tabela === "recall" ? [] : etapas.map((e, i) => ({
         tarefa_id: e.tarefa_id, nome_tarefa: e.nome_tarefa,
         dias_uteis_previsto: e.dias_uteis_previsto, dt_inicio: e.dt_inicio || null,
@@ -526,9 +526,9 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
         referencias: tabela === "recall"
           ? (form.Referencia?.trim() ? [{ referencia: form.Referencia.trim() }] : [])
           : refs.map((r) => ({
-              referencia: r.referencia, cor: r.cor, descricao: r.descricao,
-              fornecedor: r.fornecedor, tamanho: r.tamanho, quantidade: r.quantidade,
-            })),
+            referencia: r.referencia, cor: r.cor, descricao: r.descricao,
+            fornecedor: r.fornecedor, tamanho: r.tamanho, quantidade: r.quantidade,
+          })),
         etapas: tabela === "recall" ? [] : novasEtapas.map((e, i) => ({
           tarefa_id: e.tarefa_id, nome_tarefa: e.nome_tarefa,
           dias_uteis_previsto: e.dias_uteis_previsto, dt_inicio: e.dt_inicio || null,
@@ -611,11 +611,10 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
                 key={t.k}
                 type="button"
                 onClick={() => setTab(t.k as any)}
-                className={`px-4 py-3 text-xs sm:text-sm font-semibold border-b-2 transition-colors cursor-pointer whitespace-nowrap ${
-                  tab === t.k
-                    ? "border-emerald-600 text-emerald-700 font-bold bg-emerald-50/40"
-                    : "border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50"
-                }`}
+                className={`px-4 py-3 text-xs sm:text-sm font-semibold border-b-2 transition-colors cursor-pointer whitespace-nowrap ${tab === t.k
+                  ? "border-emerald-600 text-emerald-700 font-bold bg-emerald-50/40"
+                  : "border-transparent text-slate-500 hover:text-slate-800 hover:bg-slate-50"
+                  }`}
               >
                 {t.label}
               </button>
@@ -637,9 +636,8 @@ export default function ChamadoForm({ mode: modeProp, chamadoId: chamadoIdProp, 
 
         {/* FEEDBACK BANNER (FIXO ACIMA DO CORPO SE HOUVER) */}
         {feedback && (
-          <div className={`shrink-0 mx-4 sm:mx-6 mt-3 flex items-start gap-2 rounded-xl border px-3 py-2 text-xs font-medium ${
-            feedback.type === "ok" ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-rose-200 bg-rose-50 text-rose-700"
-          }`}>
+          <div className={`shrink-0 mx-4 sm:mx-6 mt-3 flex items-start gap-2 rounded-xl border px-3 py-2 text-xs font-medium ${feedback.type === "ok" ? "border-emerald-200 bg-emerald-50 text-emerald-800" : "border-rose-200 bg-rose-50 text-rose-700"
+            }`}>
             {feedback.type === "ok" ? <CheckCircle2 className="w-4 h-4 mt-0.5 shrink-0" /> : <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />}
             <span>{feedback.msg}</span>
             <button onClick={() => setFeedback(null)} className="ml-auto text-xs opacity-60 hover:opacity-100">✕</button>
