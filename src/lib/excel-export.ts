@@ -71,6 +71,13 @@ export function exportToExcel(
     alignment: { vertical: "center", horizontal: "center" },
   };
 
+  const atencaoStyle = {
+    ...defaultCellStyle,
+    font: { bold: true, sz: 10, color: { rgb: "B45309" } },
+    fill: { fgColor: { rgb: "FEF3C7" } },
+    alignment: { vertical: "center", horizontal: "center" },
+  };
+
   const centerStyle = {
     ...defaultCellStyle,
     alignment: { vertical: "center", horizontal: "center" },
@@ -96,13 +103,15 @@ export function exportToExcel(
       const rawVal = String(dataRows[r - 1][c] ?? "").trim();
       const normVal = rawVal.toLowerCase();
 
-      if (normVal === "sim" || normVal === "no prazo" || normVal === "dentro do sla") {
+      if (normVal === "sim" || normVal.includes("no prazo") || normVal === "dentro do sla") {
         ws[addr].s = simStyle;
-      } else if (normVal === "não" || normVal === "nao" || normVal === "fora do prazo" || normVal === "fora do sla") {
+      } else if (normVal.includes("vencid") || normVal.includes("atraso") || normVal === "não" || normVal === "nao" || normVal === "fora do prazo" || normVal === "fora do sla") {
         ws[addr].s = naoStyle;
+      } else if (normVal.includes("atenç") || normVal.includes("atenc")) {
+        ws[addr].s = atencaoStyle;
       } else if (typeof dataRows[r - 1][c] === "number") {
         ws[addr].s = numberStyle;
-      } else if (["dt ", "data", "sla", "status", "chamado"].some((k) => cols[c].header.toLowerCase().includes(k))) {
+      } else if (["dt ", "data", "sla", "status", "chamado", "cd"].some((k) => cols[c].header.toLowerCase().includes(k))) {
         ws[addr].s = centerStyle;
       } else {
         ws[addr].s = defaultCellStyle;

@@ -13,6 +13,8 @@ import ErrorBoundary from "./ErrorBoundary";
 import { listLojas, type Loja } from "@/lib/lojas.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { toPng } from "html-to-image";
+import { exportToExcel } from "@/lib/excel-export";
+import { toast } from "sonner";
 
 type Props = {
   rawData: any[] | undefined;
@@ -228,6 +230,65 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
     rows.forEach((r) => { c[r.alerta] += 1; });
     return c;
   }, [rows]);
+
+  // Exportação em Excel profissional (.xlsx) das atividades em aberto
+  const handleExportExcel = () => {
+    const dataToExport = filtered.length > 0 ? filtered : rows;
+    if (!dataToExport || dataToExport.length === 0) {
+      toast.info("Nenhuma atividade em aberto disponível para exportação.");
+      return;
+    }
+
+    const exportRows = dataToExport.map((r) => {
+      let alertaFormatado = "No Prazo";
+      if (r.alerta === "vencido") alertaFormatado = "> 60d (Atraso)";
+      else if (r.alerta === "atencao") alertaFormatado = "45d-60d (Atenção)";
+
+      const rowObj: Record<string, any> = {
+        "Nº Chamado": r.chamado || "—",
+        "Tipo": r.tipo || "Falta/Sobra",
+        "Loja": r.loja || "—",
+        "Tipo de Loja": r.tipoLoja || "Franquia",
+        "CD": r.cd || "Geral",
+        "Data Abertura": fmtBR(r.dtAbertura),
+        "Tarefa Atual": r.tarefa || "—",
+        "Status Chamado": r.status || "Em Aberto",
+        "Duração (Dias Úteis)": r.dias,
+        "Status do Prazo": alertaFormatado,
+        "Valor (R$)": r.valor ?? 0,
+      };
+
+      if (tabela === "recall") {
+        rowObj["Referência / SKU"] = r.referencia || r.raw?.Referencia || r.raw?.referencia || "—";
+      }
+
+      if (r.raw?.NF || r.raw?.["Nº NF"] || r.raw?.nf) {
+        rowObj["Nº NF"] = r.raw.NF || r.raw["Nº NF"] || r.raw.nf;
+      }
+      if (r.raw?.Transportadora || r.raw?.transportadora) {
+        rowObj["Transportadora"] = r.raw.Transportadora || r.raw.transportadora;
+      }
+      if (r.raw?.Conferente || r.raw?.conferente) {
+        rowObj["Conferente"] = r.raw.Conferente || r.raw.conferente;
+      }
+      if (r.raw?.Motivo || r.raw?.motivo) {
+        rowObj["Motivo"] = r.raw.Motivo || r.raw.motivo;
+      }
+
+      return rowObj;
+    });
+
+    const dataHoje = new Date().toISOString().slice(0, 10);
+    const sufixoFiltro = alertaFilter !== "todos" ? `_${alertaFilter}` : "";
+    const filename = `Atividades_Em_Aberto_${tabela === "recall" ? "Recall_" : ""}${dataHoje}${sufixoFiltro}.xlsx`;
+
+    exportToExcel(exportRows, {
+      filename,
+      sheetName: "Atividades em Aberto",
+    });
+
+    toast.success(`Relatório Excel exportado com sucesso (${exportRows.length} chamados)!`);
+  };
 
   // =========================================================================
   // GRÁFICOS (APENAS COM DADOS VÁLIDOS, SEM MESES COM TOTAL 0)
@@ -604,19 +665,28 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
             </h2>
           </div>
 
-          <div className="flex items-center gap-3 text-slate-600">
+          <div className="flex items-center gap-2 sm:gap-3 text-slate-600">
+            <button
+              onClick={handleExportExcel}
+              className="p-2 sm:px-3 sm:py-2 rounded-xl bg-emerald-50 hover:bg-emerald-100 hover:text-emerald-800 text-emerald-700 transition-colors cursor-pointer border border-emerald-200/80 flex items-center gap-1.5 text-xs font-semibold shadow-2xs"
+              title="Gerar Relatório em Excel (.xlsx) das atividades"
+            >
+              <Download className="w-4 h-4 text-emerald-700" />
+              <span>Exportar Excel</span>
+            </button>
+
             <button
               onClick={() => onChanged?.()}
-              className="p-2 rounded-xl bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 transition-colors cursor-pointer border border-slate-200/60 flex items-center gap-1.5 text-xs font-semibold"
+              className="p-2 sm:px-3 sm:py-2 rounded-xl bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 transition-colors cursor-pointer border border-slate-200/60 flex items-center gap-1.5 text-xs font-semibold"
               title="Atualizar Chamados"
             >
               <RefreshCcw className="w-4 h-4 text-emerald-600" />
-              <span>Atualizar</span>
+              <span className="hidden sm:inline">Atualizar</span>
             </button>
 
             <button
               onClick={() => setIsAtividadesOpen(!isAtividadesOpen)}
-              className="w-9 h-9 rounded-xl bg-blue-600 hover:bg-blue-700 text-white flex items-center justify-center transition-colors shadow-xs cursor-pointer"
+              className="w-9 h-9 rounded-xl bg-[#20352d] hover:bg-[#162520] text-white flex items-center justify-center transition-colors shadow-xs cursor-pointer"
               title={isAtividadesOpen ? "Recolher Atividades" : "Expandir Atividades"}
             >
               <ChevronDown className={`w-5 h-5 transition-transform duration-200 ${isAtividadesOpen ? "" : "rotate-180"}`} />
@@ -770,7 +840,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
               </div>
 
               {/* Seletor de Quantidade de Chamados na Tela */}
-              <div className="flex items-center gap-1.5 w-full sm:w-auto sm:ml-auto">
+              <div className="flex items-center gap-2 w-full sm:w-auto sm:ml-auto">
                 <span className="text-slate-500 text-[11px]">Exibir:</span>
                 <select
                   value={pageSize}
@@ -782,6 +852,16 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
                   <option value={100}>100 por tela</option>
                   <option value={9999}>Todos ({filtered.length})</option>
                 </select>
+
+                <button
+                  type="button"
+                  onClick={handleExportExcel}
+                  className="inline-flex items-center gap-1.5 px-3 py-1 rounded-lg bg-emerald-700 hover:bg-emerald-800 text-white font-bold text-xs transition-colors cursor-pointer shadow-2xs"
+                  title="Exportar chamados filtrados para Excel (.xlsx)"
+                >
+                  <Download className="w-3.5 h-3.5" />
+                  <span>Excel</span>
+                </button>
               </div>
             </div>
 

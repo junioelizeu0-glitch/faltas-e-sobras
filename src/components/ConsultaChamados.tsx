@@ -317,8 +317,8 @@ export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas"
               disabled={selected.size === 0}
               title={selected.size > 0 ? `Alterar tarefa de ${selected.size} chamado(s)` : "Selecione chamados na tabela para alterar a tarefa em lote"}
               className={`inline-flex items-center gap-1.5 px-3.5 py-2 text-xs font-bold rounded-xl transition-all cursor-pointer shadow-xs ${selected.size > 0
-                  ? "bg-emerald-700 hover:bg-emerald-800 text-white border border-emerald-800"
-                  : "text-slate-400 bg-slate-100 border border-slate-200 cursor-not-allowed opacity-50"
+                ? "bg-emerald-700 hover:bg-emerald-800 text-white border border-emerald-800"
+                : "text-slate-400 bg-slate-100 border border-slate-200 cursor-not-allowed opacity-50"
                 }`}
             >
               <Workflow className="w-4 h-4" />
