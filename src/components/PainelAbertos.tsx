@@ -239,7 +239,7 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
     const hoje = new Date();
     hoje.setHours(23, 59, 59, 999);
     const inicioAno = new Date(hoje.getFullYear(), 0, 1, 0, 0, 0, 0);
-    return (rawData || [])
+    return (effectiveData || [])
       .filter((r) => {
         if (isFinalizado(r)) return false;
         const dtAb = parseDataBR(r["Dt Abertura"]);
