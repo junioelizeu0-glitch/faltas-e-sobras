@@ -1284,10 +1284,10 @@ export default function PainelAbertos({ rawData, isLoading, error, onChanged, ta
                   mode="editar"
                   chamadoId={editingId}
                   compact
-                  tabela={tabela}
-                  onSaved={() => { onChanged?.(); }}
+                  tabela={effectiveTabela}
+                  onSaved={() => { handleAtualizar(); }}
                   onCancel={() => setEditingId(null)}
-                  onDeleted={() => { setEditingId(null); onChanged?.(); }}
+                  onDeleted={() => { setEditingId(null); handleAtualizar(); }}
                 />
               </ErrorBoundary>
             </div>
