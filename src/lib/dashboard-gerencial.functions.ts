@@ -234,7 +234,15 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
     FROM filtrado;
     `.trim();
 
-    // 2. Query de Sparklines (Histórico de 6 a 8 pontos temporais)
+    // 2. Query de Sparklines (Histórico dinâmico sensível ao período selecionado)
+    const seriesGen = periodo === "30d"
+      ? "generate_series(CURRENT_DATE - INTERVAL '25 days', CURRENT_DATE, INTERVAL '5 days')::date AS mes"
+      : periodo === "ano"
+      ? "generate_series(DATE_TRUNC('year', CURRENT_DATE), DATE_TRUNC('month', CURRENT_DATE), INTERVAL '1 month')::date AS mes"
+      : "generate_series(DATE_TRUNC('month', CURRENT_DATE - INTERVAL '5 months'), DATE_TRUNC('month', CURRENT_DATE), INTERVAL '1 month')::date AS mes";
+
+    const endOfPeriodOffset = periodo === "30d" ? "0 days" : "1 month - INTERVAL '1 day'";
+
     const sqlSpark = `
     WITH base AS (
       SELECT 'faltas' AS modulo, dt_abertura, dt_finalizacao, valor,
@@ -253,21 +261,17 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
       SELECT * FROM base WHERE 1=1 ${moduloFilter}
     ),
     meses AS (
-      SELECT generate_series(
-        DATE_TRUNC('month', CURRENT_DATE - INTERVAL '5 months'),
-        DATE_TRUNC('month', CURRENT_DATE),
-        INTERVAL '1 month'
-      )::date AS mes
+      SELECT ${seriesGen}
     )
     SELECT 
       m.mes::text AS mes_key,
-      TO_CHAR(m.mes, 'Mon/YY') AS mes_label,
-      (SELECT COUNT(*)::int FROM filtrado f WHERE f.dt_abertura <= (m.mes + INTERVAL '1 month' - INTERVAL '1 day')::date AND (f.dt_finalizacao IS NULL OR f.dt_finalizacao > (m.mes + INTERVAL '1 month' - INTERVAL '1 day')::date)) AS abertos_no_ponto,
-      (SELECT COALESCE(SUM(f.valor), 0)::numeric FROM filtrado f WHERE f.dt_abertura <= (m.mes + INTERVAL '1 month' - INTERVAL '1 day')::date AND (f.dt_finalizacao IS NULL OR f.dt_finalizacao > (m.mes + INTERVAL '1 month' - INTERVAL '1 day')::date)) AS valor_no_ponto,
-      (SELECT COUNT(*)::int FROM filtrado f WHERE f.dt_abertura <= (m.mes + INTERVAL '1 month' - INTERVAL '1 day')::date AND (f.dt_finalizacao IS NULL OR f.dt_finalizacao > (m.mes + INTERVAL '1 month' - INTERVAL '1 day')::date) AND (m.mes - f.dt_abertura) > 60) AS sla_no_ponto,
-      (SELECT ROUND(COALESCE(AVG(f.dias_resolucao), 0), 1)::numeric FROM filtrado f WHERE f.dt_finalizacao >= m.mes AND f.dt_finalizacao < (m.mes + INTERVAL '1 month')::date) AS tempo_resolucao_mes,
-      (SELECT COUNT(*)::int FROM filtrado f WHERE f.dt_finalizacao >= m.mes AND f.dt_finalizacao < (m.mes + INTERVAL '1 month')::date) AS concluidos_mes,
-      (SELECT ROUND(COALESCE(AVG(f.valor), 0), 0)::numeric FROM filtrado f WHERE f.dt_abertura <= (m.mes + INTERVAL '1 month' - INTERVAL '1 day')::date AND (f.dt_finalizacao IS NULL OR f.dt_finalizacao > (m.mes + INTERVAL '1 month' - INTERVAL '1 day')::date)) AS ticket_medio_ponto
+      TO_CHAR(m.mes, 'DD/MM') AS mes_label,
+      (SELECT COUNT(*)::int FROM filtrado f WHERE f.dt_abertura <= (m.mes + INTERVAL '${endOfPeriodOffset}')::date AND (f.dt_finalizacao IS NULL OR f.dt_finalizacao > (m.mes + INTERVAL '${endOfPeriodOffset}')::date)) AS abertos_no_ponto,
+      (SELECT COALESCE(SUM(f.valor), 0)::numeric FROM filtrado f WHERE f.dt_abertura <= (m.mes + INTERVAL '${endOfPeriodOffset}')::date AND (f.dt_finalizacao IS NULL OR f.dt_finalizacao > (m.mes + INTERVAL '${endOfPeriodOffset}')::date)) AS valor_no_ponto,
+      (SELECT COUNT(*)::int FROM filtrado f WHERE f.dt_abertura <= (m.mes + INTERVAL '${endOfPeriodOffset}')::date AND (f.dt_finalizacao IS NULL OR f.dt_finalizacao > (m.mes + INTERVAL '${endOfPeriodOffset}')::date) AND ((m.mes + INTERVAL '${endOfPeriodOffset}')::date - f.dt_abertura) > 60) AS sla_no_ponto,
+      (SELECT ROUND(COALESCE(AVG(f.dias_resolucao), 0), 1)::numeric FROM filtrado f WHERE f.dt_finalizacao >= (m.mes - INTERVAL '15 days') AND f.dt_finalizacao <= (m.mes + INTERVAL '${endOfPeriodOffset}')::date) AS tempo_resolucao_mes,
+      (SELECT COUNT(*)::int FROM filtrado f WHERE f.dt_finalizacao >= (m.mes - INTERVAL '15 days') AND f.dt_finalizacao <= (m.mes + INTERVAL '${endOfPeriodOffset}')::date) AS concluidos_mes,
+      (SELECT ROUND(COALESCE(AVG(f.valor), 0), 0)::numeric FROM filtrado f WHERE f.dt_abertura <= (m.mes + INTERVAL '${endOfPeriodOffset}')::date AND (f.dt_finalizacao IS NULL OR f.dt_finalizacao > (m.mes + INTERVAL '${endOfPeriodOffset}')::date)) AS ticket_medio_ponto
     FROM meses m
     ORDER BY m.mes ASC;
     `.trim();

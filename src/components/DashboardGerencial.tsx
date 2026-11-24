@@ -28,39 +28,68 @@ const brl = (n: number) => {
 // COMPONENTES GRÁFICOS SVG NATIVOS (PROTÓTIPO V2)
 // =========================================================================
 
-// 1. Sparkline (Curva suave com gradiente)
+// 1. Sparkline (Curva suave fluida sem cortes de borda)
 function Sparkline({ values, color }: { values: number[]; color: string }) {
   if (!values || values.length === 0) return null;
-  const w = 240;
+  const w = 260;
   const h = 64;
   const mx = Math.max(...values);
   const mn = Math.min(...values);
+  const range = mx - mn;
   const step = w / Math.max(1, values.length - 1);
-  const range = mx - mn || 1;
-  const points = values.map((y, i) => [i * step, h - 6 - ((y - mn) / range) * (h - 18)]);
-  
-  let d = `M${points[0][0]},${points[0][1]}`;
+
+  // Margens de segurança superior e inferior para evitar qualquer corte na linha e nas curvas
+  const topPad = 14;
+  const botPad = 12;
+  const usableHeight = h - topPad - botPad;
+
+  const points: [number, number][] = values.map((v, i) => {
+    const norm = range > 0 ? (v - mn) / range : 0.5;
+    const y = h - botPad - norm * usableHeight;
+    const x = i * step;
+    return [x, y];
+  });
+
+  // Interpolação suave cúbica com amortecimento de curvatura para evitar picos que excedam os limites
+  let d = `M${points[0][0].toFixed(1)},${points[0][1].toFixed(1)}`;
   for (let i = 1; i < points.length; i++) {
-    const mid = (points[i - 1][0] + points[i][0]) / 2;
-    d += ` C${mid},${points[i - 1][1]} ${mid},${points[i][1]} ${points[i][0]},${points[i][1]}`;
+    const p0 = points[i - 2] || points[i - 1];
+    const p1 = points[i - 1];
+    const p2 = points[i];
+    const p3 = points[i + 1] || p2;
+
+    const cp1x = p1[0] + (p2[0] - p0[0]) * 0.22;
+    const cp1y = p1[1] + (p2[1] - p0[1]) * 0.22;
+    const cp2x = p2[0] - (p3[0] - p1[0]) * 0.22;
+    const cp2y = p2[1] - (p3[1] - p1[1]) * 0.22;
+
+    d += ` C${cp1x.toFixed(1)},${cp1y.toFixed(1)} ${cp2x.toFixed(1)},${cp2y.toFixed(1)} ${p2[0].toFixed(1)},${p2[1].toFixed(1)}`;
   }
   const id = `spark-${Math.random().toString(36).substring(2, 9)}`;
 
   return (
     <svg
-      className="w-[calc(100%+2.25rem)] h-16 -mx-[1.125rem] -mb-4 mt-2 block"
+      className="w-[calc(100%+2rem)] h-16 -mx-4 mb-0 mt-2 block pointer-events-none"
       viewBox={`0 0 ${w} ${h}`}
       preserveAspectRatio="none"
       aria-hidden="true"
     >
       <defs>
         <linearGradient id={id} x1="0" x2="0" y1="0" y2="1">
-          <stop offset="0%" stopColor={color} stopOpacity="0.25" />
-          <stop offset="100%" stopColor={color} stopOpacity="0" />
+          <stop offset="0%" stopColor={color} stopOpacity="0.22" />
+          <stop offset="100%" stopColor={color} stopOpacity="0.0" />
         </linearGradient>
       </defs>
       <path d={`${d} L${w},${h} L0,${h} Z`} fill={`url(#${id})`} />
-      <path d={d} fill="none" stroke={color} strokeWidth="2" vectorEffect="non-scaling-stroke" />
+      <path
+        d={d}
+        fill="none"
+        stroke={color}
+        strokeWidth="2.5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        vectorEffect="non-scaling-stroke"
+      />
     </svg>
   );
 }
