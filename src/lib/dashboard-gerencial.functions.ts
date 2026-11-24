@@ -97,9 +97,11 @@ export type DashboardGerencialPayload = {
   topLojas: TopLojaItem[];
   chamadosCriticos: ChamadoCriticoItem[];
   alertas: AlertaItem[];
+  listaCDs: string[];
   filtrosAtivos: {
     modulo: ModuloFiltro;
     periodo: PeriodoFiltro;
+    cd: string;
   };
   atualizadoEm: string;
 };
@@ -107,6 +109,7 @@ export type DashboardGerencialPayload = {
 const DashboardGerencialInput = z.object({
   modulo: z.enum(["todos", "faltas", "recall"]).default("todos"),
   periodo: z.enum(["30d", "6m", "ano"]).default("6m"),
+  cd: z.string().default("todos"),
 });
 
 export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
@@ -122,10 +125,16 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
 
     const modulo = data?.modulo || "todos";
     const periodo = data?.periodo || "6m";
+    const cd = data?.cd || "todos";
 
     let moduloFilter = "";
     if (modulo === "faltas") moduloFilter = "AND modulo = 'faltas'";
     if (modulo === "recall") moduloFilter = "AND modulo = 'recall'";
+
+    let cdFilter = "";
+    if (cd && cd !== "todos") {
+      cdFilter = `AND UPPER(TRIM(cd)) = '${cd.trim().toUpperCase()}'`;
+    }
 
     let periodoFilter = "";
     if (periodo === "30d") periodoFilter = "AND dt_abertura >= (CURRENT_DATE - INTERVAL '30 days')";
@@ -168,10 +177,10 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
       FROM chamados_recall
     ),
     filtrado AS (
-      SELECT * FROM base WHERE 1=1 ${moduloFilter} ${periodoFilter}
+      SELECT * FROM base WHERE 1=1 ${moduloFilter} ${periodoFilter} ${cdFilter}
     ),
     abertos_atuais AS (
-      SELECT * FROM base WHERE em_aberto ${moduloFilter}
+      SELECT * FROM base WHERE em_aberto ${moduloFilter} ${cdFilter}
     ),
     mes_stats AS (
       SELECT 
@@ -189,7 +198,7 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
           WHERE dt_finalizacao >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month') 
             AND dt_finalizacao < DATE_TRUNC('month', CURRENT_DATE)
         )::int AS concluidos_mes_anterior
-      FROM base WHERE 1=1 ${moduloFilter}
+      FROM base WHERE 1=1 ${moduloFilter} ${cdFilter}
     )
     SELECT 
       COUNT(*)::int AS total_chamados_periodo,
@@ -243,20 +252,20 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
 
     const sqlSpark = `
     WITH base AS (
-      SELECT 'faltas' AS modulo, dt_abertura, dt_finalizacao, valor,
+      SELECT 'faltas' AS modulo, cd, dt_abertura, dt_finalizacao, valor,
         CASE WHEN dt_finalizacao IS NULL OR TRIM(dt_finalizacao::text) = '' OR TRIM(dt_finalizacao::text) = '-' THEN true ELSE false END AS em_aberto,
         (CURRENT_DATE - dt_abertura)::int AS dias_aberto,
         CASE WHEN dt_finalizacao IS NOT NULL AND TRIM(dt_finalizacao::text) != '' AND TRIM(dt_finalizacao::text) != '-' THEN (dt_finalizacao - dt_abertura)::int ELSE NULL END AS dias_resolucao
       FROM chamados_faltas
       UNION ALL
-      SELECT 'recall' AS modulo, dt_abertura, dt_finalizacao, valor,
+      SELECT 'recall' AS modulo, cd, dt_abertura, dt_finalizacao, valor,
         CASE WHEN dt_finalizacao IS NULL OR TRIM(dt_finalizacao::text) = '' OR TRIM(dt_finalizacao::text) = '-' THEN true ELSE false END AS em_aberto,
         (CURRENT_DATE - dt_abertura)::int AS dias_aberto,
         CASE WHEN dt_finalizacao IS NOT NULL AND TRIM(dt_finalizacao::text) != '' AND TRIM(dt_finalizacao::text) != '-' THEN (dt_finalizacao - dt_abertura)::int ELSE NULL END AS dias_resolucao
       FROM chamados_recall
     ),
     filtrado AS (
-      SELECT * FROM base WHERE 1=1 ${moduloFilter}
+      SELECT * FROM base WHERE 1=1 ${moduloFilter} ${cdFilter}
     ),
     meses AS (
       SELECT ${seriesGen}
@@ -278,12 +287,12 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
     const mesesIntervalo = periodo === "30d" ? "3 months" : periodo === "6m" ? "5 months" : "11 months";
     const sqlMensal = `
     WITH base AS (
-      SELECT 'faltas' AS modulo, dt_abertura, dt_finalizacao FROM chamados_faltas
+      SELECT 'faltas' AS modulo, cd, dt_abertura, dt_finalizacao FROM chamados_faltas
       UNION ALL
-      SELECT 'recall' AS modulo, dt_abertura, dt_finalizacao FROM chamados_recall
+      SELECT 'recall' AS modulo, cd, dt_abertura, dt_finalizacao FROM chamados_recall
     ),
     filtrado AS (
-      SELECT * FROM base WHERE 1=1 ${moduloFilter}
+      SELECT * FROM base WHERE 1=1 ${moduloFilter} ${cdFilter}
     ),
     meses AS (
       SELECT generate_series(
@@ -321,6 +330,7 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
       SELECT 
         'faltas' AS modulo,
         'Faltas e Sobras' AS label,
+        cd,
         valor,
         CASE WHEN dt_finalizacao IS NULL OR TRIM(dt_finalizacao::text) = '' OR TRIM(dt_finalizacao::text) = '-' THEN true ELSE false END AS em_aberto
       FROM chamados_faltas
@@ -328,6 +338,7 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
       SELECT 
         'recall' AS modulo,
         'Recall' AS label,
+        cd,
         valor,
         CASE WHEN dt_finalizacao IS NULL OR TRIM(dt_finalizacao::text) = '' OR TRIM(dt_finalizacao::text) = '-' THEN true ELSE false END AS em_aberto
       FROM chamados_recall
@@ -339,6 +350,7 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
       COUNT(*) FILTER (WHERE em_aberto)::int AS abertos,
       COALESCE(SUM(valor) FILTER (WHERE em_aberto), 0)::numeric AS valor_aberto
     FROM base
+    WHERE 1=1 ${cdFilter}
     GROUP BY modulo, label
     ORDER BY abertos DESC;
     `.trim();
@@ -346,9 +358,9 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
     // 5. Query de Tarefas em Aberto (com idade média em dias)
     const sqlTarefas = `
     WITH base AS (
-      SELECT 'faltas' AS modulo, situacao, valor, dt_abertura, dt_finalizacao FROM chamados_faltas
+      SELECT 'faltas' AS modulo, cd, situacao, valor, dt_abertura, dt_finalizacao FROM chamados_faltas
       UNION ALL
-      SELECT 'recall' AS modulo, situacao, valor, dt_abertura, dt_finalizacao FROM chamados_recall
+      SELECT 'recall' AS modulo, cd, situacao, valor, dt_abertura, dt_finalizacao FROM chamados_recall
     )
     SELECT 
       COALESCE(NULLIF(TRIM(situacao), ''), 'Não informada') AS tarefa,
@@ -356,7 +368,7 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
       COALESCE(SUM(valor), 0)::numeric AS valor_total,
       ROUND(AVG((CURRENT_DATE - dt_abertura)))::int AS idade_media_dias
     FROM base
-    WHERE (dt_finalizacao IS NULL OR TRIM(dt_finalizacao::text) = '' OR TRIM(dt_finalizacao::text) = '-') ${moduloFilter}
+    WHERE (dt_finalizacao IS NULL OR TRIM(dt_finalizacao::text) = '' OR TRIM(dt_finalizacao::text) = '-') ${moduloFilter} ${cdFilter}
     GROUP BY 1
     ORDER BY total DESC
     LIMIT 6;
@@ -365,9 +377,9 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
     // 6. Query Top 6 Lojas
     const sqlLojas = `
     WITH base AS (
-      SELECT 'faltas' AS modulo, loja, valor, tipo, dt_finalizacao FROM chamados_faltas
+      SELECT 'faltas' AS modulo, cd, loja, valor, tipo, dt_finalizacao FROM chamados_faltas
       UNION ALL
-      SELECT 'recall' AS modulo, loja, valor, tipo, dt_finalizacao FROM chamados_recall
+      SELECT 'recall' AS modulo, cd, loja, valor, tipo, dt_finalizacao FROM chamados_recall
     )
     SELECT 
       loja,
@@ -375,7 +387,7 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
       COUNT(*)::int AS total_chamados,
       COALESCE(SUM(valor), 0)::numeric AS valor_total
     FROM base
-    WHERE (dt_finalizacao IS NULL OR TRIM(dt_finalizacao::text) = '' OR TRIM(dt_finalizacao::text) = '-') ${moduloFilter}
+    WHERE (dt_finalizacao IS NULL OR TRIM(dt_finalizacao::text) = '' OR TRIM(dt_finalizacao::text) = '-') ${moduloFilter} ${cdFilter}
     GROUP BY loja
     ORDER BY valor_total DESC
     LIMIT 6;
@@ -402,9 +414,20 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
       (CURRENT_DATE - dt_abertura)::int AS dias_aberto,
       COALESCE(valor, 0)::numeric AS valor
     FROM base
-    WHERE (dt_finalizacao IS NULL OR TRIM(dt_finalizacao::text) = '' OR TRIM(dt_finalizacao::text) = '-') ${moduloFilter}
+    WHERE (dt_finalizacao IS NULL OR TRIM(dt_finalizacao::text) = '' OR TRIM(dt_finalizacao::text) = '-') ${moduloFilter} ${cdFilter}
     ORDER BY dt_abertura ASC
     LIMIT 10;
+    `.trim();
+
+    // 8. Query CDs Disponíveis
+    const sqlListaCDs = `
+    SELECT DISTINCT UPPER(TRIM(cd)) as cd
+    FROM (
+      SELECT cd FROM chamados_faltas WHERE cd IS NOT NULL AND TRIM(cd) != ''
+      UNION
+      SELECT cd FROM chamados_recall WHERE cd IS NOT NULL AND TRIM(cd) != ''
+    ) t
+    ORDER BY 1;
     `.trim();
 
     // Executar consultas concorrentes de forma ultra rápida
@@ -416,6 +439,7 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
       { data: tarefasData, error: tarefasErr },
       { data: lojasData, error: lojasErr },
       { data: criticosData, error: criticosErr },
+      { data: cdsData, error: cdsErr },
     ] = await Promise.all([
       supabase.rpc("aiiliana_run_sql", { sql: sqlKPI }),
       supabase.rpc("aiiliana_run_sql", { sql: sqlSpark }),
@@ -424,11 +448,13 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
       supabase.rpc("aiiliana_run_sql", { sql: sqlTarefas }),
       supabase.rpc("aiiliana_run_sql", { sql: sqlLojas }),
       supabase.rpc("aiiliana_run_sql", { sql: sqlCriticos }),
+      supabase.rpc("aiiliana_run_sql", { sql: sqlListaCDs }),
     ]);
 
     if (kpiErr) console.warn("[DashboardGerencial] KPI error:", kpiErr);
     if (sparkErr) console.warn("[DashboardGerencial] Spark error:", sparkErr);
     if (mensalErr) console.warn("[DashboardGerencial] Mensal error:", mensalErr);
+    if (cdsErr) console.warn("[DashboardGerencial] CDs error:", cdsErr);
 
     const rawKpi = (kpiData && kpiData[0]) || {};
     const totalAbertos = Number(rawKpi.total_abertos || 0);
@@ -598,6 +624,10 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
       });
     }
 
+    const listaCDs = Array.isArray(cdsData)
+      ? cdsData.map((c: any) => String(c.cd || "").trim()).filter(Boolean)
+      : ["ES", "PB", "TO"];
+
     return {
       kpis,
       sparklines,
@@ -607,9 +637,11 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
       topLojas,
       chamadosCriticos,
       alertas,
+      listaCDs,
       filtrosAtivos: {
         modulo,
         periodo,
+        cd,
       },
       atualizadoEm: new Date().toLocaleTimeString("pt-BR", { hour: "2-digit", minute: "2-digit" }),
     };

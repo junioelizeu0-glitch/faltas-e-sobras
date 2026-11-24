@@ -274,12 +274,18 @@ export default function DashboardGerencial() {
 
   const [modulo, setModulo] = useState<ModuloFiltro>("todos");
   const [periodo, setPeriodo] = useState<PeriodoFiltro>("6m");
+  const [cd, setCd] = useState<string>("todos");
   const [data, setData] = useState<DashboardGerencialPayload | null>(null);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const carregarDados = async (m: ModuloFiltro = modulo, p: PeriodoFiltro = periodo, isManualRefresh = false) => {
+  const carregarDados = async (
+    m: ModuloFiltro = modulo,
+    p: PeriodoFiltro = periodo,
+    c: string = cd,
+    isManualRefresh = false
+  ) => {
     if (isManualRefresh) {
       setRefreshing(true);
     } else {
@@ -288,7 +294,7 @@ export default function DashboardGerencial() {
     setError(null);
 
     try {
-      const res = await getDataFn({ data: { modulo: m, periodo: p } });
+      const res = await getDataFn({ data: { modulo: m, periodo: p, cd: c } });
       setData(res);
     } catch (err: any) {
       console.error("Erro ao carregar Dashboard Gerencial:", err);
@@ -300,8 +306,8 @@ export default function DashboardGerencial() {
   };
 
   useEffect(() => {
-    carregarDados(modulo, periodo);
-  }, [modulo, periodo]);
+    carregarDados(modulo, periodo, cd);
+  }, [modulo, periodo, cd]);
 
   const kpis = data?.kpis;
   const sparks = data?.sparklines;
@@ -332,7 +338,7 @@ export default function DashboardGerencial() {
           </span>
           <button
             type="button"
-            onClick={() => carregarDados(modulo, periodo, true)}
+            onClick={() => carregarDados(modulo, periodo, cd, true)}
             disabled={loading || refreshing}
             className="p-1 text-[#7a8a82] hover:text-[#0b6b4b] transition-colors disabled:opacity-50 cursor-pointer"
             title="Atualizar dados agora"
@@ -360,6 +366,31 @@ export default function DashboardGerencial() {
             Visão geral da operação
           </h1>
           <div className="flex gap-2.5 flex-wrap">
+            {/* Segmento CD */}
+            <div className="inline-flex bg-white border border-[#e6ebe7] rounded-[10px] p-[3px] gap-[2px]">
+              <button
+                type="button"
+                onClick={() => setCd("todos")}
+                className={`border-0 py-[7px] px-[13px] rounded-[8px] font-semibold text-[13px] cursor-pointer transition-colors ${
+                  cd === "todos" ? "bg-[#0b6b4b] text-white" : "text-[#7a8a82] hover:text-[#16241e]"
+                }`}
+              >
+                Todos os CDs
+              </button>
+              {(data?.listaCDs || ["ES", "PB", "TO"]).map((item) => (
+                <button
+                  key={item}
+                  type="button"
+                  onClick={() => setCd(item)}
+                  className={`border-0 py-[7px] px-[13px] rounded-[8px] font-semibold text-[13px] cursor-pointer transition-colors ${
+                    cd === item ? "bg-[#0b6b4b] text-white" : "text-[#7a8a82] hover:text-[#16241e]"
+                  }`}
+                >
+                  CD {item}
+                </button>
+              ))}
+            </div>
+
             {/* Segmento Módulo */}
             <div className="inline-flex bg-white border border-[#e6ebe7] rounded-[10px] p-[3px] gap-[2px]">
               <button
