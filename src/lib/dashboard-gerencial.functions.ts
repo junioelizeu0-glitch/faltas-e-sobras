@@ -180,7 +180,7 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
       SELECT * FROM base WHERE 1=1 ${moduloFilter} ${periodoFilter} ${cdFilter}
     ),
     abertos_atuais AS (
-      SELECT * FROM base WHERE em_aberto ${moduloFilter} ${cdFilter}
+      SELECT * FROM filtrado WHERE em_aberto
     ),
     mes_stats AS (
       SELECT 
@@ -220,8 +220,8 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
       (SELECT concluidos_mes_anterior FROM mes_stats) AS concluidos_mes_anterior,
       ROUND(AVG(dias_resolucao) FILTER (WHERE NOT em_aberto), 1)::numeric AS tempo_medio_resolucao_dias,
       ROUND(
-        (COUNT(*) FILTER (WHERE NOT em_aberto AND dias_resolucao <= 60)::numeric / 
-         NULLIF(COUNT(*) FILTER (WHERE NOT em_aberto), 0)) * 100, 1
+        (COUNT(*) FILTER (WHERE dias_aberto <= 60)::numeric / 
+         NULLIF(COUNT(*), 0)) * 100, 1
       ) AS perc_dentro_do_prazo,
       (SELECT abertos_mes_atual FROM mes_stats) AS novos_mes_atual,
       (SELECT abertos_mes_anterior FROM mes_stats) AS novos_mes_anterior,
@@ -250,6 +250,12 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
       ? "generate_series(DATE_TRUNC('year', CURRENT_DATE), CURRENT_DATE, (GREATEST(1, (CURRENT_DATE - DATE_TRUNC('year', CURRENT_DATE)::date) / 9) * INTERVAL '1 day'))::date AS mes"
       : "generate_series(CURRENT_DATE - INTERVAL '150 days', CURRENT_DATE, INTERVAL '15 days')::date AS mes";
 
+    const dtInicioSparkFilter = periodo === "30d"
+      ? "AND dt_abertura >= (CURRENT_DATE - INTERVAL '30 days')"
+      : periodo === "ano"
+      ? "AND dt_abertura >= DATE_TRUNC('year', CURRENT_DATE)"
+      : "AND dt_abertura >= (CURRENT_DATE - INTERVAL '6 months')";
+
     const sqlSpark = `
     WITH base AS (
       SELECT 'faltas' AS modulo, cd, dt_abertura, dt_finalizacao, valor,
@@ -265,7 +271,7 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
       FROM chamados_recall
     ),
     filtrado AS (
-      SELECT * FROM base WHERE 1=1 ${moduloFilter} ${cdFilter}
+      SELECT * FROM base WHERE 1=1 ${moduloFilter} ${cdFilter} ${dtInicioSparkFilter}
     ),
     meses AS (
       SELECT ${seriesGen}
@@ -332,6 +338,7 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
         'Faltas e Sobras' AS label,
         cd,
         valor,
+        dt_abertura,
         CASE WHEN dt_finalizacao IS NULL OR TRIM(dt_finalizacao::text) = '' OR TRIM(dt_finalizacao::text) = '-' THEN true ELSE false END AS em_aberto
       FROM chamados_faltas
       UNION ALL
@@ -340,6 +347,7 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
         'Recall' AS label,
         cd,
         valor,
+        dt_abertura,
         CASE WHEN dt_finalizacao IS NULL OR TRIM(dt_finalizacao::text) = '' OR TRIM(dt_finalizacao::text) = '-' THEN true ELSE false END AS em_aberto
       FROM chamados_recall
     )
@@ -350,7 +358,7 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
       COUNT(*) FILTER (WHERE em_aberto)::int AS abertos,
       COALESCE(SUM(valor) FILTER (WHERE em_aberto), 0)::numeric AS valor_aberto
     FROM base
-    WHERE 1=1 ${cdFilter}
+    WHERE 1=1 ${periodoFilter} ${cdFilter}
     GROUP BY modulo, label
     ORDER BY abertos DESC;
     `.trim();
@@ -368,7 +376,7 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
       COALESCE(SUM(valor), 0)::numeric AS valor_total,
       ROUND(AVG((CURRENT_DATE - dt_abertura)))::int AS idade_media_dias
     FROM base
-    WHERE (dt_finalizacao IS NULL OR TRIM(dt_finalizacao::text) = '' OR TRIM(dt_finalizacao::text) = '-') ${moduloFilter} ${cdFilter}
+    WHERE (dt_finalizacao IS NULL OR TRIM(dt_finalizacao::text) = '' OR TRIM(dt_finalizacao::text) = '-') ${moduloFilter} ${periodoFilter} ${cdFilter}
     GROUP BY 1
     ORDER BY total DESC
     LIMIT 6;
@@ -377,9 +385,9 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
     // 6. Query Top 6 Lojas
     const sqlLojas = `
     WITH base AS (
-      SELECT 'faltas' AS modulo, cd, loja, valor, tipo, dt_finalizacao FROM chamados_faltas
+      SELECT 'faltas' AS modulo, cd, loja, valor, tipo, dt_abertura, dt_finalizacao FROM chamados_faltas
       UNION ALL
-      SELECT 'recall' AS modulo, cd, loja, valor, tipo, dt_finalizacao FROM chamados_recall
+      SELECT 'recall' AS modulo, cd, loja, valor, tipo, dt_abertura, dt_finalizacao FROM chamados_recall
     )
     SELECT 
       loja,
@@ -387,7 +395,7 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
       COUNT(*)::int AS total_chamados,
       COALESCE(SUM(valor), 0)::numeric AS valor_total
     FROM base
-    WHERE (dt_finalizacao IS NULL OR TRIM(dt_finalizacao::text) = '' OR TRIM(dt_finalizacao::text) = '-') ${moduloFilter} ${cdFilter}
+    WHERE (dt_finalizacao IS NULL OR TRIM(dt_finalizacao::text) = '' OR TRIM(dt_finalizacao::text) = '-') ${moduloFilter} ${periodoFilter} ${cdFilter}
     GROUP BY loja
     ORDER BY valor_total DESC
     LIMIT 6;
@@ -414,7 +422,7 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
       (CURRENT_DATE - dt_abertura)::int AS dias_aberto,
       COALESCE(valor, 0)::numeric AS valor
     FROM base
-    WHERE (dt_finalizacao IS NULL OR TRIM(dt_finalizacao::text) = '' OR TRIM(dt_finalizacao::text) = '-') ${moduloFilter} ${cdFilter}
+    WHERE (dt_finalizacao IS NULL OR TRIM(dt_finalizacao::text) = '' OR TRIM(dt_finalizacao::text) = '-') ${moduloFilter} ${periodoFilter} ${cdFilter}
     ORDER BY dt_abertura ASC
     LIMIT 10;
     `.trim();
