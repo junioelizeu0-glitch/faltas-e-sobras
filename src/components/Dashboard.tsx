@@ -16,6 +16,7 @@ import {
 import { useDashboardData, isValidField, getTarefaAtual, isSemRetorno, parseDataBR, getBusinessDays, isMotivoErroConferente, parseValorNumeric, isValidRef } from '@/lib/data-processing';
 import NovoChamadoForm from '@/components/NovoChamadoForm';
 import PainelAbertos from '@/components/PainelAbertos';
+import DashboardGerencial from '@/components/DashboardGerencial';
 import ConsultaChamados from '@/components/ConsultaChamados';
 import RelatorioRecall from '@/components/RelatorioRecall';
 import CadastroProdutos from '@/components/CadastroProdutos';
@@ -2232,7 +2233,13 @@ const AbaReferenciasFornecedores = ({
 
 // --- MAIN COMPONENT ---
 export default function Dashboard() {
-  const [selectedSubmenu, setSelectedSubmenu] = useState<string | null>(null);
+  const [selectedSubmenu, setSelectedSubmenu] = useState<string | null>(() => {
+    if (typeof window !== "undefined") {
+      const s = new URLSearchParams(window.location.search).get("submenu");
+      if (s) return s;
+    }
+    return null;
+  });
   const [activeTab, setActiveTab] = useState('executivo');
   const dashboardRef = useRef<HTMLDivElement>(null);
   const [isDrillDownOpen, setIsDrillDownOpen] = useState(false);
@@ -2724,6 +2731,12 @@ export default function Dashboard() {
     <AppShell selectedSubmenu={selectedSubmenu} setSelectedSubmenu={setSelectedSubmenu}>
         {selectedSubmenu === null && (
           <PainelAbertos rawData={rawData} isLoading={isLoading} error={error} onChanged={() => refetch()} />
+        )}
+
+        {selectedSubmenu === 'dashboard' && (
+          <ErrorBoundary fallbackTitle="Erro ao carregar Dashboard Gerencial">
+            <DashboardGerencial />
+          </ErrorBoundary>
         )}
 
 

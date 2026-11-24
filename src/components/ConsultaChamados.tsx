@@ -68,7 +68,13 @@ type Props = { rawData: any[] | undefined; onChanged?: () => void; tabela?: "fal
 export default function ConsultaChamados({ rawData, onChanged, tabela = "faltas" }: Props) {
   const [busca, setBusca] = useState("");
   const [filtroLoja, setFiltroLoja] = useState("");
-  const [filtroChamado, setFiltroChamado] = useState("");
+  const [filtroChamado, setFiltroChamado] = useState(() => {
+    if (typeof window !== "undefined") {
+      const c = new URLSearchParams(window.location.search).get("chamado");
+      if (c) return c.trim();
+    }
+    return "";
+  });
   const [filtroNF, setFiltroNF] = useState("");
   const [filtroStatus, setFiltroStatus] = useState("Todos");
   const [filtroTarefa, setFiltroTarefa] = useState("Todas");

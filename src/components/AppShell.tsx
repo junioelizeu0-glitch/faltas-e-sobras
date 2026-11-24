@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from "react";
+import { Link } from "@tanstack/react-router";
 import {
   ChevronDown,
   ChevronLeft,
@@ -81,6 +82,7 @@ const groups = [
 ];
 
 function getPageTitle(selectedSubmenu: string | null) {
+  if (selectedSubmenu === "dashboard") return "Visão geral › Dashboard";
   if (!selectedSubmenu) return "Visão geral";
   for (const group of groups) {
     const item = group.items.find((entry) => entry.key === selectedSubmenu);
@@ -220,15 +222,36 @@ export default function AppShell({
 
         {/* Navegação com Menus e Submenus retráteis */}
         <nav className="app-navigation">
-          {/* Botão de Visão Geral (Home) */}
+          {/* Seção Visão Geral */}
           <button
             type="button"
-            onClick={() => navigate(null)}
+            onClick={() => {
+              if (typeof window !== "undefined" && window.location.pathname === "/dashboard") {
+                window.location.href = "/";
+              } else {
+                navigate(null);
+              }
+            }}
             className={`app-nav-home ${selectedSubmenu === null ? "is-active" : ""}`}
+            title="Ir para a visão geral operacional"
           >
             <Home className="w-4 h-4 shrink-0" />
             <span>Visão geral</span>
           </button>
+
+          {/* Item Dashboard Gerencial (Rota /dashboard) */}
+          <Link
+            to="/dashboard"
+            onClick={() => {
+              setSelectedSubmenu("dashboard");
+              setMobileMenuOpen(false);
+            }}
+            className={`app-nav-home ${selectedSubmenu === "dashboard" ? "is-active" : ""}`}
+            title="Ir para o Dashboard Gerencial"
+          >
+            <BarChart2 className="w-4 h-4 shrink-0" />
+            <span>Dashboard</span>
+          </Link>
 
           {/* Menus Principais: Faltas e Sobras, Recall, Cadastros */}
           {groups.map((group) => {
