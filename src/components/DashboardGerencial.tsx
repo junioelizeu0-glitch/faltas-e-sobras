@@ -1,39 +1,6 @@
 import React, { useState, useEffect } from "react";
-import {
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell,
-  Legend,
-} from "recharts";
-import {
-  TrendingUp,
-  TrendingDown,
-  Clock,
-  CheckCircle2,
-  AlertTriangle,
-  Banknote,
-  Layers,
-  RefreshCcw,
-  ShieldCheck,
-  Building2,
-  Calendar,
-  ExternalLink,
-  Eye,
-  Store,
-  MapPin,
-  Filter,
-  Inbox,
-  Package,
-  Loader2,
-  HelpCircle,
-} from "lucide-react";
+import { Link } from "@tanstack/react-router";
+import { RefreshCcw, Loader2 } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import {
   fetchDashboardGerencialData,
@@ -41,7 +8,7 @@ import {
   type ModuloFiltro,
   type PeriodoFiltro,
 } from "@/lib/dashboard-gerencial.functions";
-import { formatarMoedaBR, parseDataBR } from "@/lib/data-processing";
+import { parseDataBR } from "@/lib/data-processing";
 
 const fmtBR = (v: any) => {
   if (!v) return "—";
@@ -52,6 +19,215 @@ const fmtBR = (v: any) => {
   if (!d) return s;
   return `${String(d.getDate()).padStart(2, "0")}/${String(d.getMonth() + 1).padStart(2, "0")}/${d.getFullYear()}`;
 };
+
+const brl = (n: number) => {
+  return "R$ " + (n || 0).toLocaleString("pt-BR", { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+};
+
+// =========================================================================
+// COMPONENTES GRÁFICOS SVG NATIVOS (PROTÓTIPO V2)
+// =========================================================================
+
+// 1. Sparkline (Curva suave com gradiente)
+function Sparkline({ values, color }: { values: number[]; color: string }) {
+  if (!values || values.length === 0) return null;
+  const w = 240;
+  const h = 64;
+  const mx = Math.max(...values);
+  const mn = Math.min(...values);
+  const step = w / Math.max(1, values.length - 1);
+  const range = mx - mn || 1;
+  const points = values.map((y, i) => [i * step, h - 6 - ((y - mn) / range) * (h - 18)]);
+  
+  let d = `M${points[0][0]},${points[0][1]}`;
+  for (let i = 1; i < points.length; i++) {
+    const mid = (points[i - 1][0] + points[i][0]) / 2;
+    d += ` C${mid},${points[i - 1][1]} ${mid},${points[i][1]} ${points[i][0]},${points[i][1]}`;
+  }
+  const id = `spark-${Math.random().toString(36).substring(2, 9)}`;
+
+  return (
+    <svg
+      className="w-[calc(100%+2.25rem)] h-16 -mx-[1.125rem] -mb-4 mt-2 block"
+      viewBox={`0 0 ${w} ${h}`}
+      preserveAspectRatio="none"
+      aria-hidden="true"
+    >
+      <defs>
+        <linearGradient id={id} x1="0" x2="0" y1="0" y2="1">
+          <stop offset="0%" stopColor={color} stopOpacity="0.25" />
+          <stop offset="100%" stopColor={color} stopOpacity="0" />
+        </linearGradient>
+      </defs>
+      <path d={`${d} L${w},${h} L0,${h} Z`} fill={`url(#${id})`} />
+      <path d={d} fill="none" stroke={color} strokeWidth="2" vectorEffect="non-scaling-stroke" />
+    </svg>
+  );
+}
+
+// 2. Medidor Semicircular de SLA (Gauge)
+function Gauge({ ate30, de31a60, acima60 }: { ate30: number; de31a60: number; acima60: number }) {
+  const tot = ate30 + de31a60 + acima60 || 1;
+  const percNoPrazo = (((ate30 + de31a60) / tot) * 100).toFixed(1).replace(".", ",");
+  const seg = [ate30, de31a60, acima60];
+  const cols = ["#0b6b4b", "#e8a317", "#d64545"];
+
+  const pt = (ang: number, r: number) => [
+    100 + r * Math.cos((ang * Math.PI) / 180),
+    100 + r * Math.sin((ang * Math.PI) / 180),
+  ];
+
+  let a = 182;
+  const paths: React.ReactNode[] = [];
+  seg.forEach((s, i) => {
+    if (s <= 0) return;
+    const e = a + (s / tot) * 176;
+    const [x0, y0] = pt(a, 80);
+    const [x1, y1] = pt(e - 2, 80);
+    paths.push(
+      <path
+        key={i}
+        d={`M${x0},${y0} A80,80 0 0 1 ${x1},${y1}`}
+        fill="none"
+        stroke={cols[i]}
+        strokeWidth="20"
+      />
+    );
+    a = e + 2;
+  });
+
+  return (
+    <div className="flex flex-col items-center my-1">
+      <svg viewBox="0 0 200 118" className="w-full max-w-[260px] block my-2 mx-auto" role="img" aria-label="Medidor de SLA">
+        {paths.length > 0 ? (
+          paths
+        ) : (
+          <path d="M20,100 A80,80 0 0 1 180,100" fill="none" stroke="#e6ebe7" strokeWidth="20" />
+        )}
+        <text x="100" y="86" textAnchor="middle" fontSize="26" fontWeight="800" fill="#16241e">
+          {percNoPrazo}%
+        </text>
+        <text x="100" y="104" textAnchor="middle" fontSize="10" fill="#7a8a82">
+          no prazo (SLA)
+        </text>
+      </svg>
+    </div>
+  );
+}
+
+// 3. Gráfico de Barras Duplo de Evolução Mensal
+function EvoMensal({
+  data,
+}: {
+  data: { mes_label: string; abertos: number; concluidos: number }[];
+}) {
+  if (!data || data.length === 0) {
+    return <div className="h-44 flex items-center justify-center text-xs text-[#7a8a82]">Sem dados no período</div>;
+  }
+
+  const maxVal = Math.max(...data.map((d) => Math.max(d.abertos, d.concluidos)), 10);
+  const ceilStep = Math.ceil(maxVal / 4 / 10) * 10 || 25;
+  const yTicks = [0, ceilStep, ceilStep * 2, ceilStep * 3, ceilStep * 4];
+  const maxY = ceilStep * 4;
+  const svgWidth = 420;
+  const svgHeight = 200;
+  const chartBottom = 170;
+  const barScale = 140 / (maxY || 1);
+
+  return (
+    <div className="w-full overflow-x-auto">
+      <svg viewBox={`0 0 ${svgWidth} ${svgHeight}`} className="w-full min-w-[320px] block my-1" role="img" aria-label="Evolução mensal">
+        {yTicks.map((v) => {
+          const y = chartBottom - v * barScale;
+          return (
+            <g key={v}>
+              <line x1="28" x2="415" y1={y} y2={y} stroke="#e6ebe7" strokeDasharray="3 4" />
+              <text x="22" y={y + 3} textAnchor="end" fontSize="9" fill="#7a8a82">
+                {v}
+              </text>
+            </g>
+          );
+        })}
+
+        {data.map((m, i) => {
+          const colWidth = (svgWidth - 60) / data.length;
+          const x = 38 + i * colWidth;
+          const hAb = Math.max(2, m.abertos * barScale);
+          const hCo = Math.max(2, m.concluidos * barScale);
+          const wBar = Math.min(18, colWidth / 2.6);
+
+          return (
+            <g key={i}>
+              {/* Barra Abertos */}
+              <rect
+                x={x}
+                y={chartBottom - hAb}
+                width={wBar}
+                height={hAb}
+                rx="3"
+                fill="#0b6b4b"
+              >
+                <title>{`${m.mes_label} - Abertos: ${m.abertos}`}</title>
+              </rect>
+              {/* Barra Concluídos */}
+              <rect
+                x={x + wBar + 3}
+                y={chartBottom - hCo}
+                width={wBar}
+                height={hCo}
+                rx="3"
+                fill="#9fd356"
+              >
+                <title>{`${m.mes_label} - Concluídos: ${m.concluidos}`}</title>
+              </rect>
+              {/* Rótulo do Mês */}
+              <text x={x + wBar + 1.5} y="188" textAnchor="middle" fontSize="10" fill="#7a8a82">
+                {m.mes_label.split("/")[0]}
+              </text>
+            </g>
+          );
+        })}
+      </svg>
+    </div>
+  );
+}
+
+// 4. Gráfico Donut de Módulos (Recall x Faltas e Sobras)
+function Donut({ recall, faltas }: { recall: number; faltas: number }) {
+  const tot = recall + faltas || 1;
+  const percRecall = Math.round((recall / tot) * 100);
+  const circ = 2 * Math.PI * 44; // ~276.46
+  const recallDash = (percRecall / 100) * circ;
+
+  return (
+    <div className="flex justify-center my-3">
+      <svg viewBox="0 0 120 120" className="w-[150px] h-[150px] block" role="img">
+        <circle cx="60" cy="60" r="44" fill="none" stroke="#bfe3d2" strokeWidth="15" />
+        <circle
+          cx="60"
+          cy="60"
+          r="44"
+          fill="none"
+          stroke="#0b6b4b"
+          strokeWidth="15"
+          strokeLinecap="round"
+          strokeDasharray={`${recallDash} ${circ}`}
+          transform="rotate(-90 60 60)"
+        />
+        <text x="60" y="58" textAnchor="middle" fontSize="22" fontWeight="800" fill="#16241e">
+          {tot}
+        </text>
+        <text x="60" y="73" textAnchor="middle" fontSize="9" fill="#7a8a82">
+          em aberto
+        </text>
+      </svg>
+    </div>
+  );
+}
+
+// =========================================================================
+// COMPONENTE PRINCIPAL: DASHBOARD GERENCIAL V2
+// =========================================================================
 
 export default function DashboardGerencial() {
   const getDataFn = useServerFn(fetchDashboardGerencialData);
@@ -88,859 +264,574 @@ export default function DashboardGerencial() {
   }, [modulo, periodo]);
 
   const kpis = data?.kpis;
+  const sparks = data?.sparklines;
+
+  // Cálculos para proporção de módulos
+  const modRecall = data?.distribuicaoModulos.find((d) => d.modulo === "recall");
+  const modFaltas = data?.distribuicaoModulos.find((d) => d.modulo === "faltas");
+  const recallAbertos = modRecall?.abertos || 0;
+  const faltasAbertos = modFaltas?.abertos || 0;
+  const totMod = recallAbertos + faltasAbertos || 1;
+  const percRec = Math.round((recallAbertos / totMod) * 100);
+  const percFal = 100 - percRec;
 
   return (
-    <div className="min-h-screen bg-[#F4F6F5] text-slate-800 p-4 sm:p-6 lg:p-8 space-y-6 font-sans">
+    <div className="min-h-screen bg-[#f1f4f1] text-[#16241e] font-sans antialiased text-[13px] [font-variant-numeric:tabular-nums]">
       
       {/* ========================================================================= */}
-      {/* 1. CABEÇALHO EXECUTIVO E BARRA DE CONTROLES SOMENTE LEITURA               */}
+      {/* 1. BARRA SUPERIOR (BREADCRUMB + STATUS DO USUÁRIO LEITOR)                 */}
       {/* ========================================================================= */}
-      <header className="bg-white rounded-2xl border border-slate-200/70 p-5 sm:p-6 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col md:flex-row md:items-center justify-between gap-4">
-        <div>
-          <div className="flex items-center gap-2.5">
-            <div className="w-10 h-10 rounded-xl bg-[#20352d] text-white flex items-center justify-center shadow-xs">
-              <Layers className="w-5 h-5 text-emerald-400" />
-            </div>
-            <div>
-              <div className="flex items-center gap-2">
-                <h1 className="text-xl sm:text-2xl font-bold text-slate-900 tracking-tight">
-                  Dashboard Gerencial
-                </h1>
-                <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-slate-100 text-slate-700 border border-slate-200">
-                  <Eye className="w-3 h-3 text-slate-500" />
-                  Somente Leitura
-                </span>
-              </div>
-              <p className="text-xs sm:text-sm text-slate-500 mt-0.5">
-                Indicadores executivos consolidados, SLAs e conformidade operacional
-              </p>
-            </div>
-          </div>
+      <div className="flex justify-between items-center gap-3 px-6 py-3.5 bg-white border-b border-[#e6ebe7] flex-wrap">
+        <div className="text-[#7a8a82] text-[13px]">
+          Operação › <b className="text-[#16241e]">Dashboard</b>
         </div>
-
-        {/* Status de Atualização e Botão de Refresh */}
-        <div className="flex items-center gap-3 self-end md:self-auto">
-          {data?.atualizadoEm && (
-            <span className="text-xs text-slate-400 hidden sm:inline">
-              Atualizado às <strong className="text-slate-600">{data.atualizadoEm}</strong>
-            </span>
-          )}
+        <div className="flex items-center gap-3">
+          <span className="text-[#7a8a82] text-xs flex items-center gap-1.5">
+            <i className="inline-block w-[7px] h-[7px] rounded-full bg-[#58c27d] animate-pulse"></i>
+            Dados atualizados às {data?.atualizadoEm || "..."}
+          </span>
           <button
             type="button"
             onClick={() => carregarDados(modulo, periodo, true)}
             disabled={loading || refreshing}
-            className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 font-semibold text-xs border border-slate-200/80 transition-all cursor-pointer shadow-2xs disabled:opacity-60"
-            title="Atualizar dados do banco"
+            className="p-1 text-[#7a8a82] hover:text-[#0b6b4b] transition-colors disabled:opacity-50 cursor-pointer"
+            title="Atualizar dados agora"
           >
-            <RefreshCcw className={`w-3.5 h-3.5 text-emerald-600 ${refreshing ? "animate-spin" : ""}`} />
-            <span>{refreshing ? "Atualizando..." : "Atualizar"}</span>
+            <RefreshCcw className={`w-3.5 h-3.5 ${refreshing ? "animate-spin" : ""}`} />
           </button>
+          <div className="w-[34px] h-[34px] rounded-full bg-[#0b6b4b] text-white flex items-center justify-center font-bold text-xs shadow-2xs">
+            GR
+          </div>
+          <div>
+            <b className="block text-[12.5px] leading-tight text-[#16241e]">Gerente</b>
+            <span className="text-[11px] text-[#7a8a82]">Somente leitura</span>
+          </div>
         </div>
-      </header>
+      </div>
 
       {/* ========================================================================= */}
-      {/* 2. FILTROS NO TOPO (MÓDULO E PERÍODO)                                     */}
+      {/* 2. CONTEÚDO PRINCIPAL (PAGE WRAPPER)                                      */}
       {/* ========================================================================= */}
-      <section className="bg-white rounded-2xl border border-slate-200/70 p-4 sm:p-5 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col lg:flex-row lg:items-center justify-between gap-4">
+      <div className="p-5 sm:p-6 space-y-4">
         
-        {/* Filtro de Módulo (Segmented Control) */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-            <Filter className="w-3.5 h-3.5 text-slate-400" />
-            Módulo:
-          </span>
-          <div className="inline-flex p-1 bg-slate-100/80 rounded-xl border border-slate-200/60 max-w-full overflow-x-auto gap-1">
-            <button
-              type="button"
-              onClick={() => setModulo("todos")}
-              className={`px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                modulo === "todos"
-                  ? "bg-[#20352d] text-white shadow-xs"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
-              }`}
-            >
-              Todos os Módulos
-            </button>
-            <button
-              type="button"
-              onClick={() => setModulo("recall")}
-              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                modulo === "recall"
-                  ? "bg-[#20352d] text-white shadow-xs"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
-              }`}
-            >
-              <RefreshCcw className="w-3 h-3 text-cyan-400" />
-              <span>Recall</span>
-            </button>
-            <button
-              type="button"
-              onClick={() => setModulo("faltas")}
-              className={`inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                modulo === "faltas"
-                  ? "bg-[#20352d] text-white shadow-xs"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
-              }`}
-            >
-              <Package className="w-3 h-3 text-emerald-400" />
-              <span>Faltas e Sobras</span>
-            </button>
+        {/* Cabeçalho da Página + Filtros Segmentados */}
+        <div className="flex justify-between items-end flex-wrap gap-3">
+          <h1 className="text-[21px] font-bold text-[#16241e] tracking-tight m-0">
+            Visão geral da operação
+          </h1>
+          <div className="flex gap-2.5 flex-wrap">
+            {/* Segmento Módulo */}
+            <div className="inline-flex bg-white border border-[#e6ebe7] rounded-[10px] p-[3px] gap-[2px]">
+              <button
+                type="button"
+                onClick={() => setModulo("todos")}
+                className={`border-0 py-[7px] px-[13px] rounded-[8px] font-semibold text-[13px] cursor-pointer transition-colors ${
+                  modulo === "todos" ? "bg-[#0b6b4b] text-white" : "text-[#7a8a82] hover:text-[#16241e]"
+                }`}
+              >
+                Todos
+              </button>
+              <button
+                type="button"
+                onClick={() => setModulo("recall")}
+                className={`border-0 py-[7px] px-[13px] rounded-[8px] font-semibold text-[13px] cursor-pointer transition-colors ${
+                  modulo === "recall" ? "bg-[#0b6b4b] text-white" : "text-[#7a8a82] hover:text-[#16241e]"
+                }`}
+              >
+                Recall
+              </button>
+              <button
+                type="button"
+                onClick={() => setModulo("faltas")}
+                className={`border-0 py-[7px] px-[13px] rounded-[8px] font-semibold text-[13px] cursor-pointer transition-colors ${
+                  modulo === "faltas" ? "bg-[#0b6b4b] text-white" : "text-[#7a8a82] hover:text-[#16241e]"
+                }`}
+              >
+                Faltas e Sobras
+              </button>
+            </div>
+
+            {/* Segmento Período */}
+            <div className="inline-flex bg-white border border-[#e6ebe7] rounded-[10px] p-[3px] gap-[2px]">
+              <button
+                type="button"
+                onClick={() => setPeriodo("30d")}
+                className={`border-0 py-[7px] px-[13px] rounded-[8px] font-semibold text-[13px] cursor-pointer transition-colors ${
+                  periodo === "30d" ? "bg-[#0b6b4b] text-white" : "text-[#7a8a82] hover:text-[#16241e]"
+                }`}
+              >
+                30 dias
+              </button>
+              <button
+                type="button"
+                onClick={() => setPeriodo("6m")}
+                className={`border-0 py-[7px] px-[13px] rounded-[8px] font-semibold text-[13px] cursor-pointer transition-colors ${
+                  periodo === "6m" ? "bg-[#0b6b4b] text-white" : "text-[#7a8a82] hover:text-[#16241e]"
+                }`}
+              >
+                6 meses
+              </button>
+              <button
+                type="button"
+                onClick={() => setPeriodo("ano")}
+                className={`border-0 py-[7px] px-[13px] rounded-[8px] font-semibold text-[13px] cursor-pointer transition-colors ${
+                  periodo === "ano" ? "bg-[#0b6b4b] text-white" : "text-[#7a8a82] hover:text-[#16241e]"
+                }`}
+              >
+                Este ano
+              </button>
+            </div>
           </div>
         </div>
 
-        {/* Filtro de Período (Segmented Control) */}
-        <div className="flex flex-col sm:flex-row sm:items-center gap-2">
-          <span className="text-xs font-bold text-slate-500 uppercase tracking-wider flex items-center gap-1.5">
-            <Calendar className="w-3.5 h-3.5 text-slate-400" />
-            Período:
-          </span>
-          <div className="inline-flex p-1 bg-slate-100/80 rounded-xl border border-slate-200/60 max-w-full overflow-x-auto gap-1">
-            <button
-              type="button"
-              onClick={() => setPeriodo("30d")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                periodo === "30d"
-                  ? "bg-emerald-700 text-white shadow-xs"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
-              }`}
-            >
-              Últimos 30 dias
-            </button>
-            <button
-              type="button"
-              onClick={() => setPeriodo("6m")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                periodo === "6m"
-                  ? "bg-emerald-700 text-white shadow-xs"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
-              }`}
-            >
-              6 meses
-            </button>
-            <button
-              type="button"
-              onClick={() => setPeriodo("ano")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                periodo === "ano"
-                  ? "bg-emerald-700 text-white shadow-xs"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
-              }`}
-            >
-              Este ano
-            </button>
-            <button
-              type="button"
-              onClick={() => setPeriodo("todos")}
-              className={`px-3 py-1.5 rounded-lg text-xs font-bold transition-all cursor-pointer whitespace-nowrap ${
-                periodo === "todos"
-                  ? "bg-emerald-700 text-white shadow-xs"
-                  : "text-slate-600 hover:text-slate-900 hover:bg-white/60"
-              }`}
-            >
-              Todos
-            </button>
+        {/* Loading ou Erro */}
+        {loading && !data && (
+          <div className="h-64 flex flex-col items-center justify-center gap-3 bg-white border border-[#e6ebe7] rounded-[14px]">
+            <Loader2 className="w-8 h-8 text-[#0b6b4b] animate-spin" />
+            <p className="text-xs font-semibold text-[#7a8a82]">Consolidando métricas e indicadores do Supabase...</p>
           </div>
-        </div>
+        )}
 
-      </section>
+        {error && (
+          <div className="p-4 bg-rose-50 border border-rose-200 rounded-[14px] text-rose-700 text-xs">
+            <strong>Erro:</strong> {error}
+          </div>
+        )}
 
-      {/* ========================================================================= */}
-      {/* ESTADO DE CARREGAMENTO / ERRO                                             */}
-      {/* ========================================================================= */}
-      {loading && !data && (
-        <div className="bg-white rounded-2xl border border-slate-200/70 p-16 text-center shadow-xs flex flex-col items-center justify-center space-y-3">
-          <Loader2 className="w-8 h-8 animate-spin text-emerald-600" />
-          <h3 className="text-base font-bold text-slate-800">Carregando indicadores gerenciais...</h3>
-          <p className="text-xs text-slate-500">Consultando views e agregações SQL no Supabase em tempo real.</p>
-        </div>
-      )}
-
-      {error && !loading && (
-        <div className="bg-rose-50 border border-rose-200 rounded-2xl p-6 text-center space-y-3">
-          <AlertTriangle className="w-8 h-8 text-rose-600 mx-auto" />
-          <h3 className="text-base font-bold text-rose-800">Erro ao carregar dados</h3>
-          <p className="text-xs text-rose-600">{error}</p>
-          <button
-            onClick={() => carregarDados(modulo, periodo)}
-            className="px-4 py-2 bg-rose-600 hover:bg-rose-700 text-white rounded-xl text-xs font-bold transition-colors shadow-xs cursor-pointer"
-          >
-            Tentar Novamente
-          </button>
-        </div>
-      )}
-
-      {data && (
-        <>
-          {/* ========================================================================= */}
-          {/* 3. CARTÕES DE INDICADORES (KPIS)                                          */}
-          {/* ========================================================================= */}
-          <section className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4">
+        {/* Layout Grid Principal: Coluna Principal + Coluna Direita (300px) */}
+        {data && (
+          <div className="grid grid-cols-1 xl:grid-cols-[minmax(0,1fr)_300px] gap-4 items-start">
             
-            {/* KPI 1: Chamados em Aberto */}
-            <div className="bg-white rounded-2xl border border-slate-200/70 p-4 sm:p-5 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col justify-between relative overflow-hidden">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                  Em Aberto
-                </span>
-                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-100">
-                  <Inbox className="w-4 h-4 text-emerald-600" />
-                </div>
-              </div>
-              <div>
-                <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-                  {kpis?.total_abertos ?? 0}
-                </div>
-                <div className="flex items-center gap-1 mt-1.5">
-                  {(kpis?.variacao_vs_mes_anterior ?? 0) <= 0 ? (
-                    <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
-                      <TrendingDown className="w-3 h-3" />
-                      {Math.abs(kpis?.variacao_vs_mes_anterior ?? 0)}%
-                    </span>
-                  ) : (
-                    <span className="inline-flex items-center gap-0.5 px-2 py-0.5 rounded-full text-[10px] font-bold bg-amber-50 text-amber-700 border border-amber-200/60">
-                      <TrendingUp className="w-3 h-3" />
-                      +{kpis?.variacao_vs_mes_anterior}%
-                    </span>
-                  )}
-                  <span className="text-[11px] text-slate-400">vs. mês ant.</span>
-                </div>
-              </div>
-            </div>
-
-            {/* KPI 2: Valor Total em Aberto */}
-            <div className="bg-white rounded-2xl border border-slate-200/70 p-4 sm:p-5 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col justify-between relative overflow-hidden">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                  Valor em Aberto
-                </span>
-                <div className="w-8 h-8 rounded-xl bg-amber-50 text-amber-700 flex items-center justify-center border border-amber-100">
-                  <Banknote className="w-4 h-4 text-amber-600" />
-                </div>
-              </div>
-              <div>
-                <div className="text-xl sm:text-2xl font-extrabold text-slate-900 tracking-tight truncate">
-                  {formatarMoedaBR(kpis?.valor_total_aberto ?? 0, { showZero: true })}
-                </div>
-                <p className="text-[11px] text-slate-400 mt-1">Montante financeiro pendente</p>
-              </div>
-            </div>
-
-            {/* KPI 3: SLA Estourado */}
-            <div className="bg-white rounded-2xl border border-slate-200/70 p-4 sm:p-5 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col justify-between relative overflow-hidden">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                  SLA Estourado
-                </span>
-                <div className="w-8 h-8 rounded-xl bg-rose-50 text-rose-700 flex items-center justify-center border border-rose-100">
-                  <AlertTriangle className="w-4 h-4 text-rose-600" />
-                </div>
-              </div>
-              <div>
-                <div className="flex items-baseline gap-2">
-                  <span className="text-2xl sm:text-3xl font-extrabold text-rose-600 tracking-tight">
-                    {kpis?.total_sla_estourado ?? 0}
-                  </span>
-                  <span className="text-xs font-bold text-rose-500">
-                    ({kpis?.perc_sla_estourado ?? 0}%)
-                  </span>
-                </div>
-                <div className="mt-1 flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-rose-500" />
-                  <span className="text-[11px] font-semibold text-rose-600">Acima de 60 dias</span>
-                </div>
-              </div>
-            </div>
-
-            {/* KPI 4: Concluídos no Mês */}
-            <div className="bg-white rounded-2xl border border-slate-200/70 p-4 sm:p-5 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col justify-between relative overflow-hidden">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                  Concluídos no Mês
-                </span>
-                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-100">
-                  <CheckCircle2 className="w-4 h-4 text-emerald-600" />
-                </div>
-              </div>
-              <div>
-                <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-                  {kpis?.concluidos_mes_atual ?? 0}
-                </div>
-                <p className="text-[11px] text-slate-400 mt-1">Finalizados no mês corrente</p>
-              </div>
-            </div>
-
-            {/* KPI 5: Tempo Médio de Resolução */}
-            <div className="bg-white rounded-2xl border border-slate-200/70 p-4 sm:p-5 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col justify-between relative overflow-hidden">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider truncate">
-                  Tempo Resolução
-                </span>
-                <div className="w-8 h-8 rounded-xl bg-sky-50 text-sky-700 flex items-center justify-center border border-sky-100">
-                  <Clock className="w-4 h-4 text-sky-600" />
-                </div>
-              </div>
-              <div>
-                <div className="text-2xl sm:text-3xl font-extrabold text-slate-900 tracking-tight">
-                  {kpis?.tempo_medio_resolucao_dias ?? 0} <span className="text-sm font-semibold text-slate-500">dias</span>
-                </div>
-                <p className="text-[11px] text-slate-400 mt-1">Ciclo médio de atendimento</p>
-              </div>
-            </div>
-
-            {/* KPI 6: % Dentro do Prazo */}
-            <div className="bg-white rounded-2xl border border-slate-200/70 p-4 sm:p-5 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col justify-between relative overflow-hidden">
-              <div className="flex items-center justify-between mb-2">
-                <span className="text-[11px] font-bold text-slate-500 uppercase tracking-wider">
-                  No Prazo (SLA)
-                </span>
-                <div className="w-8 h-8 rounded-xl bg-emerald-50 text-emerald-700 flex items-center justify-center border border-emerald-100">
-                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
-                </div>
-              </div>
-              <div>
-                <div className="text-2xl sm:text-3xl font-extrabold text-emerald-700 tracking-tight">
-                  {kpis?.perc_dentro_do_prazo ?? 0}%
-                </div>
-                <div className="mt-1 flex items-center gap-1.5">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500" />
-                  <span className="text-[11px] font-semibold text-emerald-700">Resolvidos ≤ 60d</span>
-                </div>
-              </div>
-            </div>
-
-          </section>
-
-          {/* ========================================================================= */}
-          {/* 4. GRÁFICOS PRINCIPAIS: EVOLUÇÃO MENSAL E DISTRIBUIÇÃO                    */}
-          {/* ========================================================================= */}
-          <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            
-            {/* GRÁFICO 1: EVOLUÇÃO MENSAL (ABERTOS X CONCLUÍDOS) */}
-            <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/70 p-5 sm:p-6 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col justify-between">
-              <div className="flex items-center justify-between mb-4 pb-3 border-b border-slate-100">
-                <div>
-                  <h2 className="text-base font-bold text-slate-900 tracking-tight">
-                    Evolução Mensal: Abertos vs Concluídos
-                  </h2>
-                  <p className="text-xs text-slate-500">
-                    Comparativo histórico de novas entradas versus resoluções por mês
-                  </p>
-                </div>
-                <div className="flex items-center gap-4 text-xs font-semibold">
-                  <span className="inline-flex items-center gap-1.5 text-slate-600">
-                    <span className="w-3 h-3 rounded-sm bg-[#047857]" />
-                    Abertos
-                  </span>
-                  <span className="inline-flex items-center gap-1.5 text-slate-600">
-                    <span className="w-3 h-3 rounded-sm bg-[#0284c7]" />
-                    Concluídos
-                  </span>
-                </div>
-              </div>
-
-              <div className="h-64 sm:h-72 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={data.evolucaoMensal}
-                    margin={{ top: 15, right: 10, left: -15, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="2 2" vertical={false} stroke="#e2e8f0" />
-                    <XAxis
-                      dataKey="mes_label"
-                      tick={{ fontSize: 11, fill: "#64748b", fontWeight: 600 }}
-                    />
-                    <YAxis tick={{ fontSize: 10, fill: "#64748b" }} domain={[0, "auto"]} />
-                    <Tooltip
-                      cursor={{ fill: "rgba(4, 120, 87, 0.05)" }}
-                      content={({ active, payload }) => {
-                        if (active && payload && payload.length) {
-                          const d = payload[0].payload;
-                          return (
-                            <div className="bg-slate-900 text-white p-3 rounded-xl text-xs shadow-lg space-y-1.5 min-w-[140px]">
-                              <p className="font-bold border-b border-slate-700 pb-1">{d.mes_label}</p>
-                              <div className="flex justify-between items-center text-emerald-400">
-                                <span>Abertos:</span>
-                                <strong>{d.abertos}</strong>
-                              </div>
-                              <div className="flex justify-between items-center text-sky-400">
-                                <span>Concluídos:</span>
-                                <strong>{d.concluidos}</strong>
-                              </div>
-                            </div>
-                          );
-                        }
-                        return null;
-                      }}
-                    />
-                    <Bar
-                      dataKey="abertos"
-                      name="Abertos"
-                      fill="#047857"
-                      radius={[4, 4, 0, 0]}
-                      barSize={18}
-                    />
-                    <Bar
-                      dataKey="concluidos"
-                      name="Concluídos"
-                      fill="#0284c7"
-                      radius={[4, 4, 0, 0]}
-                      barSize={18}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                <span>Total de movimentações no período selecionado</span>
-                <span className="font-bold text-slate-700">
-                  {kpis?.total_chamados_periodo ?? 0} chamados no escopo
-                </span>
-              </div>
-            </div>
-
-            {/* GRÁFICO 2: DISTRIBUIÇÃO RECALL X FALTAS E SOBRAS (DONUT) */}
-            <div className="bg-white rounded-2xl border border-slate-200/70 p-5 sm:p-6 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col justify-between">
-              <div className="mb-2 pb-3 border-b border-slate-100">
-                <h2 className="text-base font-bold text-slate-900 tracking-tight">
-                  Distribuição por Módulo
-                </h2>
-                <p className="text-xs text-slate-500">
-                  Proporção de chamados ativos entre os módulos
-                </p>
-              </div>
-
-              <div className="h-48 w-full relative flex items-center justify-center">
-                <ResponsiveContainer width="100%" height="100%">
-                  <PieChart>
-                    <Pie
-                      data={data.distribuicaoModulos}
-                      dataKey="abertos"
-                      nameKey="label"
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={55}
-                      outerRadius={75}
-                      paddingAngle={4}
-                    >
-                      {data.distribuicaoModulos.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.fill} />
-                      ))}
-                    </Pie>
-                    <Tooltip
-                      content={({ active, payload }) => {
-                        if (active && payload && payload.length) {
-                          const d = payload[0].payload;
-                          return (
-                            <div className="bg-slate-900 text-white p-2.5 rounded-xl text-xs shadow-lg space-y-1">
-                              <p className="font-bold text-white border-b border-slate-700 pb-1">{d.label}</p>
-                              <p>Em Aberto: <strong>{d.abertos}</strong> ({d.percentual}%)</p>
-                              <p className="text-emerald-400 font-mono">
-                                {formatarMoedaBR(d.valor_aberto, { showZero: true })}
-                              </p>
-                            </div>
-                          );
-                        }
-                        return null;
-                      }}
-                    />
-                  </PieChart>
-                </ResponsiveContainer>
-                {/* Texto Central do Donut */}
-                <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none">
-                  <span className="text-2xl font-black text-slate-900">{kpis?.total_abertos ?? 0}</span>
-                  <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider">Abertos</span>
-                </div>
-              </div>
-
-              {/* Legenda Customizada */}
-              <div className="space-y-2.5 pt-3 border-t border-slate-100">
-                {data.distribuicaoModulos.map((m) => (
-                  <div key={m.modulo} className="flex items-center justify-between text-xs">
-                    <div className="flex items-center gap-2">
-                      <span className="w-2.5 h-2.5 rounded-full" style={{ backgroundColor: m.fill }} />
-                      <span className="font-semibold text-slate-700">{m.label}</span>
+            {/* ========================================================================= */}
+            {/* COLUNA ESQUERDA (PRINCIPAL)                                               */}
+            {/* ========================================================================= */}
+            <div className="flex flex-col gap-4 min-w-0">
+              
+              {/* 1. Três cartões de indicador (k3) */}
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                
+                {/* KPI 1: Chamados em aberto */}
+                <div className="bg-white border border-[#e6ebe7] rounded-[14px] p-4 pb-0 relative overflow-hidden shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                  <div className="flex justify-between items-start gap-2">
+                    <div>
+                      <h3 className="m-0 text-[13.5px] font-bold text-[#16241e]">Chamados em aberto</h3>
+                      <div className="text-[#7a8a82] text-[11.5px] mt-0.5">Total ainda sem encerramento</div>
                     </div>
-                    <div className="flex items-center gap-2">
-                      <span className="font-mono text-slate-500">{formatarMoedaBR(m.valor_aberto, { showZero: true })}</span>
-                      <span className="font-bold text-slate-900 bg-slate-100 px-2 py-0.5 rounded-md text-[11px]">
-                        {m.abertos} ({m.percentual}%)
-                      </span>
+                    <span
+                      className={`text-[11px] font-bold py-[3px] px-2 rounded-[6px] whitespace-nowrap ${
+                        (kpis?.variacao_vs_mes_anterior || 0) <= 0
+                          ? "bg-[#e8f4ee] text-[#0b6b4b]"
+                          : "bg-[#fbe6e6] text-[#d64545]"
+                      }`}
+                    >
+                      {(kpis?.variacao_vs_mes_anterior || 0) <= 0 ? "▼" : "▲"}{" "}
+                      {Math.abs(kpis?.variacao_vs_mes_anterior || 0).toFixed(1).replace(".", ",")}%
+                    </span>
+                  </div>
+                  <div className="text-[26px] font-extrabold text-[#16241e] mt-3 tracking-tight">
+                    {kpis?.total_abertos || 0}{" "}
+                    <small className="text-[13px] font-semibold text-[#7a8a82]">chamados</small>
+                  </div>
+                  <Sparkline values={sparks?.abertos || []} color="#0b6b4b" />
+                </div>
+
+                {/* KPI 2: Valor em aberto */}
+                <div className="bg-white border border-[#e6ebe7] rounded-[14px] p-4 pb-0 relative overflow-hidden shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                  <div className="flex justify-between items-start gap-2">
+                    <div>
+                      <h3 className="m-0 text-[13.5px] font-bold text-[#16241e]">Valor em aberto</h3>
+                      <div className="text-[#7a8a82] text-[11.5px] mt-0.5">Montante financeiro pendente</div>
+                    </div>
+                    <span
+                      className={`text-[11px] font-bold py-[3px] px-2 rounded-[6px] whitespace-nowrap ${
+                        (kpis?.variacao_valor_vs_mes_anterior || 0) <= 0
+                          ? "bg-[#e8f4ee] text-[#0b6b4b]"
+                          : "bg-[#fbe6e6] text-[#d64545]"
+                      }`}
+                    >
+                      {(kpis?.variacao_valor_vs_mes_anterior || 0) <= 0 ? "▼" : "▲"}{" "}
+                      {Math.abs(kpis?.variacao_valor_vs_mes_anterior || 0).toFixed(1).replace(".", ",")}%
+                    </span>
+                  </div>
+                  <div className="text-[26px] font-extrabold text-[#16241e] mt-3 tracking-tight">
+                    {brl(kpis?.valor_total_aberto || 0)}
+                  </div>
+                  <Sparkline values={sparks?.valor || []} color="#2f9a74" />
+                </div>
+
+                {/* KPI 3: SLA estourado */}
+                <div className="bg-white border border-[#e6ebe7] rounded-[14px] p-4 pb-0 relative overflow-hidden shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                  <div className="flex justify-between items-start gap-2">
+                    <div>
+                      <h3 className="m-0 text-[13.5px] font-bold text-[#16241e]">SLA estourado</h3>
+                      <div className="text-[#7a8a82] text-[11.5px] mt-0.5">Acima de 60 dias</div>
+                    </div>
+                    <span className="text-[11px] font-bold py-[3px] px-2 rounded-[6px] whitespace-nowrap bg-[#fbe6e6] text-[#d64545]">
+                      {kpis?.perc_sla_estourado || 0}%
+                    </span>
+                  </div>
+                  <div className="text-[26px] font-extrabold text-[#16241e] mt-3 tracking-tight">
+                    {kpis?.total_sla_estourado || 0}{" "}
+                    <small className="text-[13px] font-semibold text-[#7a8a82]">chamados</small>
+                  </div>
+                  <Sparkline values={sparks?.sla || []} color="#d64545" />
+                </div>
+
+              </div>
+
+              {/* 2. Dois cards: Prazo (Gauge) x Evolução Mensal */}
+              <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.25fr] gap-4">
+                
+                {/* Chamados dentro do prazo */}
+                <div className="bg-white border border-[#e6ebe7] rounded-[14px] p-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                  <div className="flex justify-between items-start gap-2">
+                    <div>
+                      <h3 className="m-0 text-[13.5px] font-bold text-[#16241e]">Chamados dentro do prazo</h3>
+                      <div className="text-[#7a8a82] text-[11.5px] mt-0.5">Meta: 85% resolvidos em até 60 dias</div>
                     </div>
                   </div>
-                ))}
-              </div>
-            </div>
 
-          </section>
+                  <Gauge
+                    ate30={kpis?.sla_ate_30d || 0}
+                    de31a60={kpis?.sla_31_a_60d || 0}
+                    acima60={kpis?.sla_acima_60d || 0}
+                  />
 
-          {/* ========================================================================= */}
-          {/* 5. SEGUNDA LINHA: TAREFAS ATUAIS E IDADE DOS CHAMADOS                     */}
-          {/* ========================================================================= */}
-          <section className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-
-            {/* GRÁFICO 3: CHAMADOS POR TAREFA ATUAL */}
-            <div className="bg-white rounded-2xl border border-slate-200/70 p-5 sm:p-6 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col justify-between">
-              <div className="mb-4 pb-3 border-b border-slate-100">
-                <h2 className="text-base font-bold text-slate-900 tracking-tight">
-                  Chamados por Tarefa Atual
-                </h2>
-                <p className="text-xs text-slate-500">
-                  Etapa onde os chamados em aberto estão estacionados
-                </p>
-              </div>
-
-              <div className="h-64 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    layout="vertical"
-                    data={data.tarefas.slice(0, 7)}
-                    margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="2 2" horizontal={false} stroke="#e2e8f0" />
-                    <XAxis type="number" tick={{ fontSize: 10, fill: "#64748b" }} />
-                    <YAxis
-                      type="category"
-                      dataKey="tarefa"
-                      tick={{ fontSize: 10, fill: "#475569", fontWeight: 600 }}
-                      width={160}
-                      tickFormatter={(v) => (v.length > 24 ? `${v.substring(0, 22)}...` : v)}
-                    />
-                    <Tooltip
-                      content={({ active, payload }) => {
-                        if (active && payload && payload.length) {
-                          const d = payload[0].payload;
-                          return (
-                            <div className="bg-slate-900 text-white p-2.5 rounded-xl text-xs shadow-lg space-y-1">
-                              <p className="font-bold border-b border-slate-700 pb-1">{d.tarefa}</p>
-                              <p>Total em Aberto: <strong>{d.total}</strong> chamados</p>
-                              <p className="text-emerald-400 font-mono">
-                                {formatarMoedaBR(d.valor_total, { showZero: true })}
-                              </p>
-                            </div>
-                          );
-                        }
-                        return null;
-                      }}
-                    />
-                    <Bar
-                      dataKey="total"
-                      fill="#20352d"
-                      radius={[0, 6, 6, 0]}
-                      barSize={16}
-                    />
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 flex items-center justify-between text-xs text-slate-500">
-                <span>Concentração por etapa de fluxo</span>
-                <span className="font-bold text-slate-700">{data.tarefas.length} tarefas com pendências</span>
-              </div>
-            </div>
-
-            {/* GRÁFICO 4: IDADE DOS CHAMADOS POR FAIXA (SLA) */}
-            <div className="bg-white rounded-2xl border border-slate-200/70 p-5 sm:p-6 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col justify-between">
-              <div className="mb-4 pb-3 border-b border-slate-100">
-                <h2 className="text-base font-bold text-slate-900 tracking-tight">
-                  Idade dos Chamados em Aberto
-                </h2>
-                <p className="text-xs text-slate-500">
-                  Distribuição temporal dos chamados por faixas de dias em aberto
-                </p>
-              </div>
-
-              <div className="h-64 w-full">
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart
-                    data={data.faixasIdade}
-                    margin={{ top: 20, right: 15, left: -20, bottom: 5 }}
-                  >
-                    <CartesianGrid strokeDasharray="2 2" vertical={false} stroke="#e2e8f0" />
-                    <XAxis
-                      dataKey="label"
-                      tick={{ fontSize: 11, fill: "#475569", fontWeight: 600 }}
-                    />
-                    <YAxis tick={{ fontSize: 10, fill: "#64748b" }} domain={[0, "auto"]} />
-                    <Tooltip
-                      content={({ active, payload }) => {
-                        if (active && payload && payload.length) {
-                          const d = payload[0].payload;
-                          return (
-                            <div className="bg-slate-900 text-white p-2.5 rounded-xl text-xs shadow-lg space-y-1">
-                              <p className="font-bold border-b border-slate-700 pb-1">{d.label}</p>
-                              <p>{d.dias_label}</p>
-                              <p className="text-emerald-400">Total: <strong>{d.quantidade}</strong> chamados ({d.percentual}%)</p>
-                            </div>
-                          );
-                        }
-                        return null;
-                      }}
-                    />
-                    <Bar
-                      dataKey="quantidade"
-                      radius={[6, 6, 0, 0]}
-                      barSize={32}
-                    >
-                      {data.faixasIdade.map((f) => (
-                        <Cell key={f.faixa} fill={f.color} />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 grid grid-cols-2 sm:grid-cols-4 gap-2 text-center text-xs">
-                {data.faixasIdade.map((f) => (
-                  <div key={f.faixa} className="p-2 rounded-xl bg-slate-50 border border-slate-100">
-                    <span className="text-[10px] font-bold text-slate-400 block">{f.label}</span>
-                    <strong className="text-sm font-extrabold text-slate-900">{f.quantidade}</strong>
-                    <span className="text-[10px] text-slate-500 block">({f.percentual}%)</span>
+                  <div className="flex justify-between items-center gap-2 py-2 border-t border-[#e6ebe7] text-[12.5px]">
+                    <span className="text-[#16241e]">Dentro do prazo (até 30d)</span>
+                    <b className="font-bold text-[#16241e]">{kpis?.sla_ate_30d || 0}</b>
                   </div>
-                ))}
-              </div>
-            </div>
-
-          </section>
-
-          {/* ========================================================================= */}
-          {/* 6. TERCEIRA LINHA: TOP 6 LOJAS E CHAMADOS POR CD                          */}
-          {/* ========================================================================= */}
-          <section className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-
-            {/* TOP 6 LOJAS POR VALOR EM ABERTO (2 colunas) */}
-            <div className="lg:col-span-2 bg-white rounded-2xl border border-slate-200/70 p-5 sm:p-6 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col justify-between">
-              <div className="mb-4 pb-3 border-b border-slate-100 flex items-center justify-between">
-                <div>
-                  <h2 className="text-base font-bold text-slate-900 tracking-tight">
-                    Top 6 Lojas por Valor em Aberto
-                  </h2>
-                  <p className="text-xs text-slate-500">
-                    Lojas com maior impacto financeiro pendente de resolução
-                  </p>
+                  <div className="flex justify-between items-center gap-2 py-2 border-t border-[#e6ebe7] text-[12.5px]">
+                    <span className="text-[#16241e]">Atenção (31 a 60d)</span>
+                    <b className="font-bold text-[#16241e]">{kpis?.sla_31_a_60d || 0}</b>
+                  </div>
+                  <div className="flex justify-between items-center gap-2 py-2 border-t border-[#e6ebe7] text-[12.5px]">
+                    <span className="text-[#16241e]">Estourado (+60d)</span>
+                    <b className="font-bold text-[#d64545]">{kpis?.sla_acima_60d || 0}</b>
+                  </div>
                 </div>
-                <span className="text-xs font-semibold text-slate-400">
-                  Ranking Financeiro
-                </span>
-              </div>
 
-              <div className="space-y-3">
-                {data.topLojas.length === 0 ? (
-                  <p className="text-xs text-slate-400 py-6 text-center">Nenhuma loja com pendências registradas.</p>
-                ) : (
-                  data.topLojas.map((loja, idx) => (
-                    <div
-                      key={loja.loja}
-                      className="p-3 rounded-xl border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors"
-                    >
-                      <div className="flex items-center justify-between text-xs mb-1.5">
-                        <div className="flex items-center gap-2">
-                          <span className={`w-5 h-5 rounded-full flex items-center justify-center text-[10px] font-bold ${
-                            idx === 0
-                              ? "bg-amber-100 text-amber-800"
-                              : idx === 1
-                              ? "bg-slate-200 text-slate-700"
-                              : idx === 2
-                              ? "bg-amber-50 text-amber-900"
-                              : "bg-slate-100 text-slate-600"
-                          }`}>
-                            #{idx + 1}
-                          </span>
-                          <span className="font-bold text-slate-900">Loja {loja.loja}</span>
-                          <span className="inline-block px-2 py-0.5 rounded-full text-[10px] font-semibold bg-emerald-50 text-emerald-700 border border-emerald-200/60">
-                            {loja.tipo}
-                          </span>
-                        </div>
-                        <div className="flex items-center gap-3">
-                          <span className="text-slate-500">{loja.total_chamados} chamados</span>
-                          <span className="font-bold font-mono text-slate-900">
-                            {formatarMoedaBR(loja.valor_total, { showZero: true })}
-                          </span>
-                        </div>
+                {/* Evolução mensal */}
+                <div className="bg-white border border-[#e6ebe7] rounded-[14px] p-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)] flex flex-col justify-between">
+                  <div>
+                    <div className="flex justify-between items-start gap-2 flex-wrap mb-2">
+                      <div>
+                        <h3 className="m-0 text-[13.5px] font-bold text-[#16241e]">Evolução mensal</h3>
+                        <div className="text-[#7a8a82] text-[11.5px] mt-0.5">Chamados abertos x concluídos</div>
                       </div>
-                      {/* Barra de Progresso Proporcional */}
-                      <div className="w-full h-1.5 rounded-full bg-slate-200 overflow-hidden">
-                        <div
-                          className="h-full rounded-full bg-emerald-600"
-                          style={{ width: `${Math.max(8, loja.percentual_do_max)}%` }}
-                        />
-                      </div>
-                    </div>
-                  ))
-                )}
-              </div>
-
-              <div className="pt-3 border-t border-slate-100 text-xs text-slate-500 flex justify-between items-center">
-                <span>Concentração dos maiores valores retidos</span>
-                <span className="font-semibold text-slate-700">6 maiores lojas</span>
-              </div>
-            </div>
-
-            {/* CHAMADOS POR CD (1 coluna) */}
-            <div className="bg-white rounded-2xl border border-slate-200/70 p-5 sm:p-6 shadow-[0_2px_10px_rgba(0,0,0,0.03)] flex flex-col justify-between">
-              <div className="mb-4 pb-3 border-b border-slate-100">
-                <h2 className="text-base font-bold text-slate-900 tracking-tight">
-                  Chamados por Centro de Distribuição
-                </h2>
-                <p className="text-xs text-slate-500">
-                  Distribuição geográfica das ocorrências
-                </p>
-              </div>
-
-              <div className="space-y-3">
-                {data.cds.map((c) => (
-                  <div
-                    key={c.cd}
-                    className="p-3.5 rounded-xl border border-slate-100 bg-slate-50/50 space-y-2"
-                  >
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="w-7 h-7 rounded-lg bg-emerald-100 text-emerald-800 flex items-center justify-center font-bold text-xs">
-                          {c.cd}
-                        </div>
-                        <div>
-                          <span className="text-xs font-bold text-slate-900 block">CD {c.cd}</span>
-                          <span className="text-[10px] text-slate-400">Total histórico: {c.total_chamados}</span>
-                        </div>
-                      </div>
-                      <div className="text-right">
-                        <span className="text-xs font-bold text-slate-900 block">{c.total_abertos} abertos</span>
-                        <span className="text-[11px] font-mono text-emerald-700 font-semibold block">
-                          {formatarMoedaBR(c.valor_aberto, { showZero: true })}
+                      <div className="flex gap-3 text-[11.5px] text-[#7a8a82]">
+                        <span className="flex items-center gap-1.5">
+                          <i className="inline-block w-[9px] h-[9px] rounded-[3px] bg-[#0b6b4b]"></i>
+                          Abertos
+                        </span>
+                        <span className="flex items-center gap-1.5">
+                          <i className="inline-block w-[9px] h-[9px] rounded-[3px] bg-[#9fd356]"></i>
+                          Concluídos
                         </span>
                       </div>
                     </div>
+
+                    <EvoMensal data={data.evolucaoMensal} />
                   </div>
-                ))}
+                </div>
+
               </div>
 
-              <div className="pt-3 border-t border-slate-100 text-xs text-slate-500 flex justify-between items-center">
-                <span>Centros operacionais ativos</span>
-                <span className="font-bold text-slate-700">{data.cds.length} CDs</span>
-              </div>
-            </div>
-
-          </section>
-
-          {/* ========================================================================= */}
-          {/* 7. TABELA: CHAMADOS EM ABERTO MAIS ANTIGOS (COM LINK PARA CONSULTA)       */}
-          {/* ========================================================================= */}
-          <section className="bg-white rounded-2xl border border-slate-200/70 shadow-[0_2px_10px_rgba(0,0,0,0.03)] overflow-hidden">
-            <div className="p-5 sm:p-6 border-b border-slate-100 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div>
-                <div className="flex items-center gap-2">
-                  <h2 className="text-base font-bold text-slate-900 tracking-tight">
-                    Chamados em Aberto Mais Antigos
-                  </h2>
-                  <span className="inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-bold bg-rose-50 text-rose-700 border border-rose-200/60">
-                    Atenção Prioritária
+              {/* 3. Tabela: Chamados Críticos */}
+              <div className="bg-white border border-[#e6ebe7] rounded-[14px] p-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                <div className="flex justify-between items-start gap-2 mb-3">
+                  <div>
+                    <h3 className="m-0 text-[13.5px] font-bold text-[#16241e]">Chamados críticos</h3>
+                    <div className="text-[#7a8a82] text-[11.5px] mt-0.5">Em aberto há mais tempo, ordenados por SLA</div>
+                  </div>
+                  <span className="text-[11px] font-bold py-[3px] px-2 rounded-[6px] whitespace-nowrap bg-[#fbe6e6] text-[#d64545]">
+                    {kpis?.total_acima_45d || 0} acima de 45 dias
                   </span>
                 </div>
-                <p className="text-xs text-slate-500 mt-0.5">
-                  Lista dos 10 chamados com maior tempo em aberto sem finalização
-                </p>
+
+                <div className="overflow-x-auto">
+                  <table className="w-full border-collapse min-w-[640px] text-left">
+                    <thead>
+                      <tr>
+                        <th className="text-[11px] text-[#7a8a82] font-semibold p-2.5 bg-[#f6f9f7] border-b border-[#e6ebe7]">Chamado</th>
+                        <th className="text-[11px] text-[#7a8a82] font-semibold p-2.5 bg-[#f6f9f7] border-b border-[#e6ebe7]">Loja</th>
+                        <th className="text-[11px] text-[#7a8a82] font-semibold p-2.5 bg-[#f6f9f7] border-b border-[#e6ebe7]">Tarefa atual</th>
+                        <th className="text-[11px] text-[#7a8a82] font-semibold p-2.5 bg-[#f6f9f7] border-b border-[#e6ebe7]">Status</th>
+                        <th className="text-[11px] text-[#7a8a82] font-semibold p-2.5 bg-[#f6f9f7] border-b border-[#e6ebe7]">Abertura</th>
+                        <th className="text-[11px] text-[#7a8a82] font-semibold p-2.5 bg-[#f6f9f7] border-b border-[#e6ebe7] w-[170px]">SLA (limite 60d)</th>
+                        <th className="text-[11px] text-[#7a8a82] font-semibold p-2.5 bg-[#f6f9f7] border-b border-[#e6ebe7] text-right">Valor</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {data.chamadosCriticos.length === 0 ? (
+                        <tr>
+                          <td colSpan={7} className="text-center py-6 text-xs text-[#7a8a82]">
+                            Nenhum chamado crítico em aberto neste módulo
+                          </td>
+                        </tr>
+                      ) : (
+                        data.chamadosCriticos.map((c) => {
+                          const percSla = Math.min(100, Math.round((c.dias_aberto / 60) * 100));
+                          const barColor =
+                            c.dias_aberto > 60
+                              ? "#d64545"
+                              : c.dias_aberto > 45
+                              ? "#e0762f"
+                              : c.dias_aberto > 30
+                              ? "#e8a317"
+                              : "#0b6b4b";
+
+                          return (
+                            <tr key={c.id} className="border-b border-[#e6ebe7] last:border-b-0 hover:bg-[#f6f9f7]/50 transition-colors">
+                              <td className="p-2.5 text-[12.5px]">
+                                <Link
+                                  to="/consulta"
+                                  search={{ chamado: c.chamado }}
+                                  className="font-bold text-[#0b6b4b] hover:underline"
+                                  title="Abrir chamado na Consulta"
+                                >
+                                  {c.chamado}
+                                </Link>
+                              </td>
+                              <td className="p-2.5 text-[12.5px] text-[#16241e]">{c.loja}</td>
+                              <td className="p-2.5 text-[12.5px] text-[#16241e] max-w-[200px] truncate" title={c.tarefa_atual}>
+                                {c.tarefa_atual}
+                              </td>
+                              <td className="p-2.5 text-[12.5px]">
+                                <span
+                                  className={`py-[3px] px-2 rounded-[6px] text-[11px] font-semibold ${
+                                    c.status_chamado.toLowerCase().includes("aprov") ||
+                                    c.status_chamado.toLowerCase().includes("concl")
+                                      ? "bg-[#e8f4ee] text-[#0b6b4b]"
+                                      : "bg-[#fdf1d3] text-[#9a6a00]"
+                                  }`}
+                                >
+                                  {c.status_chamado}
+                                </span>
+                              </td>
+                              <td className="p-2.5 text-[12.5px] text-[#16241e]">{fmtBR(c.dt_abertura)}</td>
+                              <td className="p-2.5 text-[12.5px]">
+                                <div className="flex items-center gap-2">
+                                  <div className="flex-1 h-[6px] bg-[#f6f9f7] rounded-[4px] overflow-hidden min-w-[70px]">
+                                    <div
+                                      className="h-full rounded-[4px]"
+                                      style={{ width: `${percSla}%`, backgroundColor: barColor }}
+                                    ></div>
+                                  </div>
+                                  <span className="text-[11px] text-[#7a8a82] w-[30px] text-right">
+                                    {c.dias_aberto}d
+                                  </span>
+                                </div>
+                              </td>
+                              <td className="p-2.5 text-[12.5px] text-right font-bold text-[#16241e]">
+                                {brl(c.valor)}
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
               </div>
 
-              <span className="text-xs text-slate-400">
-                Ordenado por data de abertura (mais antigo primeiro)
-              </span>
+              {/* 4. Dois cards: Tarefas (Onde estão parados) x Lojas (Valor em aberto) */}
+              <div className="grid grid-cols-1 lg:grid-cols-[1fr_1.25fr] gap-4">
+                
+                {/* Onde os chamados estão parados */}
+                <div className="bg-white border border-[#e6ebe7] rounded-[14px] p-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                  <h3 className="m-0 text-[13.5px] font-bold text-[#16241e]">Onde os chamados estão parados</h3>
+                  <div className="text-[#7a8a82] text-[11.5px] mt-0.5 mb-3">Quantidade por tarefa atual e idade média</div>
+
+                  <div className="space-y-3">
+                    {data.tarefas.map((t, idx) => {
+                      const maxT = data.tarefas[0]?.total || 1;
+                      const percW = Math.round((t.total / maxT) * 100);
+                      const badgeCls =
+                        t.idade_media_dias > 45
+                          ? "bg-[#fbe6e6] text-[#d64545]"
+                          : t.idade_media_dias > 30
+                          ? "bg-[#fdf1d3] text-[#9a6a00]"
+                          : "bg-[#e8f4ee] text-[#0b6b4b]";
+
+                      return (
+                        <div key={idx} className="grid grid-cols-[130px_1fr_26px_52px] gap-2.5 items-center text-[12px]">
+                          <span className="truncate text-[#16241e]" title={t.tarefa}>
+                            {t.tarefa}
+                          </span>
+                          <div className="block">
+                            <div className="h-[9px] bg-[#f6f9f7] rounded-[4px] overflow-hidden">
+                              <div
+                                className="h-full bg-[#0b6b4b] rounded-[4px]"
+                                style={{ width: `${percW}%` }}
+                              ></div>
+                            </div>
+                          </div>
+                          <b className="text-right text-[#16241e]">{t.total}</b>
+                          <span className={`text-[11px] font-bold py-[2px] px-1.5 rounded-[5px] text-center ${badgeCls}`}>
+                            {t.idade_media_dias}d
+                          </span>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Valor em aberto por loja */}
+                <div className="bg-white border border-[#e6ebe7] rounded-[14px] p-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                  <h3 className="m-0 text-[13.5px] font-bold text-[#16241e]">Valor em aberto por loja</h3>
+                  <div className="text-[#7a8a82] text-[11.5px] mt-0.5 mb-3">Top 6 lojas, em R$ mil</div>
+
+                  <div className="space-y-3">
+                    {data.topLojas.map((l, idx) => {
+                      const maxV = data.topLojas[0]?.valor_total || 1;
+                      const percW = Math.round((l.valor_total / maxV) * 100);
+                      const barCol = idx === 0 ? "#0b6b4b" : "#2f9a74";
+                      const valMil = (l.valor_total / 1000).toFixed(1).replace(".", ",");
+
+                      return (
+                        <div key={idx} className="grid grid-cols-[70px_1fr_50px] gap-2.5 items-center text-[12px]">
+                          <span className="text-[#16241e] font-medium truncate">{l.loja}</span>
+                          <div className="block">
+                            <div className="h-[9px] bg-[#f6f9f7] rounded-[4px] overflow-hidden">
+                              <div
+                                className="h-full rounded-[4px]"
+                                style={{ width: `${percW}%`, backgroundColor: barCol }}
+                              ></div>
+                            </div>
+                          </div>
+                          <b className="text-right text-[#16241e] whitespace-nowrap">{valMil}</b>
+                        </div>
+                      );
+                    })}
+                  </div>
+                </div>
+
+              </div>
+
             </div>
 
-            <div className="w-full overflow-x-auto">
-              <table className="w-full text-left text-xs border-collapse">
-                <thead className="bg-slate-50/80 border-b border-slate-100">
-                  <tr>
-                    <th className="px-4 py-3 text-slate-500 font-bold uppercase tracking-wider text-[11px]">Chamado</th>
-                    <th className="px-4 py-3 text-slate-500 font-bold uppercase tracking-wider text-[11px]">Módulo</th>
-                    <th className="px-4 py-3 text-slate-500 font-bold uppercase tracking-wider text-[11px]">Loja</th>
-                    <th className="px-4 py-3 text-center text-slate-500 font-bold uppercase tracking-wider text-[11px]">CD</th>
-                    <th className="px-4 py-3 text-slate-500 font-bold uppercase tracking-wider text-[11px]">Abertura</th>
-                    <th className="px-4 py-3 text-center text-slate-500 font-bold uppercase tracking-wider text-[11px]">Dias em Aberto</th>
-                    <th className="px-4 py-3 text-slate-500 font-bold uppercase tracking-wider text-[11px]">Tarefa Atual</th>
-                    <th className="px-4 py-3 text-right text-slate-500 font-bold uppercase tracking-wider text-[11px]">Valor</th>
-                    <th className="px-4 py-3 text-center text-slate-500 font-bold uppercase tracking-wider text-[11px]">Ação</th>
-                  </tr>
-                </thead>
-                <tbody className="divide-y divide-slate-100">
-                  {data.chamadosAntigos.length === 0 ? (
-                    <tr>
-                      <td colSpan={9} className="py-8 text-center text-slate-400">
-                        Nenhum chamado em aberto encontrado no filtro selecionado.
-                      </td>
-                    </tr>
-                  ) : (
-                    data.chamadosAntigos.map((c) => (
-                      <tr key={c.id} className="hover:bg-slate-50/60 transition-colors">
-                        <td className="px-4 py-3 font-bold text-slate-900">
-                          {c.chamado}
-                        </td>
-                        <td className="px-4 py-3">
-                          <span className={`inline-block px-2 py-0.5 rounded-full text-[10px] font-bold ${
-                            c.modulo === "recall"
-                              ? "bg-cyan-50 text-cyan-800 border border-cyan-200/60"
-                              : "bg-emerald-50 text-emerald-800 border border-emerald-200/60"
-                          }`}>
-                            {c.modulo_label}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 font-semibold text-slate-700">
-                          Loja {c.loja}
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <span className="inline-block px-2 py-0.5 rounded-md bg-slate-100 text-slate-700 font-bold text-[10px]">
-                            {c.cd}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-slate-600 font-medium whitespace-nowrap">
-                          {fmtBR(c.dt_abertura)}
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <span className={`inline-block px-2.5 py-0.5 rounded-full text-[11px] font-bold ${
-                            c.dias_aberto > 60
-                              ? "bg-rose-50 text-rose-700 border border-rose-200"
-                              : c.dias_aberto >= 45
-                              ? "bg-amber-50 text-amber-700 border border-amber-200"
-                              : "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                          }`}>
-                            {c.dias_aberto} dias {c.dias_aberto > 60 && "(Atraso)"}
-                          </span>
-                        </td>
-                        <td className="px-4 py-3 text-slate-700 font-medium">
-                          {c.tarefa_atual}
-                        </td>
-                        <td className="px-4 py-3 text-right font-mono font-bold text-slate-900 whitespace-nowrap">
-                          {formatarMoedaBR(c.valor, { showZero: true })}
-                        </td>
-                        <td className="px-4 py-3 text-center">
-                          <a
-                            href={`/?submenu=${c.modulo === "recall" ? "recall_consulta" : "consulta"}&chamado=${c.chamado}`}
-                            className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg bg-slate-100 hover:bg-emerald-50 hover:text-emerald-700 text-slate-700 font-semibold text-[11px] border border-slate-200 transition-colors"
-                            title="Abrir este chamado na tela de Consulta"
-                          >
-                            <span>Ver na consulta</span>
-                            <ExternalLink className="w-3 h-3 text-slate-400" />
-                          </a>
-                        </td>
-                      </tr>
-                    ))
-                  )}
-                </tbody>
-              </table>
+            {/* ========================================================================= */}
+            {/* COLUNA DIREITA (300px)                                                    */}
+            {/* ========================================================================= */}
+            <div className="flex flex-col gap-4">
+              
+              {/* Card 1: Donut Recall x Faltas */}
+              <div className="bg-white border border-[#e6ebe7] rounded-[14px] p-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                <h3 className="m-0 text-[13.5px] font-bold text-[#16241e]">Recall x Faltas e Sobras</h3>
+                <div className="text-[#7a8a82] text-[11.5px] mt-0.5">Proporção de chamados em aberto</div>
+
+                <Donut recall={recallAbertos} faltas={faltasAbertos} />
+
+                <div className="flex justify-center gap-3 text-[11.5px] text-[#7a8a82] mt-1">
+                  <span className="flex items-center gap-1.5">
+                    <i className="inline-block w-[9px] h-[9px] rounded-[3px] bg-[#0b6b4b]"></i>
+                    Recall {percRec}%
+                  </span>
+                  <span className="flex items-center gap-1.5">
+                    <i className="inline-block w-[9px] h-[9px] rounded-[3px] bg-[#bfe3d2]"></i>
+                    Faltas e Sobras {percFal}%
+                  </span>
+                </div>
+              </div>
+
+              {/* Card 2: Mini KPI - Tempo de resolução */}
+              <div className="bg-white border border-[#e6ebe7] rounded-[14px] p-4 pb-0 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                <div className="flex justify-between items-start gap-2">
+                  <div>
+                    <h3 className="m-0 text-[13.5px] font-bold text-[#16241e]">Tempo de resolução</h3>
+                    <div className="text-[#7a8a82] text-[11.5px] mt-0.5">Ciclo médio de atendimento</div>
+                  </div>
+                  <span className="text-[11px] font-bold py-[3px] px-2 rounded-[6px] whitespace-nowrap bg-[#fdf1d3] text-[#9a6a00]">
+                    ▲ {kpis?.tempo_medio_resolucao_dias || 0}d
+                  </span>
+                </div>
+                <div className="text-[22px] font-extrabold text-[#16241e] mt-2 tracking-tight">
+                  {(kpis?.tempo_medio_resolucao_dias || 0).toFixed(1).replace(".", ",")}{" "}
+                  <small className="text-[13px] font-semibold text-[#7a8a82]">dias</small>
+                </div>
+                <Sparkline values={sparks?.tempo || []} color="#e8a317" />
+              </div>
+
+              {/* Card 3: Mini KPI - Concluídos no mês */}
+              <div className="bg-white border border-[#e6ebe7] rounded-[14px] p-4 pb-0 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                <div className="flex justify-between items-start gap-2">
+                  <div>
+                    <h3 className="m-0 text-[13.5px] font-bold text-[#16241e]">Concluídos no mês</h3>
+                    <div className="text-[#7a8a82] text-[11.5px] mt-0.5">Finalizados no mês corrente</div>
+                  </div>
+                  <span
+                    className={`text-[11px] font-bold py-[3px] px-2 rounded-[6px] whitespace-nowrap ${
+                      (kpis?.variacao_concluidos_vs_mes_anterior || 0) >= 0
+                        ? "bg-[#e8f4ee] text-[#0b6b4b]"
+                        : "bg-[#fdf1d3] text-[#9a6a00]"
+                    }`}
+                  >
+                    {(kpis?.variacao_concluidos_vs_mes_anterior || 0) >= 0 ? "▲" : "▼"}{" "}
+                    {Math.abs(kpis?.variacao_concluidos_vs_mes_anterior || 0).toFixed(0)}%
+                  </span>
+                </div>
+                <div className="text-[22px] font-extrabold text-[#16241e] mt-2 tracking-tight">
+                  {kpis?.concluidos_mes_atual || 0}{" "}
+                  <small className="text-[13px] font-semibold text-[#7a8a82]">chamados</small>
+                </div>
+                <Sparkline values={sparks?.concluidos || []} color="#2f9a74" />
+              </div>
+
+              {/* Card 4: Mini KPI - Ticket médio */}
+              <div className="bg-white border border-[#e6ebe7] rounded-[14px] p-4 pb-0 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                <div className="flex justify-between items-start gap-2">
+                  <div>
+                    <h3 className="m-0 text-[13.5px] font-bold text-[#16241e]">Ticket médio</h3>
+                    <div className="text-[#7a8a82] text-[11.5px] mt-0.5">Valor médio por chamado</div>
+                  </div>
+                  <span className="text-[11px] font-bold py-[3px] px-2 rounded-[6px] whitespace-nowrap bg-[#e8f4ee] text-[#0b6b4b]">
+                    Média
+                  </span>
+                </div>
+                <div className="text-[22px] font-extrabold text-[#16241e] mt-2 tracking-tight">
+                  {brl(kpis?.ticket_medio || 0)}
+                </div>
+                <Sparkline values={sparks?.ticket || []} color="#0b6b4b" />
+              </div>
+
+              {/* Card 5: Alertas */}
+              <div className="bg-white border border-[#e6ebe7] rounded-[14px] p-4 shadow-[0_2px_10px_rgba(0,0,0,0.02)]">
+                <h3 className="m-0 text-[13.5px] font-bold text-[#16241e]">Alertas</h3>
+                <div className="text-[#7a8a82] text-[11.5px] mt-0.5 mb-2">O que precisa de atenção hoje</div>
+
+                <div className="divide-y divide-[#e6ebe7]">
+                  {data.alertas.map((al, idx) => {
+                    const dotColor =
+                      al.tipo === "bad"
+                        ? "bg-[#d64545]"
+                        : al.tipo === "warn"
+                        ? "bg-[#e8a317]"
+                        : "bg-[#2f9a74]";
+
+                    return (
+                      <div key={idx} className="py-2.5 first:pt-1 last:pb-1 flex gap-2.5 items-start">
+                        <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${dotColor}`}></div>
+                        <div>
+                          <b className="block text-[12.5px] text-[#16241e] leading-snug">{al.titulo}</b>
+                          <span className="text-[11.5px] text-[#7a8a82] leading-tight">{al.descricao}</span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="mt-3.5 bg-[#f6f9f7] rounded-[8px] p-2.5 text-[11.5px] text-[#7a8a82]">
+                  Dados consolidados em tempo real do banco Supabase. Tela somente leitura.
+                </div>
+              </div>
+
             </div>
 
-            <div className="p-4 bg-slate-50/50 border-t border-slate-100 text-xs text-slate-500 flex flex-col sm:flex-row items-center justify-between gap-2">
-              <span className="flex items-center gap-1.5">
-                <HelpCircle className="w-3.5 h-3.5 text-slate-400" />
-                Esta tela opera exclusivamente em modo leitura. Modificações devem ser feitas na tela de Consulta.
-              </span>
-              <span className="font-semibold text-slate-700">
-                10 chamados exibidos
-              </span>
-            </div>
-          </section>
+          </div>
+        )}
 
-        </>
-      )}
-
+      </div>
     </div>
   );
 }

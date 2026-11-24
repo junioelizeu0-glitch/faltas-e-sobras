@@ -2,7 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 
 export type ModuloFiltro = "todos" | "faltas" | "recall";
-export type PeriodoFiltro = "30d" | "6m" | "ano" | "todos";
+export type PeriodoFiltro = "30d" | "6m" | "ano";
 
 export type DashboardGerencialKPIs = {
   total_chamados_periodo: number;
@@ -10,12 +10,29 @@ export type DashboardGerencialKPIs = {
   valor_total_aberto: number;
   total_sla_estourado: number;
   perc_sla_estourado: number;
+  sla_ate_30d: number;
+  sla_31_a_60d: number;
+  sla_acima_60d: number;
+  total_acima_45d: number;
   concluidos_mes_atual: number;
+  concluidos_mes_anterior: number;
   tempo_medio_resolucao_dias: number;
   perc_dentro_do_prazo: number;
+  ticket_medio: number;
   novos_mes_atual: number;
   novos_mes_anterior: number;
   variacao_vs_mes_anterior: number;
+  variacao_valor_vs_mes_anterior: number;
+  variacao_concluidos_vs_mes_anterior: number;
+};
+
+export type SparklinesData = {
+  abertos: number[];
+  valor: number[];
+  sla: number[];
+  tempo: number[];
+  concluidos: number[];
+  ticket: number[];
 };
 
 export type EvolucaoMensalItem = {
@@ -39,15 +56,7 @@ export type TarefaItem = {
   tarefa: string;
   total: number;
   valor_total: number;
-};
-
-export type FaixaIdadeItem = {
-  faixa: string;
-  label: string;
-  dias_label: string;
-  quantidade: number;
-  percentual: number;
-  color: string;
+  idade_media_dias: number;
 };
 
 export type TopLojaItem = {
@@ -58,14 +67,7 @@ export type TopLojaItem = {
   percentual_do_max: number;
 };
 
-export type CDItem = {
-  cd: string;
-  total_chamados: number;
-  total_abertos: number;
-  valor_aberto: number;
-};
-
-export type ChamadoAntigoItem = {
+export type ChamadoCriticoItem = {
   id: string;
   modulo: "faltas" | "recall";
   modulo_label: string;
@@ -74,20 +76,27 @@ export type ChamadoAntigoItem = {
   cd: string;
   tipo: string;
   tarefa_atual: string;
+  status_chamado: string;
   dt_abertura: string;
   dias_aberto: number;
   valor: number;
 };
 
+export type AlertaItem = {
+  tipo: "bad" | "warn" | "good";
+  titulo: string;
+  descricao: string;
+};
+
 export type DashboardGerencialPayload = {
   kpis: DashboardGerencialKPIs;
+  sparklines: SparklinesData;
   evolucaoMensal: EvolucaoMensalItem[];
   distribuicaoModulos: DistribuicaoModuloItem[];
   tarefas: TarefaItem[];
-  faixasIdade: FaixaIdadeItem[];
   topLojas: TopLojaItem[];
-  cds: CDItem[];
-  chamadosAntigos: ChamadoAntigoItem[];
+  chamadosCriticos: ChamadoCriticoItem[];
+  alertas: AlertaItem[];
   filtrosAtivos: {
     modulo: ModuloFiltro;
     periodo: PeriodoFiltro;
@@ -97,7 +106,7 @@ export type DashboardGerencialPayload = {
 
 const DashboardGerencialInput = z.object({
   modulo: z.enum(["todos", "faltas", "recall"]).default("todos"),
-  periodo: z.enum(["30d", "6m", "ano", "todos"]).default("6m"),
+  periodo: z.enum(["30d", "6m", "ano"]).default("6m"),
 });
 
 export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
@@ -123,12 +132,11 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
     if (periodo === "6m") periodoFilter = "AND dt_abertura >= (CURRENT_DATE - INTERVAL '6 months')";
     if (periodo === "ano") periodoFilter = "AND dt_abertura >= DATE_TRUNC('year', CURRENT_DATE)";
 
-    // SQL Principal Agregado
-    const sql = `
+    // 1. SQL Principal de KPIs
+    const sqlKPI = `
     WITH base AS (
       SELECT 
-        'faltas' AS modulo,
-        'Faltas e Sobras' AS modulo_label,
+        'faltas' AS modulo, 'Faltas e Sobras' AS modulo_label,
         id, chamado, loja, tipo, cd, situacao, dt_abertura, dt_finalizacao,
         COALESCE(valor, 0)::numeric AS valor,
         CASE 
@@ -144,8 +152,7 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
       FROM chamados_faltas
       UNION ALL
       SELECT 
-        'recall' AS modulo,
-        'Recall' AS modulo_label,
+        'recall' AS modulo, 'Recall' AS modulo_label,
         id, chamado, loja, tipo, cd, situacao, dt_abertura, dt_finalizacao,
         COALESCE(valor, 0)::numeric AS valor,
         CASE 
@@ -161,12 +168,10 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
       FROM chamados_recall
     ),
     filtrado AS (
-      SELECT * FROM base
-      WHERE 1=1 ${moduloFilter} ${periodoFilter}
+      SELECT * FROM base WHERE 1=1 ${moduloFilter} ${periodoFilter}
     ),
     abertos_atuais AS (
-      SELECT * FROM base
-      WHERE em_aberto ${moduloFilter}
+      SELECT * FROM base WHERE em_aberto ${moduloFilter}
     ),
     mes_stats AS (
       SELECT 
@@ -174,9 +179,17 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
         COUNT(*) FILTER (
           WHERE dt_abertura >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month') 
             AND dt_abertura < DATE_TRUNC('month', CURRENT_DATE)
-        )::int AS abertos_mes_anterior
-      FROM base
-      WHERE 1=1 ${moduloFilter}
+        )::int AS abertos_mes_anterior,
+        COALESCE(SUM(valor) FILTER (WHERE dt_abertura >= DATE_TRUNC('month', CURRENT_DATE)), 0)::numeric AS valor_mes_atual,
+        COALESCE(SUM(valor) FILTER (
+          WHERE dt_abertura >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month') 
+            AND dt_abertura < DATE_TRUNC('month', CURRENT_DATE)
+        ), 0)::numeric AS valor_mes_anterior,
+        COUNT(*) FILTER (
+          WHERE dt_finalizacao >= DATE_TRUNC('month', CURRENT_DATE - INTERVAL '1 month') 
+            AND dt_finalizacao < DATE_TRUNC('month', CURRENT_DATE)
+        )::int AS concluidos_mes_anterior
+      FROM base WHERE 1=1 ${moduloFilter}
     )
     SELECT 
       COUNT(*)::int AS total_chamados_periodo,
@@ -187,10 +200,15 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
         ((SELECT COUNT(*)::numeric FROM abertos_atuais WHERE dias_aberto > 60) / 
          NULLIF((SELECT COUNT(*)::numeric FROM abertos_atuais), 0)) * 100, 1
       ) AS perc_sla_estourado,
+      (SELECT COUNT(*)::int FROM abertos_atuais WHERE dias_aberto <= 30) AS sla_ate_30d,
+      (SELECT COUNT(*)::int FROM abertos_atuais WHERE dias_aberto BETWEEN 31 AND 60) AS sla_31_a_60d,
+      (SELECT COUNT(*)::int FROM abertos_atuais WHERE dias_aberto > 60) AS sla_acima_60d,
+      (SELECT COUNT(*)::int FROM abertos_atuais WHERE dias_aberto > 45) AS total_acima_45d,
       COUNT(*) FILTER (
         WHERE NOT em_aberto 
           AND dt_finalizacao >= DATE_TRUNC('month', CURRENT_DATE)::date
       )::int AS concluidos_mes_atual,
+      (SELECT concluidos_mes_anterior FROM mes_stats) AS concluidos_mes_anterior,
       ROUND(AVG(dias_resolucao) FILTER (WHERE NOT em_aberto), 1)::numeric AS tempo_medio_resolucao_dias,
       ROUND(
         (COUNT(*) FILTER (WHERE NOT em_aberto AND dias_resolucao <= 60)::numeric / 
@@ -202,11 +220,59 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
         WHEN (SELECT abertos_mes_anterior FROM mes_stats) = 0 THEN 0 
         ELSE ROUND((((SELECT abertos_mes_atual FROM mes_stats) - (SELECT abertos_mes_anterior FROM mes_stats))::numeric / 
                     (SELECT abertos_mes_anterior FROM mes_stats)::numeric) * 100, 1)
-      END AS variacao_vs_mes_anterior
+      END AS variacao_vs_mes_anterior,
+      CASE 
+        WHEN (SELECT valor_mes_anterior FROM mes_stats) = 0 THEN 0 
+        ELSE ROUND((((SELECT valor_mes_atual FROM mes_stats) - (SELECT valor_mes_anterior FROM mes_stats))::numeric / 
+                    (SELECT valor_mes_anterior FROM mes_stats)::numeric) * 100, 1)
+      END AS variacao_valor_vs_mes_anterior,
+      CASE 
+        WHEN (SELECT concluidos_mes_anterior FROM mes_stats) = 0 THEN 0 
+        ELSE ROUND((((COUNT(*) FILTER (WHERE NOT em_aberto AND dt_finalizacao >= DATE_TRUNC('month', CURRENT_DATE)::date)) - (SELECT concluidos_mes_anterior FROM mes_stats))::numeric / 
+                    (SELECT concluidos_mes_anterior FROM mes_stats)::numeric) * 100, 1)
+      END AS variacao_concluidos_vs_mes_anterior
     FROM filtrado;
     `.trim();
 
-    // Query de Evolução Mensal (Últimos 6 a 12 meses dependendo do período)
+    // 2. Query de Sparklines (Histórico de 6 a 8 pontos temporais)
+    const sqlSpark = `
+    WITH base AS (
+      SELECT 'faltas' AS modulo, dt_abertura, dt_finalizacao, valor,
+        CASE WHEN dt_finalizacao IS NULL OR TRIM(dt_finalizacao::text) = '' OR TRIM(dt_finalizacao::text) = '-' THEN true ELSE false END AS em_aberto,
+        (CURRENT_DATE - dt_abertura)::int AS dias_aberto,
+        CASE WHEN dt_finalizacao IS NOT NULL AND TRIM(dt_finalizacao::text) != '' AND TRIM(dt_finalizacao::text) != '-' THEN (dt_finalizacao - dt_abertura)::int ELSE NULL END AS dias_resolucao
+      FROM chamados_faltas
+      UNION ALL
+      SELECT 'recall' AS modulo, dt_abertura, dt_finalizacao, valor,
+        CASE WHEN dt_finalizacao IS NULL OR TRIM(dt_finalizacao::text) = '' OR TRIM(dt_finalizacao::text) = '-' THEN true ELSE false END AS em_aberto,
+        (CURRENT_DATE - dt_abertura)::int AS dias_aberto,
+        CASE WHEN dt_finalizacao IS NOT NULL AND TRIM(dt_finalizacao::text) != '' AND TRIM(dt_finalizacao::text) != '-' THEN (dt_finalizacao - dt_abertura)::int ELSE NULL END AS dias_resolucao
+      FROM chamados_recall
+    ),
+    filtrado AS (
+      SELECT * FROM base WHERE 1=1 ${moduloFilter}
+    ),
+    meses AS (
+      SELECT generate_series(
+        DATE_TRUNC('month', CURRENT_DATE - INTERVAL '5 months'),
+        DATE_TRUNC('month', CURRENT_DATE),
+        INTERVAL '1 month'
+      )::date AS mes
+    )
+    SELECT 
+      m.mes::text AS mes_key,
+      TO_CHAR(m.mes, 'Mon/YY') AS mes_label,
+      (SELECT COUNT(*)::int FROM filtrado f WHERE f.dt_abertura <= (m.mes + INTERVAL '1 month' - INTERVAL '1 day')::date AND (f.dt_finalizacao IS NULL OR f.dt_finalizacao > (m.mes + INTERVAL '1 month' - INTERVAL '1 day')::date)) AS abertos_no_ponto,
+      (SELECT COALESCE(SUM(f.valor), 0)::numeric FROM filtrado f WHERE f.dt_abertura <= (m.mes + INTERVAL '1 month' - INTERVAL '1 day')::date AND (f.dt_finalizacao IS NULL OR f.dt_finalizacao > (m.mes + INTERVAL '1 month' - INTERVAL '1 day')::date)) AS valor_no_ponto,
+      (SELECT COUNT(*)::int FROM filtrado f WHERE f.dt_abertura <= (m.mes + INTERVAL '1 month' - INTERVAL '1 day')::date AND (f.dt_finalizacao IS NULL OR f.dt_finalizacao > (m.mes + INTERVAL '1 month' - INTERVAL '1 day')::date) AND (m.mes - f.dt_abertura) > 60) AS sla_no_ponto,
+      (SELECT ROUND(COALESCE(AVG(f.dias_resolucao), 0), 1)::numeric FROM filtrado f WHERE f.dt_finalizacao >= m.mes AND f.dt_finalizacao < (m.mes + INTERVAL '1 month')::date) AS tempo_resolucao_mes,
+      (SELECT COUNT(*)::int FROM filtrado f WHERE f.dt_finalizacao >= m.mes AND f.dt_finalizacao < (m.mes + INTERVAL '1 month')::date) AS concluidos_mes,
+      (SELECT ROUND(COALESCE(AVG(f.valor), 0), 0)::numeric FROM filtrado f WHERE f.dt_abertura <= (m.mes + INTERVAL '1 month' - INTERVAL '1 day')::date AND (f.dt_finalizacao IS NULL OR f.dt_finalizacao > (m.mes + INTERVAL '1 month' - INTERVAL '1 day')::date)) AS ticket_medio_ponto
+    FROM meses m
+    ORDER BY m.mes ASC;
+    `.trim();
+
+    // 3. Query de Evolução Mensal
     const mesesIntervalo = periodo === "30d" ? "3 months" : periodo === "6m" ? "5 months" : "11 months";
     const sqlMensal = `
     WITH base AS (
@@ -247,7 +313,7 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
     ORDER BY m.mes ASC;
     `.trim();
 
-    // Query de Distribuição por Módulo
+    // 4. Query de Distribuição por Módulo
     const sqlModulos = `
     WITH base AS (
       SELECT 
@@ -275,41 +341,26 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
     ORDER BY abertos DESC;
     `.trim();
 
-    // Query de Tarefas em Aberto
+    // 5. Query de Tarefas em Aberto (com idade média em dias)
     const sqlTarefas = `
     WITH base AS (
-      SELECT 'faltas' AS modulo, situacao, valor, dt_finalizacao FROM chamados_faltas
+      SELECT 'faltas' AS modulo, situacao, valor, dt_abertura, dt_finalizacao FROM chamados_faltas
       UNION ALL
-      SELECT 'recall' AS modulo, situacao, valor, dt_finalizacao FROM chamados_recall
+      SELECT 'recall' AS modulo, situacao, valor, dt_abertura, dt_finalizacao FROM chamados_recall
     )
     SELECT 
       COALESCE(NULLIF(TRIM(situacao), ''), 'Não informada') AS tarefa,
       COUNT(*)::int AS total,
-      COALESCE(SUM(valor), 0)::numeric AS valor_total
+      COALESCE(SUM(valor), 0)::numeric AS valor_total,
+      ROUND(AVG((CURRENT_DATE - dt_abertura)))::int AS idade_media_dias
     FROM base
     WHERE (dt_finalizacao IS NULL OR TRIM(dt_finalizacao::text) = '' OR TRIM(dt_finalizacao::text) = '-') ${moduloFilter}
     GROUP BY 1
     ORDER BY total DESC
-    LIMIT 10;
+    LIMIT 6;
     `.trim();
 
-    // Query de Faixas de Idade dos Chamados em Aberto
-    const sqlFaixas = `
-    WITH base AS (
-      SELECT 'faltas' AS modulo, (CURRENT_DATE - dt_abertura)::int AS dias, dt_finalizacao FROM chamados_faltas
-      UNION ALL
-      SELECT 'recall' AS modulo, (CURRENT_DATE - dt_abertura)::int AS dias, dt_finalizacao FROM chamados_recall
-    )
-    SELECT 
-      COUNT(*) FILTER (WHERE dias BETWEEN 0 AND 15)::int AS faixa_0_15,
-      COUNT(*) FILTER (WHERE dias BETWEEN 16 AND 30)::int AS faixa_16_30,
-      COUNT(*) FILTER (WHERE dias BETWEEN 31 AND 60)::int AS faixa_31_60,
-      COUNT(*) FILTER (WHERE dias > 60)::int AS faixa_60_plus
-    FROM base
-    WHERE (dt_finalizacao IS NULL OR TRIM(dt_finalizacao::text) = '' OR TRIM(dt_finalizacao::text) = '-') ${moduloFilter};
-    `.trim();
-
-    // Query Top 6 Lojas
+    // 6. Query Top 6 Lojas
     const sqlLojas = `
     WITH base AS (
       SELECT 'faltas' AS modulo, loja, valor, tipo, dt_finalizacao FROM chamados_faltas
@@ -328,30 +379,12 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
     LIMIT 6;
     `.trim();
 
-    // Query Chamados por CD
-    const sqlCD = `
+    // 7. Query Chamados Críticos (Mais antigos em aberto com SLA estourado ou próximo)
+    const sqlCriticos = `
     WITH base AS (
-      SELECT 'faltas' AS modulo, cd, valor, dt_finalizacao FROM chamados_faltas
+      SELECT 'faltas' AS modulo, 'Faltas e Sobras' AS modulo_label, id, chamado, loja, cd, tipo, situacao AS tarefa_atual, status_chamado, dt_abertura, dt_finalizacao, valor FROM chamados_faltas
       UNION ALL
-      SELECT 'recall' AS modulo, cd, valor, dt_finalizacao FROM chamados_recall
-    )
-    SELECT 
-      COALESCE(NULLIF(TRIM(cd), ''), 'Geral') AS cd,
-      COUNT(*)::int AS total_chamados,
-      COUNT(*) FILTER (WHERE dt_finalizacao IS NULL OR TRIM(dt_finalizacao::text) = '' OR TRIM(dt_finalizacao::text) = '-')::int AS total_abertos,
-      COALESCE(SUM(valor) FILTER (WHERE dt_finalizacao IS NULL OR TRIM(dt_finalizacao::text) = '' OR TRIM(dt_finalizacao::text) = '-'), 0)::numeric AS valor_aberto
-    FROM base
-    WHERE 1=1 ${moduloFilter}
-    GROUP BY 1
-    ORDER BY total_abertos DESC;
-    `.trim();
-
-    // Query Chamados Mais Antigos
-    const sqlAntigos = `
-    WITH base AS (
-      SELECT 'faltas' AS modulo, 'Faltas e Sobras' AS modulo_label, id, chamado, loja, cd, tipo, situacao AS tarefa_atual, dt_abertura, dt_finalizacao, valor FROM chamados_faltas
-      UNION ALL
-      SELECT 'recall' AS modulo, 'Recall' AS modulo_label, id, chamado, loja, cd, tipo, situacao AS tarefa_atual, dt_abertura, dt_finalizacao, valor FROM chamados_recall
+      SELECT 'recall' AS modulo, 'Recall' AS modulo_label, id, chamado, loja, cd, tipo, situacao AS tarefa_atual, status_chamado, dt_abertura, dt_finalizacao, valor FROM chamados_recall
     )
     SELECT 
       id,
@@ -362,6 +395,7 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
       COALESCE(cd, 'Geral') AS cd,
       COALESCE(tipo, 'Franquia') AS tipo,
       COALESCE(tarefa_atual, 'Em andamento') AS tarefa_atual,
+      COALESCE(status_chamado, 'Aprovado') AS status_chamado,
       dt_abertura::text AS dt_abertura,
       (CURRENT_DATE - dt_abertura)::int AS dias_aberto,
       COALESCE(valor, 0)::numeric AS valor
@@ -374,44 +408,72 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
     // Executar consultas concorrentes de forma ultra rápida
     const [
       { data: kpiData, error: kpiErr },
+      { data: sparkData, error: sparkErr },
       { data: mensalData, error: mensalErr },
       { data: modulosData, error: modulosErr },
       { data: tarefasData, error: tarefasErr },
-      { data: faixasData, error: faixasErr },
       { data: lojasData, error: lojasErr },
-      { data: cdData, error: cdErr },
-      { data: antigosData, error: antigosErr },
+      { data: criticosData, error: criticosErr },
     ] = await Promise.all([
-      supabase.rpc("aiiliana_run_sql", { sql }),
+      supabase.rpc("aiiliana_run_sql", { sql: sqlKPI }),
+      supabase.rpc("aiiliana_run_sql", { sql: sqlSpark }),
       supabase.rpc("aiiliana_run_sql", { sql: sqlMensal }),
       supabase.rpc("aiiliana_run_sql", { sql: sqlModulos }),
       supabase.rpc("aiiliana_run_sql", { sql: sqlTarefas }),
-      supabase.rpc("aiiliana_run_sql", { sql: sqlFaixas }),
       supabase.rpc("aiiliana_run_sql", { sql: sqlLojas }),
-      supabase.rpc("aiiliana_run_sql", { sql: sqlCD }),
-      supabase.rpc("aiiliana_run_sql", { sql: sqlAntigos }),
+      supabase.rpc("aiiliana_run_sql", { sql: sqlCriticos }),
     ]);
 
     if (kpiErr) console.warn("[DashboardGerencial] KPI error:", kpiErr);
+    if (sparkErr) console.warn("[DashboardGerencial] Spark error:", sparkErr);
     if (mensalErr) console.warn("[DashboardGerencial] Mensal error:", mensalErr);
 
     const rawKpi = (kpiData && kpiData[0]) || {};
+    const totalAbertos = Number(rawKpi.total_abertos || 0);
+    const valorAberto = Number(rawKpi.valor_total_aberto || 0);
 
     const kpis: DashboardGerencialKPIs = {
       total_chamados_periodo: Number(rawKpi.total_chamados_periodo || 0),
-      total_abertos: Number(rawKpi.total_abertos || 0),
-      valor_total_aberto: Number(rawKpi.valor_total_aberto || 0),
+      total_abertos: totalAbertos,
+      valor_total_aberto: valorAberto,
       total_sla_estourado: Number(rawKpi.total_sla_estourado || 0),
       perc_sla_estourado: Number(rawKpi.perc_sla_estourado || 0),
+      sla_ate_30d: Number(rawKpi.sla_ate_30d || 0),
+      sla_31_a_60d: Number(rawKpi.sla_31_a_60d || 0),
+      sla_acima_60d: Number(rawKpi.sla_acima_60d || 0),
+      total_acima_45d: Number(rawKpi.total_acima_45d || 0),
       concluidos_mes_atual: Number(rawKpi.concluidos_mes_atual || 0),
+      concluidos_mes_anterior: Number(rawKpi.concluidos_mes_anterior || 0),
       tempo_medio_resolucao_dias: Number(rawKpi.tempo_medio_resolucao_dias || 0),
       perc_dentro_do_prazo: Number(rawKpi.perc_dentro_do_prazo || 0),
+      ticket_medio: totalAbertos > 0 ? Math.round(valorAberto / totalAbertos) : 0,
       novos_mes_atual: Number(rawKpi.novos_mes_atual || 0),
       novos_mes_anterior: Number(rawKpi.novos_mes_anterior || 0),
       variacao_vs_mes_anterior: Number(rawKpi.variacao_vs_mes_anterior || 0),
+      variacao_valor_vs_mes_anterior: Number(rawKpi.variacao_valor_vs_mes_anterior || 0),
+      variacao_concluidos_vs_mes_anterior: Number(rawKpi.variacao_concluidos_vs_mes_anterior || 0),
     };
 
-    // Formatar meses
+    // Extrair sparklines
+    const rawSpark = Array.isArray(sparkData) ? sparkData : [];
+    const sparklines: SparklinesData = {
+      abertos: rawSpark.map((s: any) => Number(s.abertos_no_ponto || 0)),
+      valor: rawSpark.map((s: any) => Number(s.valor_no_ponto || 0)),
+      sla: rawSpark.map((s: any) => Number(s.sla_no_ponto || 0)),
+      tempo: rawSpark.map((s: any) => Number(s.tempo_resolucao_mes || 0)),
+      concluidos: rawSpark.map((s: any) => Number(s.concluidos_mes || 0)),
+      ticket: rawSpark.map((s: any) => Number(s.ticket_medio_ponto || 0)),
+    };
+
+    // Garantir pelo menos 2 pontos para sparkline
+    if (sparklines.abertos.length < 2) sparklines.abertos = [totalAbertos, totalAbertos];
+    if (sparklines.valor.length < 2) sparklines.valor = [valorAberto, valorAberto];
+    if (sparklines.sla.length < 2) sparklines.sla = [kpis.total_sla_estourado, kpis.total_sla_estourado];
+    if (sparklines.tempo.length < 2) sparklines.tempo = [kpis.tempo_medio_resolucao_dias, kpis.tempo_medio_resolucao_dias];
+    if (sparklines.concluidos.length < 2) sparklines.concluidos = [kpis.concluidos_mes_atual, kpis.concluidos_mes_atual];
+    if (sparklines.ticket.length < 2) sparklines.ticket = [kpis.ticket_medio, kpis.ticket_medio];
+
+    // Formatar meses para a evolução mensal
     const mesesMesFormatado: Record<string, string> = {
       "Jan": "Jan", "Feb": "Fev", "Mar": "Mar", "Apr": "Abr", "May": "Mai", "Jun": "Jun",
       "Jul": "Jul", "Aug": "Ago", "Sep": "Set", "Oct": "Out", "Nov": "Nov", "Dec": "Dez"
@@ -443,56 +505,19 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
           abertos: Number(m.abertos || 0),
           valor_aberto: Number(m.valor_aberto || 0),
           percentual: Math.round((Number(m.abertos || 0) / totalAbertosTodos) * 100),
-          fill: m.modulo === "recall" ? "#06b6d4" : "#047857",
+          fill: m.modulo === "recall" ? "#0b6b4b" : "#bfe3d2",
         }))
       : [];
 
-    // Formatar Tarefas
+    // Formatar Tarefas com idade média
     const tarefas: TarefaItem[] = Array.isArray(tarefasData)
       ? tarefasData.map((t: any) => ({
           tarefa: String(t.tarefa),
           total: Number(t.total || 0),
           valor_total: Number(t.valor_total || 0),
+          idade_media_dias: Number(t.idade_media_dias || 0),
         }))
       : [];
-
-    // Formatar Faixas de Idade
-    const rawF = (faixasData && faixasData[0]) || {};
-    const totalFaixas = (Number(rawF.faixa_0_15 || 0) + Number(rawF.faixa_16_30 || 0) + Number(rawF.faixa_31_60 || 0) + Number(rawF.faixa_60_plus || 0)) || 1;
-    const faixasIdade: FaixaIdadeItem[] = [
-      {
-        faixa: "0_15",
-        label: "0 a 15 dias",
-        dias_label: "Recém abertos",
-        quantidade: Number(rawF.faixa_0_15 || 0),
-        percentual: Math.round((Number(rawF.faixa_0_15 || 0) / totalFaixas) * 100),
-        color: "#059669", // Verde esmeralda
-      },
-      {
-        faixa: "16_30",
-        label: "16 a 30 dias",
-        dias_label: "Em andamento normal",
-        quantidade: Number(rawF.faixa_16_30 || 0),
-        percentual: Math.round((Number(rawF.faixa_16_30 || 0) / totalFaixas) * 100),
-        color: "#0284c7", // Azul
-      },
-      {
-        faixa: "31_60",
-        label: "31 a 60 dias",
-        dias_label: "Atenção (prazo crítico)",
-        quantidade: Number(rawF.faixa_31_60 || 0),
-        percentual: Math.round((Number(rawF.faixa_31_60 || 0) / totalFaixas) * 100),
-        color: "#d97706", // Âmbar
-      },
-      {
-        faixa: "60_plus",
-        label: "60+ dias",
-        dias_label: "SLA Estourado (Atraso)",
-        quantidade: Number(rawF.faixa_60_plus || 0),
-        percentual: Math.round((Number(rawF.faixa_60_plus || 0) / totalFaixas) * 100),
-        color: "#e11d48", // Rosa/Vermelho
-      },
-    ];
 
     // Formatar Top Lojas
     const maxLojaValor = (lojasData || []).reduce((max: number, l: any) => Math.max(max, Number(l.valor_total || 0)), 0) || 1;
@@ -506,19 +531,9 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
         }))
       : [];
 
-    // Formatar CDs
-    const cds: CDItem[] = Array.isArray(cdData)
-      ? cdData.map((c: any) => ({
-          cd: String(c.cd),
-          total_chamados: Number(c.total_chamados || 0),
-          total_abertos: Number(c.total_abertos || 0),
-          valor_aberto: Number(c.valor_aberto || 0),
-        }))
-      : [];
-
-    // Formatar Chamados Antigos
-    const chamadosAntigos: ChamadoAntigoItem[] = Array.isArray(antigosData)
-      ? antigosData.map((a: any) => ({
+    // Formatar Chamados Críticos
+    const chamadosCriticos: ChamadoCriticoItem[] = Array.isArray(criticosData)
+      ? criticosData.map((a: any) => ({
           id: String(a.id),
           modulo: a.modulo as "faltas" | "recall",
           modulo_label: String(a.modulo_label),
@@ -527,21 +542,69 @@ export const fetchDashboardGerencialData = createServerFn({ method: "GET" })
           cd: String(a.cd),
           tipo: String(a.tipo),
           tarefa_atual: String(a.tarefa_atual),
+          status_chamado: String(a.status_chamado),
           dt_abertura: String(a.dt_abertura),
           dias_aberto: Number(a.dias_aberto || 0),
           valor: Number(a.valor || 0),
         }))
       : [];
 
+    // Gerar Alertas Inteligentes com base nos dados reais
+    const alertas: AlertaItem[] = [];
+
+    // Alerta 1: SLA crítico
+    if (kpis.total_sla_estourado > 0) {
+      const topTarefaCritica = tarefas[0]?.tarefa || "fluxo geral";
+      alertas.push({
+        tipo: "bad",
+        titulo: `${kpis.total_sla_estourado} chamados passaram de 60 dias`,
+        descricao: `Maior concentração em "${topTarefaCritica}"`,
+      });
+    } else {
+      alertas.push({
+        tipo: "good",
+        titulo: "SLA sob controle",
+        descricao: "Nenhum chamado aberto com mais de 60 dias de atraso",
+      });
+    }
+
+    // Alerta 2: Concentração de valor por loja
+    if (topLojas.length > 0 && valorAberto > 0) {
+      const top1 = topLojas[0];
+      const percTop1 = Math.round((top1.valor_total / valorAberto) * 100);
+      alertas.push({
+        tipo: "warn",
+        titulo: `${top1.loja} concentra ${percTop1}% do valor pendente`,
+        descricao: `R$ ${(top1.valor_total / 1000).toLocaleString("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 })} mil em ${top1.total_chamados} chamados`,
+      });
+    }
+
+    // Alerta 3: Desempenho / Concluídos
+    if (kpis.variacao_concluidos_vs_mes_anterior >= 0) {
+      alertas.push({
+        tipo: "good",
+        titulo: `Concluídos no mês: ${kpis.concluidos_mes_atual} chamados`,
+        descricao: kpis.variacao_concluidos_vs_mes_anterior > 0 
+          ? `Crescimento de +${kpis.variacao_concluidos_vs_mes_anterior}% vs. mês anterior`
+          : "Ritmo de atendimento mantido dentro da meta",
+      });
+    } else {
+      alertas.push({
+        tipo: "warn",
+        titulo: `${kpis.perc_dentro_do_prazo}% de resoluções dentro do prazo`,
+        descricao: `Ciclo médio atual de ${kpis.tempo_medio_resolucao_dias} dias`,
+      });
+    }
+
     return {
       kpis,
+      sparklines,
       evolucaoMensal,
       distribuicaoModulos,
       tarefas,
-      faixasIdade,
       topLojas,
-      cds,
-      chamadosAntigos,
+      chamadosCriticos,
+      alertas,
       filtrosAtivos: {
         modulo,
         periodo,
