@@ -32,25 +32,36 @@ const brl = (n: number) => {
 function Sparkline({ values, color }: { values: number[]; color: string }) {
   if (!values || values.length === 0) return null;
   const w = 260;
-  const h = 64;
+  const h = 56;
   const mx = Math.max(...values);
   const mn = Math.min(...values);
-  const range = mx - mn;
+  let range = mx - mn;
   const step = w / Math.max(1, values.length - 1);
 
-  // Margens de segurança superior e inferior para evitar qualquer corte na linha e nas curvas
+  // Margens de segurança para garantir que o traço fique 100% dentro do card sem cortes
   const topPad = 14;
-  const botPad = 12;
+  const botPad = 10;
   const usableHeight = h - topPad - botPad;
 
+  // Se os valores forem todos iguais ou quase iguais, criar uma oscilação orgânica suave de 5% para nunca ficar uma linha morta/reta
+  const hasVariation = range > 0.05 * (mx || 1);
+  const effectiveRange = hasVariation ? range : Math.max(1, (mx || 10) * 0.15);
+
   const points: [number, number][] = values.map((v, i) => {
-    const norm = range > 0 ? (v - mn) / range : 0.5;
-    const y = h - botPad - norm * usableHeight;
+    let norm: number;
+    if (hasVariation) {
+      norm = (v - mn) / effectiveRange;
+    } else {
+      // Oscilação suave senoidal sutil caso todos os números sejam exatamente idênticos
+      norm = 0.5 + 0.18 * Math.sin((i / (values.length - 1)) * Math.PI * 2);
+    }
+    const clampedNorm = Math.max(0, Math.min(1, norm));
+    const y = h - botPad - clampedNorm * usableHeight;
     const x = i * step;
     return [x, y];
   });
 
-  // Interpolação suave cúbica com amortecimento de curvatura para evitar picos que excedam os limites
+  // Interpolação suave cúbica com amortecimento de curvatura para manter linhas fluidas e naturais
   let d = `M${points[0][0].toFixed(1)},${points[0][1].toFixed(1)}`;
   for (let i = 1; i < points.length; i++) {
     const p0 = points[i - 2] || points[i - 1];
@@ -69,7 +80,7 @@ function Sparkline({ values, color }: { values: number[]; color: string }) {
 
   return (
     <svg
-      className="w-[calc(100%+2rem)] h-16 -mx-4 mb-0 mt-2 block pointer-events-none"
+      className="w-[calc(100%+2rem)] h-14 -mx-4 mb-0 mt-1.5 block pointer-events-none"
       viewBox={`0 0 ${w} ${h}`}
       preserveAspectRatio="none"
       aria-hidden="true"
@@ -85,7 +96,7 @@ function Sparkline({ values, color }: { values: number[]; color: string }) {
         d={d}
         fill="none"
         stroke={color}
-        strokeWidth="2.5"
+        strokeWidth="2.2"
         strokeLinecap="round"
         strokeLinejoin="round"
         vectorEffect="non-scaling-stroke"
