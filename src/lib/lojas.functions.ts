@@ -132,3 +132,133 @@ export const deleteLoja = createServerFn({ method: "POST" })
     if (error) throw new Error(error.message);
     return { ok: true };
   });
+
+export type ChamadoVinculadoLoja = {
+  id: string;
+  modulo: "faltas" | "recall";
+  chamado: string;
+  loja: string;
+  tipo: string;
+  cd: string;
+  nf: string;
+  situacao: string;
+  status_chamado: string;
+  status_pagamento: string;
+  valor: number;
+  dt_abertura: string;
+  dt_finalizacao: string | null;
+  dt_pagamento: string | null;
+};
+
+export const listChamadosByLoja = createServerFn({ method: "GET" })
+  .validator((d: { numero: string }) => d)
+  .handler(async ({ data }) => {
+    const { requireUnlockedSession: _r } = await import("@/lib/gate.server"); await _r();
+    const supabase = (await import("@/integrations/supabase/server-client")).getServerSupabase();
+    const numClean = String(data.numero || "").trim();
+    if (!numClean) return [];
+
+    const numStripped = numClean.replace(/^0+/, "");
+    const numPadded = numClean.padStart(3, "0");
+    const lojasVariants = Array.from(new Set([numClean, numStripped, numPadded].filter(Boolean)));
+    const whereIn = lojasVariants.map((v) => `'${v.replace(/'/g, "''")}'`).join(", ");
+
+    const sql = `
+      SELECT 
+        'faltas' AS modulo,
+        id::text,
+        COALESCE(chamado, '')::text AS chamado,
+        COALESCE(loja, '')::text AS loja,
+        COALESCE(tipo, '')::text AS tipo,
+        COALESCE(cd, '')::text AS cd,
+        COALESCE(nf, '')::text AS nf,
+        COALESCE(situacao, '')::text AS situacao,
+        COALESCE(status_chamado, '')::text AS status_chamado,
+        COALESCE(status_pagamento, '')::text AS status_pagamento,
+        COALESCE(valor, 0)::numeric AS valor,
+        dt_abertura::text AS dt_abertura,
+        dt_finalizacao::text AS dt_finalizacao,
+        dt_pagamento::text AS dt_pagamento
+      FROM chamados_faltas
+      WHERE TRIM(loja) IN (${whereIn})
+      UNION ALL
+      SELECT 
+        'recall' AS modulo,
+        id::text,
+        COALESCE(chamado, '')::text AS chamado,
+        COALESCE(loja, '')::text AS loja,
+        COALESCE(tipo, '')::text AS tipo,
+        COALESCE(cd, '')::text AS cd,
+        COALESCE(nf, '')::text AS nf,
+        COALESCE(situacao, '')::text AS situacao,
+        COALESCE(status_chamado, '')::text AS status_chamado,
+        COALESCE(status_pagamento, '')::text AS status_pagamento,
+        COALESCE(valor, 0)::numeric AS valor,
+        dt_abertura::text AS dt_abertura,
+        dt_finalizacao::text AS dt_finalizacao,
+        dt_pagamento::text AS dt_pagamento
+      FROM chamados_recall
+      WHERE TRIM(loja) IN (${whereIn})
+      ORDER BY dt_abertura DESC NULLS LAST
+    `.trim();
+
+    try {
+      const { data: result, error } = await supabase.rpc("aiiliana_run_sql", { sql });
+      if (!error && Array.isArray(result)) {
+        return result.map((r: any) => ({
+          ...r,
+          valor: Number(r.valor || 0),
+        })) as ChamadoVinculadoLoja[];
+      }
+      if (error) console.warn("[listChamadosByLoja] RPC error:", error);
+    } catch (e) {
+      console.warn("[listChamadosByLoja] Exception in RPC:", e);
+    }
+
+    // Fallback padrão via Supabase JS se a RPC falhar
+    const [faltasRes, recallRes] = await Promise.all([
+      supabase.from("chamados_faltas").select("*").in("loja", lojasVariants).order("dt_abertura", { ascending: false }),
+      supabase.from("chamados_recall").select("*").in("loja", lojasVariants).order("dt_abertura", { ascending: false }),
+    ]);
+
+    const combined: ChamadoVinculadoLoja[] = [];
+    (faltasRes.data || []).forEach((r: any) => {
+      combined.push({
+        id: String(r.id),
+        modulo: "faltas",
+        chamado: String(r.chamado || ""),
+        loja: String(r.loja || ""),
+        tipo: String(r.tipo || ""),
+        cd: String(r.cd || ""),
+        nf: String(r.nf || ""),
+        situacao: String(r.situacao || ""),
+        status_chamado: String(r.status_chamado || ""),
+        status_pagamento: String(r.status_pagamento || ""),
+        valor: Number(r.valor || 0),
+        dt_abertura: String(r.dt_abertura || ""),
+        dt_finalizacao: r.dt_finalizacao ? String(r.dt_finalizacao) : null,
+        dt_pagamento: r.dt_pagamento ? String(r.dt_pagamento) : null,
+      });
+    });
+
+    (recallRes.data || []).forEach((r: any) => {
+      combined.push({
+        id: String(r.id),
+        modulo: "recall",
+        chamado: String(r.chamado || ""),
+        loja: String(r.loja || ""),
+        tipo: String(r.tipo || ""),
+        cd: String(r.cd || ""),
+        nf: String(r.nf || ""),
+        situacao: String(r.situacao || ""),
+        status_chamado: String(r.status_chamado || ""),
+        status_pagamento: String(r.status_pagamento || ""),
+        valor: Number(r.valor || 0),
+        dt_abertura: String(r.dt_abertura || ""),
+        dt_finalizacao: r.dt_finalizacao ? String(r.dt_finalizacao) : null,
+        dt_pagamento: r.dt_pagamento ? String(r.dt_pagamento) : null,
+      });
+    });
+
+    return combined.sort((a, b) => (b.dt_abertura || "").localeCompare(a.dt_abertura || ""));
+  });
