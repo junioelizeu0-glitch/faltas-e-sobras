@@ -78,8 +78,31 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
   const filtered = useMemo(() => {
     const q = busca.trim().toLowerCase();
     if (!q) return rows;
+
+    // Se a busca contiver apenas números (ex: "35"), faz correspondência exata para número da loja ou código de parceiro
+    const isOnlyDigits = /^\d+$/.test(q);
+    if (isOnlyDigits) {
+      const qStripped = q.replace(/^0+/, "");
+      return rows.filter((r) => {
+        const numStr = String(r.numero ?? "").trim().toLowerCase();
+        const numStripped = numStr.replace(/^0+/, "");
+        const parcStr = String(r.parceiro ?? "").trim().toLowerCase();
+        const parcStripped = parcStr.replace(/^0+/, "");
+
+        // Correspondência exata no número da loja (com ou sem zeros à esquerda)
+        const matchNumero = numStr === q || (qStripped && numStripped === qStripped);
+        // Correspondência exata no código de parceiro (com ou sem zeros à esquerda)
+        const matchParceiro = parcStr === q || (qStripped && parcStripped === qStripped);
+
+        return matchNumero || matchParceiro;
+      });
+    }
+
+    // Se contiver letras, pontuações ou outros caracteres, busca textual por sub-string nos campos
     return rows.filter((r) =>
-      [r.numero, r.parceiro, r.cnpj, r.razao_social, r.banco].some((v) => String(v ?? "").toLowerCase().includes(q))
+      [r.numero, r.parceiro, r.cnpj, r.razao_social, r.banco].some((v) =>
+        String(v ?? "").toLowerCase().includes(q)
+      )
     );
   }, [rows, busca]);
 
