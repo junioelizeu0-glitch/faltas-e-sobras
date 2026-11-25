@@ -645,7 +645,15 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
                 </label>
               </div>
 
-              {field("Razão Social", "razao_social")}
+              <label className="block">
+                <span className="text-xs font-semibold text-slate-600">Razão Social</span>
+                <input
+                  value={editing?.razao_social ?? ""}
+                  onChange={(e) => setEditing((prev) => prev ? ({ ...prev, razao_social: e.target.value }) : prev)}
+                  placeholder="Razão Social da empresa"
+                  className="mt-1.5 w-full text-sm rounded-xl border border-slate-200 px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white font-medium"
+                />
+              </label>
 
               <div className="pt-4 border-t border-slate-100 space-y-4">
                 <div className="text-xs font-bold text-slate-500 uppercase tracking-wider">Dados Bancários</div>
@@ -715,7 +723,16 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
                 </div>
               </div>
 
-              {field("Observação", "observacao")}
+              <label className="block">
+                <span className="text-xs font-semibold text-slate-600">Observação</span>
+                <textarea
+                  rows={2}
+                  value={editing?.observacao ?? ""}
+                  onChange={(e) => setEditing((prev) => prev ? ({ ...prev, observacao: e.target.value }) : prev)}
+                  placeholder="Observações adicionais..."
+                  className="mt-1.5 w-full text-sm rounded-xl border border-slate-200 px-3.5 py-2.5 focus:outline-none focus:ring-2 focus:ring-emerald-500/20 focus:border-emerald-500 bg-white font-medium resize-none"
+                />
+              </label>
             </div>
 
             <div className="shrink-0 flex justify-end gap-3 px-4 sm:px-6 py-3.5 border-t border-slate-200 bg-slate-50">
