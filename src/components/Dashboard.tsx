@@ -2758,25 +2758,55 @@ export default function Dashboard() {
           </ErrorBoundary>
         )}
 
-        {selectedSubmenu === 'cad_produtos' && <CadastroProdutos />}
-        {selectedSubmenu === 'cad_lojas' && <CadastroLojas />}
-        {selectedSubmenu === 'cad_tarefas' && <CadastroTarefas />}
-        {selectedSubmenu === 'cad_etapas' && <CadastroEtapas />}
+        {selectedSubmenu === 'cad_produtos' && (
+          <ErrorBoundary fallbackTitle="Erro ao carregar Cadastro de Produtos">
+            <CadastroProdutos />
+          </ErrorBoundary>
+        )}
+        {selectedSubmenu === 'cad_lojas' && (
+          <ErrorBoundary fallbackTitle="Erro ao carregar Cadastro de Lojas">
+            <CadastroLojas />
+          </ErrorBoundary>
+        )}
+        {selectedSubmenu === 'cad_tarefas' && (
+          <ErrorBoundary fallbackTitle="Erro ao carregar Cadastro de Situações">
+            <CadastroTarefas />
+          </ErrorBoundary>
+        )}
+        {selectedSubmenu === 'cad_etapas' && (
+          <ErrorBoundary fallbackTitle="Erro ao carregar Cadastro de Etapas">
+            <CadastroEtapas />
+          </ErrorBoundary>
+        )}
         {selectedSubmenu === 'cad_transportadoras' && (
-          <CadastroSimples titulo="Transportadoras" nomeLabel="Transportadora" listFn={listTransportadoras} upsertFn={upsertTransportadora} deleteFn={deleteTransportadora} />
+          <ErrorBoundary fallbackTitle="Erro ao carregar Cadastro de Transportadoras">
+            <CadastroSimples titulo="Transportadoras" nomeLabel="Transportadora" listFn={listTransportadoras} upsertFn={upsertTransportadora} deleteFn={deleteTransportadora} />
+          </ErrorBoundary>
         )}
         {selectedSubmenu === 'cad_conferentes' && (
-          <CadastroSimples titulo="Conferentes" nomeLabel="Conferente" listFn={listConferentes} upsertFn={upsertConferente} deleteFn={deleteConferente}
-            extraFields={[{ key: "cd", label: "CD", type: "select", options: ["ES", "PB", "TO"] }]} />
+          <ErrorBoundary fallbackTitle="Erro ao carregar Cadastro de Conferentes">
+            <CadastroSimples titulo="Conferentes" nomeLabel="Conferente" listFn={listConferentes} upsertFn={upsertConferente} deleteFn={deleteConferente}
+              extraFields={[{ key: "cd", label: "CD", type: "select", options: ["ES", "PB", "TO"] }]} />
+          </ErrorBoundary>
         )}
 
         {selectedSubmenu === 'cad_motivos' && (
-          <CadastroSimples titulo="Motivos" nomeLabel="Motivo" listFn={listMotivos} upsertFn={upsertMotivo} deleteFn={deleteMotivo} />
+          <ErrorBoundary fallbackTitle="Erro ao carregar Cadastro de Motivos">
+            <CadastroSimples titulo="Motivos" nomeLabel="Motivo" listFn={listMotivos} upsertFn={upsertMotivo} deleteFn={deleteMotivo} />
+          </ErrorBoundary>
         )}
 
-        {selectedSubmenu === 'logs' && <AuditLogViewer />}
+        {selectedSubmenu === 'logs' && (
+          <ErrorBoundary fallbackTitle="Erro ao carregar Log de Alterações">
+            <AuditLogViewer />
+          </ErrorBoundary>
+        )}
 
-        {selectedSubmenu === 'aiiliana' && <AIliana />}
+        {selectedSubmenu === 'aiiliana' && (
+          <ErrorBoundary fallbackTitle="Erro ao carregar Assistente AIliana">
+            <AIliana />
+          </ErrorBoundary>
+        )}
 
         {(selectedSubmenu === 'relatorio' || selectedSubmenu === 'recall_relatorio') && (
           <div className="flex-1 flex flex-col overflow-hidden bg-slate-50">

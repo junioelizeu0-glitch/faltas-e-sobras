@@ -112,13 +112,31 @@ export default function CadastroLojas({ buscaInicial }: { buscaInicial?: string 
 
   const save = async () => {
     if (!editing) return;
+    const numLimpo = String(editing.numero || "").trim();
+    if (!numLimpo) {
+      setErr("O número da loja é obrigatório.");
+      toast.error("O número da loja é obrigatório.");
+      return;
+    }
+
     setErr(null); setSaving(true);
     try {
-      await up({ data: editing as any });
+      const payload: Partial<Loja> & { numero: string } = {
+        ...editing,
+        numero: numLimpo,
+        id: editing.id && String(editing.id).trim() !== "" ? editing.id : undefined,
+      };
+      await up({ data: payload as any });
       toast.success("Loja salva com sucesso");
-      setEditing(null); await load();
-    } catch (e: any) { setErr(e?.message || "Erro"); toast.error(e?.message || "Erro ao salvar loja"); }
-    finally { setSaving(false); }
+      setEditing(null);
+      await load();
+    } catch (e: any) {
+      const msg = e?.message || "Erro ao salvar loja";
+      setErr(msg);
+      toast.error(msg);
+    } finally {
+      setSaving(false);
+    }
   };
 
   const remove = async (r: Loja) => {

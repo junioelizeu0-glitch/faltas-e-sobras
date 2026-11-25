@@ -66,30 +66,27 @@ export const upsertLoja = createServerFn({ method: "POST" })
     if (!numero) throw new Error("Número da loja é obrigatório");
     const cnpjDigits = String(data.cnpj || "").replace(/\D/g, "");
 
-    // Regra anti-duplicidade: número da loja
+    // Regra anti-duplicidade: número da loja (considera id real, ignorando string vazia)
+    const validId = data.id && String(data.id).trim() !== "" ? String(data.id).trim() : null;
     {
       let q = supabase.from("lojas").select("id").eq("numero", numero);
-      if (data.id) q = q.neq("id", data.id);
+      if (validId) q = q.neq("id", validId);
       const { data: dupNum } = await q.limit(1).maybeSingle();
-      if (dupNum) throw new Error(`Já existe uma loja com o número ${numero}.`);
+      if (dupNum) throw new Error(`Já existe uma loja cadastrada com o número ${numero}.`);
     }
 
     // Regra anti-duplicidade: CNPJ (comparando só dígitos)
     if (cnpjDigits.length === 14) {
       const { data: all } = await supabase.from("lojas").select("id, cnpj");
       const conflict = (all || []).find((r: any) =>
-        String(r.cnpj || "").replace(/\D/g, "") === cnpjDigits && r.id !== data.id
+        String(r.cnpj || "").replace(/\D/g, "") === cnpjDigits && (!validId || r.id !== validId)
       );
-      if (conflict) throw new Error(`Já existe uma loja com o CNPJ ${data.cnpj}.`);
+      if (conflict) throw new Error(`Já existe uma loja cadastrada com o CNPJ ${data.cnpj}.`);
     }
 
-    const parceiroResolved = data.parceiro !== undefined && data.parceiro !== null && String(data.parceiro).trim() !== ""
-      ? String(data.parceiro).trim()
-      : (getParceiroByLoja(numero) || null);
-
-    const row: any = {
+    // Objeto limpo para inserção/atualização no Supabase (não inclui 'parceiro' pois não existe na tabela lojas)
+    const row: Record<string, any> = {
       numero,
-      parceiro: parceiroResolved,
       cnpj: data.cnpj?.trim() || null,
       razao_social: data.razao_social?.trim() || null,
       tipo: data.tipo?.trim() || null,
@@ -101,25 +98,19 @@ export const upsertLoja = createServerFn({ method: "POST" })
       observacao: data.observacao?.trim() || null,
     };
 
-    if (data.id) {
-      let { error } = await supabase.from("lojas").update(row).eq("id", data.id);
-      if (error && (error.message?.includes("parceiro") || error.code === "PGRST204")) {
-        delete row.parceiro;
-        const res = await supabase.from("lojas").update(row).eq("id", data.id);
-        error = res.error;
-      }
+    if (validId) {
+      const { error } = await supabase.from("lojas").update(row).eq("id", validId);
       if (error) throw new Error(error.message);
-      return { ok: true, id: data.id };
+      return { ok: true, id: validId };
     }
 
-    let { data: ins, error } = await supabase.from("lojas").upsert(row, { onConflict: "numero" }).select().single();
-    if (error && (error.message?.includes("parceiro") || error.code === "PGRST204")) {
-      delete row.parceiro;
-      const res = await supabase.from("lojas").upsert(row, { onConflict: "numero" }).select().single();
-      ins = res.data;
-      error = res.error;
+    const { data: ins, error } = await supabase.from("lojas").insert(row).select().single();
+    if (error) {
+      // Se houver conflito de chave única ou erro no insert, tenta upsert sem id
+      const { data: altIns, error: altErr } = await supabase.from("lojas").upsert(row, { onConflict: "numero" }).select().single();
+      if (altErr) throw new Error(altErr.message || error.message);
+      return { ok: true, id: altIns?.id || "" };
     }
-    if (error) throw new Error(error.message);
     return { ok: true, id: ins?.id || "" };
   });
 
